@@ -145,3 +145,23 @@ Code is pushed to this mirror repo ([Eukyrios/my_torch](https://github.com/Eukyr
 - **Mirroring**: if everything passes on `main`, the full history is pushed to the Epitech repo
   `EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20`. The push uses the SSH key stored in the
   `GIT_SSH_PRIVATE_KEY` secret of this repo.
+
+### Setting up the mirror key
+
+Done once, outside CI. The key must have **no passphrase** (nobody can type it during a run), so use a
+dedicated key rather than your personal one:
+
+```bash
+ssh-keygen -t ed25519 -N "" -C "my_torch CI mirror" -f ~/.ssh/mytorch_ci
+gh secret set GIT_SSH_PRIVATE_KEY -R Eukyrios/my_torch < ~/.ssh/mytorch_ci
+gh auth refresh -h github.com -s admin:public_key
+gh ssh-key add ~/.ssh/mytorch_ci.pub --title "my_torch CI mirror"
+```
+
+The last two lines can be replaced by pasting `~/.ssh/mytorch_ci.pub` in GitHub → Settings → SSH and GPG keys.
+The key belongs to an account with push access to the Epitech repo. To check it before pushing:
+
+```bash
+GIT_SSH_COMMAND="ssh -i ~/.ssh/mytorch_ci -o IdentitiesOnly=yes" \
+  git ls-remote git@github.com:EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20.git
+```
