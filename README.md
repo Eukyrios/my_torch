@@ -93,3 +93,45 @@ Days with several tasks can be split between team members. *(finish)* marks the 
 |---|---|
 | Mon 16 Nov | Test from a clean clone, check the Epitech repo, re-read the subject |
 | Tue 17 Nov | 🏁 **Deadline** |
+
+## Development
+
+Python 3.12, no neural network library.
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements-dev.txt
+
+make                    # builds ./my_torch_analyzer
+make tests_run          # every test
+make coverage           # tests + coverage report in reports/htmlcov
+```
+
+```
+my_torch/               the neural network module (create, train, save, load)
+analyzer/               my_torch_analyzer: CLI, predict and train modes
+my_torch_analyzer.py    entry point, copied to ./my_torch_analyzer by make
+tests/                  one folder per package, mirroring the sources
+```
+
+### Workflow
+
+```
+feature branch  ──  PR  →  main  ──  CI  →  Epitech repo
+```
+
+1. One branch per issue, PR into `main` with `Closes #<issue>` so merging closes it.
+2. CI must be green (build, tests, coverage ≥ 85%) before merging.
+
+### CI and mirroring
+
+Code is pushed to this mirror repo ([Eukyrios/my_torch](https://github.com/Eukyrios/my_torch)). Every push runs
+[`ci.yml`](.github/workflows/ci.yml):
+
+- **Build**: `make`, then `./my_torch_analyzer --help`.
+- **Tests and coverage**: **blocking under 85%**.
+- **Traces**: `reports/` (build log, pytest log, JUnit XML, coverage XML and HTML) is uploaded as the
+  `test-reports-<sha>` artifact of the run and kept **90 days**; the coverage table is also on the run summary.
+- **Mirroring**: if everything passes on `main`, the full history is pushed to the Epitech repo
+  `EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20`. The push uses the SSH key stored in the
+  `GIT_SSH_PRIVATE_KEY` secret of this repo.
