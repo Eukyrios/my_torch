@@ -1,0 +1,2 @@
+# Runtime dependencies. Neural network libraries (pytorch, tensorflow, ...) are NOT allowed.
+# numpy: add it here once the staff confirms it is allowed and it is on the dump.

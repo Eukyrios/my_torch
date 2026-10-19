@@ -1,0 +1,112 @@
+name: CI
+
+# The mirror repo (Eukyrios/my_torch) is where code is pushed.
+# Build + tests + coverage (blocking under 85%), then, if everything passes on main,
+# the full history is pushed to the Epitech repo.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TARGET_REPO: git@github.com:EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20.git
+  COVERAGE_MIN: 85
+
+defaults:
+  run:
+    # `shell: bash` turns on pipefail, without which `... | tee` would
+    # hide a failing command behind tee's own exit status.
+    shell: bash
+
+jobs:
+  test:
+    name: Build, tests & coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Collect the traces here
+        run: mkdir -p reports
+
+      - name: Build
+        run: |
+          make 2>&1 | tee reports/build.log
+          ./my_torch_analyzer --help 2>&1 | tee -a reports/build.log
+
+      - name: Run tests
+        run: |
+          python -m pytest \
+            --junitxml=reports/junit.xml \
+            --cov --cov-branch \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=html:reports/htmlcov \
+            --cov-fail-under=${COVERAGE_MIN} \
+            2>&1 | tee reports/pytest.log
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          {
+            echo "## Coverage (min ${COVERAGE_MIN} %)"
+            echo '```'
+            python -m coverage report 2>/dev/null || echo "no coverage data"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports-${{ github.sha }}
+          path: reports/
+          retention-days: 90
+
+  mirror:
+    name: Push to Epitech repo
+    needs: test
+    if: github.repository == 'Eukyrios/my_torch' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history: every commit is kept
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.GIT_SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SSH_KEY" ]; then
+            echo "::error::the GIT_SSH_PRIVATE_KEY secret is not set, nothing was pushed"
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -t rsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+          # Fails outright if the secret was mangled on paste or has a passphrase.
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null; then
+            echo "::error::the secret is not a usable private key"
+            exit 1
+          fi
+
+      - name: Push main
+        run: |
+          git remote add target "$TARGET_REPO"
+          git push target HEAD:refs/heads/main
+          git push target --tags

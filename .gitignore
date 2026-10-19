@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+reports/
+
+# Environments
+venv/
+.venv/
+.env
+
+# Built entry points (make)
+/my_torch_analyzer
+
+# Training datasets: too heavy to push, but keep them for the defense
+datasets/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

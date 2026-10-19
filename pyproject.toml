@@ -1,0 +1,13 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --import-mode=importlib"
+
+[tool.coverage.run]
+source = ["my_torch", "analyzer"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_empty = true
