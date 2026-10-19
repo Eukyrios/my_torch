@@ -148,17 +148,17 @@ Code is pushed to this mirror repo ([Eukyrios/my_torch](https://github.com/Eukyr
 
 ### Setting up the mirror key
 
-Done once, outside CI. The secret reuses the CI key shared by our other projects (`~/.ssh/cartepro_mirror`):
+Done once, outside CI. The secret reuses the CI key shared by our other projects (`~/.ssh/ci_deploy`):
 it is registered on the Eukyrios account and has **no passphrase**, which CI needs since nobody can type
 one during a run.
 
 ```bash
-gh secret set GIT_SSH_PRIVATE_KEY -R Eukyrios/my_torch < ~/.ssh/cartepro_mirror
+gh secret set GIT_SSH_PRIVATE_KEY -R Eukyrios/my_torch < ~/.ssh/ci_deploy
 ```
 
 To check the key reaches the Epitech repo before pushing:
 
 ```bash
-GIT_SSH_COMMAND="ssh -i ~/.ssh/cartepro_mirror -o IdentitiesOnly=yes" \
+GIT_SSH_COMMAND="ssh -i ~/.ssh/ci_deploy -o IdentitiesOnly=yes" \
   git ls-remote git@github.com:EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20.git
 ```
