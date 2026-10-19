@@ -1,4 +1,6 @@
-# Python
+# Python caches and test reports, environments, the entry points built by make,
+# training datasets (too heavy to push, but kept for the defense) and IDE files.
+
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -7,19 +9,11 @@ __pycache__/
 coverage.xml
 htmlcov/
 reports/
-
-# Environments
 venv/
 .venv/
 .env
-
-# Built entry points (make)
 /my_torch_analyzer
-
-# Training datasets: too heavy to push, but keep them for the defense
 datasets/
-
-# IDE / OS
 .vscode/
 .idea/
 .DS_Store

@@ -3,6 +3,11 @@ name: CI
 # The mirror repo (Eukyrios/my_torch) is where code is pushed.
 # Build + tests + coverage (blocking under 85%), then, if everything passes on main,
 # the full history is pushed to the Epitech repo.
+#
+# `shell: bash` turns on pipefail, without which `... | tee` would hide a failing
+# command behind tee's own exit status. The mirror job checks out the full history
+# so every commit is kept, and checks the SSH key first: a secret mangled on paste
+# or protected by a passphrase fails with a clear error instead of a push error.
 
 on:
   push:
@@ -20,8 +25,6 @@ env:
 
 defaults:
   run:
-    # `shell: bash` turns on pipefail, without which `... | tee` would
-    # hide a failing command behind tee's own exit status.
     shell: bash
 
 jobs:
@@ -85,7 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history: every commit is kept
+          fetch-depth: 0
 
       - name: Setup SSH
         env:
@@ -99,7 +102,6 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -t rsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
-          # Fails outright if the secret was mangled on paste or has a passphrase.
           if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null; then
             echo "::error::the secret is not a usable private key"
             exit 1

@@ -2,15 +2,15 @@
 ## EPITECH PROJECT, 2026
 ## my_torch
 ## File description:
-## Installs the Python entry points under the names the subject expects
+## Installs the Python entry points under the names the subject expects.
+## The launcher imports the packages next to it at run time, so it is the
+## only file the binary depends on.
 ##
 
 ANALYZER	=	my_torch_analyzer
 
 all:	$(ANALYZER)
 
-# The launcher imports the packages next to it at run time, so it is the
-# only file the binary depends on.
 $(ANALYZER):	$(ANALYZER).py
 	cp $< $@
 	chmod +x $@
