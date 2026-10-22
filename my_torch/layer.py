@@ -3,7 +3,7 @@
 # implements forward, and a layer is called like a function, layer(inputs) running
 # layer.forward(inputs). Its shape is (n_inputs, n_outputs) for a layer with a fixed size
 # and None by default, for layers that work on any size; DenseLayer overrides it with the
-# shape of its weight matrix and reads n_inputs and n_outputs from it.
+# shape of its weight matrix.
 # DenseLayer: n_outputs neurons that all read the same n_inputs values.
 # Column j of the weight matrix (shape n_inputs x n_outputs) holds the weights of
 # neuron j, so the whole layer is one matrix product: outputs = inputs . weights + biases.
@@ -65,19 +65,10 @@ class DenseLayer(Layer):
 
     @property
     def shape(self) -> tuple[int, int]:
-        n_inputs, n_outputs = self.weights.shape
-        return n_inputs, n_outputs
-
-    @property
-    def n_inputs(self) -> int:
-        return self.shape[0]
-
-    @property
-    def n_outputs(self) -> int:
-        return self.shape[1]
+        return self.weights.shape
 
     def forward(self, inputs) -> np.ndarray:
         self.inputs = np.asarray(inputs, dtype=float)
-        check_input_size(self.inputs, self.n_inputs)
+        check_input_size(self.inputs, self.shape[0])
         self.z = self.inputs @ self.weights + self.biases
         return self.activation(self.z)

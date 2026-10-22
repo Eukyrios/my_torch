@@ -51,11 +51,6 @@ def test_shape_is_the_shape_of_the_weight_matrix():
     assert DenseLayer(np.zeros((768, 256)), np.zeros(256)).shape == (768, 256)
 
 
-def test_sizes_are_read_from_the_shape():
-    layer = DenseLayer(np.zeros((768, 256)), np.zeros(256))
-    assert (layer.n_inputs, layer.n_outputs) == (768, 256)
-
-
 def test_rejects_weights_that_are_not_a_matrix():
     with pytest.raises(ValueError, match="must be a matrix"):
         DenseLayer([1, 2, 3], [0])
