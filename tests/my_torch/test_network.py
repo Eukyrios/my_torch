@@ -100,7 +100,7 @@ def test_rejects_something_that_is_not_a_layer():
 def test_rejects_layers_whose_sizes_do_not_chain():
     first = DenseLayer(np.zeros((768, 64)), np.zeros(64))
     second = DenseLayer(np.zeros((32, 3)), np.zeros(3))
-    with pytest.raises(ValueError, match="layer 0 gives 64 outputs but layer 1 expects 32 inputs"):
+    with pytest.raises(ValueError, match="layer 1 expects 32 inputs but receives 64"):
         Network([first, second])
 
 
@@ -112,7 +112,7 @@ def test_rejects_inputs_of_the_wrong_size():
 def test_size_errors_name_the_positions_in_the_whole_network():
     first = DenseLayer(np.zeros((768, 64)), np.zeros(64))
     second = DenseLayer(np.zeros((32, 3)), np.zeros(3))
-    with pytest.raises(ValueError, match="layer 0 gives 64 outputs but layer 2 expects 32 inputs"):
+    with pytest.raises(ValueError, match="layer 2 expects 32 inputs but receives 64"):
         Network([first, PassThrough(), second])
 
 

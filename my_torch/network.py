@@ -7,8 +7,8 @@
 # numbers each sample must have, n_outputs from the last how many scores it gives back.
 # Layers without a fixed size work on whatever they receive and are skipped there.
 # The checks come first: check_layers rejects anything that is not a layer, a network
-# without a layer of fixed size, and sized layers that do not chain (the outputs of one
-# must be the inputs of the next sized layer).
+# without a layer of fixed size, and sized layers that do not chain: walking the layers
+# in order, each sized layer must expect as many inputs as the previous sized layer gives.
 
 import numpy as np
 
@@ -20,14 +20,14 @@ def is_sized(layer: Layer) -> bool:
 
 
 def check_sizes_chain(layers: list[Layer]) -> None:
-    sized = [(position, layer) for position, layer in enumerate(layers) if is_sized(layer)]
-    for (previous_position, previous), (following_position, following) in zip(sized, sized[1:]):
-        previous_outputs, following_inputs = previous.shape[1], following.shape[0]
-        if previous_outputs != following_inputs:
-            raise ValueError(
-                f"layer {previous_position} gives {previous_outputs} outputs but layer "
-                f"{following_position} expects {following_inputs} inputs"
-            )
+    received = None
+    for position, layer in enumerate(layers):
+        if not is_sized(layer):
+            continue
+        n_inputs, n_outputs = layer.shape
+        if received is not None and n_inputs != received:
+            raise ValueError(f"layer {position} expects {n_inputs} inputs but receives {received}")
+        received = n_outputs
 
 
 def check_layers(layers: list) -> None:
