@@ -66,9 +66,8 @@ def test_softmax_output_gives_probabilities():
     assert network(batch).sum(axis=1) == pytest.approx(np.ones(3))
 
 
-def test_sizes_come_from_the_first_and_last_dense_layers():
-    network = random_network([768, 256, 64, 3])
-    assert (network.n_inputs, network.n_outputs) == (768, 3)
+def test_shape_comes_from_the_first_and_last_sized_layers():
+    assert random_network([768, 256, 64, 3]).shape == (768, 3)
 
 
 def test_keeps_its_layers_in_order():
@@ -79,7 +78,7 @@ def test_keeps_its_layers_in_order():
 def test_a_layer_without_weights_can_sit_between_dense_layers():
     hidden, output = hidden_layer(), output_layer()
     network = Network([hidden, PassThrough(), output])
-    assert network.sized_layers == [hidden, output]
+    assert network.shape == (2, 3)
     assert network([1, 2]) == pytest.approx(Network([hidden, output])([1, 2]))
 
 
@@ -117,7 +116,7 @@ def test_size_errors_name_the_positions_in_the_whole_network():
         Network([first, PassThrough(), second])
 
 
-def test_sizes_skip_layers_without_a_fixed_size():
+def test_shape_skips_layers_without_a_fixed_size():
     hidden, output = hidden_layer(), output_layer()
     network = Network([PassThrough(), hidden, PassThrough(), output, PassThrough()])
-    assert (network.n_inputs, network.n_outputs) == (2, 3)
+    assert network.shape == (2, 3)

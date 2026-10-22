@@ -3,8 +3,8 @@
 # of shape (batch, n_inputs), and a network is called like a function: network(inputs)
 # runs network.forward(inputs).
 # It works with any Layer. Layers with a fixed size (a shape, like a dense layer) give the
-# network its sizes: n_inputs from the first of them is how many numbers each sample must
-# have, n_outputs from the last how many scores the network gives back.
+# network its shape (n_inputs, n_outputs): n_inputs from the first of them is how many
+# numbers each sample must have, n_outputs from the last how many scores it gives back.
 # Layers without a fixed size work on whatever they receive and are skipped there.
 # The checks come first: check_layers rejects anything that is not a layer, a network
 # without a layer of fixed size, and sized layers that do not chain (the outputs of one
@@ -45,16 +45,9 @@ class Network:
         check_layers(self.layers)
 
     @property
-    def sized_layers(self) -> list[Layer]:
-        return [layer for layer in self.layers if is_sized(layer)]
-
-    @property
-    def n_inputs(self) -> int:
-        return self.sized_layers[0].shape[0]
-
-    @property
-    def n_outputs(self) -> int:
-        return self.sized_layers[-1].shape[1]
+    def shape(self) -> tuple[int, int]:
+        sized_layers = [layer for layer in self.layers if is_sized(layer)]
+        return sized_layers[0].shape[0], sized_layers[-1].shape[1]
 
     def __call__(self, inputs) -> np.ndarray:
         return self.forward(inputs)
