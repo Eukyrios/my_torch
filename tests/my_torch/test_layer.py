@@ -39,7 +39,30 @@ def test_rejects_a_bias_count_that_does_not_match_the_neurons(biases):
         Dense(WEIGHTS, biases)
 
 
-@pytest.mark.parametrize("inputs", [[1], [1, 2, 3]])
-def test_rejects_the_wrong_number_of_inputs(inputs):
-    with pytest.raises(ValueError, match="expects 2 inputs"):
+def test_batch_gives_one_output_row_per_sample():
+    outputs = Dense(np.zeros((768, 3)), np.zeros(3)).forward(np.zeros((32, 768)))
+    assert outputs.shape == (32, 3)
+
+
+def test_each_batch_row_matches_the_single_sample_forward():
+    rng = np.random.default_rng(1)
+    layer = Dense(rng.normal(size=(5, 4)), rng.normal(size=4))
+    batch = rng.normal(size=(8, 5))
+    outputs = layer.forward(batch)
+    for row in range(8):
+        assert outputs[row] == pytest.approx(layer.forward(batch[row]))
+
+
+def test_biases_are_added_to_every_row():
+    outputs = Dense(np.zeros((2, 2)), BIASES).forward(np.ones((3, 2)))
+    assert outputs == pytest.approx(np.tile(BIASES, (3, 1)))
+
+
+def test_batch_of_one_keeps_its_batch_dimension():
+    assert Dense(WEIGHTS, BIASES).forward([[1, 2]]).shape == (1, 2)
+
+
+@pytest.mark.parametrize("inputs", [[1], [1, 2, 3], [[1, 2, 3]], np.zeros((2, 2, 2))])
+def test_rejects_the_wrong_input_shape(inputs):
+    with pytest.raises(ValueError, match="expects 2 inputs per sample"):
         Dense(WEIGHTS, BIASES).forward(inputs)

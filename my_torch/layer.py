@@ -1,6 +1,9 @@
 # A dense layer: n_outputs neurons that all read the same n_inputs values.
 # Column j of the weight matrix (shape n_inputs x n_outputs) holds the weights of
 # neuron j, so the whole layer is one matrix product: outputs = inputs . weights + biases.
+# The same product runs a whole batch at once: inputs of shape (batch, n_inputs), one
+# sample per row, give outputs of shape (batch, n_outputs), with the biases added to
+# every row. A single sample of shape (n_inputs,) still gives (n_outputs,).
 
 import numpy as np
 
@@ -37,5 +40,8 @@ def check_one_bias_per_neuron(weights: np.ndarray, biases: np.ndarray) -> None:
 
 
 def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
-    if inputs.shape != (n_inputs,):
-        raise ValueError(f"the layer expects {n_inputs} inputs, got shape {inputs.shape}")
+    if inputs.ndim not in (1, 2) or inputs.shape[-1] != n_inputs:
+        raise ValueError(
+            f"the layer expects {n_inputs} inputs per sample, as (n_inputs,) or (batch, n_inputs), "
+            f"got shape {inputs.shape}"
+        )
