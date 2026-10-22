@@ -47,7 +47,11 @@ def test_each_output_is_the_neuron_of_its_column():
         assert outputs[neuron] == pytest.approx(Neuron(weights[:, neuron], biases[neuron]).forward(inputs))
 
 
-def test_sizes_come_from_the_weight_matrix():
+def test_shape_is_the_shape_of_the_weight_matrix():
+    assert DenseLayer(np.zeros((768, 256)), np.zeros(256)).shape == (768, 256)
+
+
+def test_sizes_are_read_from_the_shape():
     layer = DenseLayer(np.zeros((768, 256)), np.zeros(256))
     assert (layer.n_inputs, layer.n_outputs) == (768, 256)
 
@@ -123,6 +127,5 @@ class AnySize(Layer):
         return inputs
 
 
-def test_a_layer_has_no_fixed_size_by_default():
-    layer = AnySize()
-    assert (layer.n_inputs, layer.n_outputs) == (None, None)
+def test_a_layer_has_no_shape_by_default():
+    assert AnySize().shape is None

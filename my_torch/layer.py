@@ -1,8 +1,9 @@
 # Layer is the base class of every layer: it takes the layer's name, which a saved network
 # will use to know which kind of layer to rebuild; a subclass passes its own name and
 # implements forward, and a layer is called like a function, layer(inputs) running
-# layer.forward(inputs). n_inputs and n_outputs are None by default, for layers that work
-# on any size; layers with a fixed size, like DenseLayer, override them.
+# layer.forward(inputs). Its shape is (n_inputs, n_outputs) for a layer with a fixed size
+# and None by default, for layers that work on any size; DenseLayer overrides it with the
+# shape of its weight matrix and reads n_inputs and n_outputs from it.
 # DenseLayer: n_outputs neurons that all read the same n_inputs values.
 # Column j of the weight matrix (shape n_inputs x n_outputs) holds the weights of
 # neuron j, so the whole layer is one matrix product: outputs = inputs . weights + biases.
@@ -41,11 +42,7 @@ class Layer(ABC):
         self.name = name
 
     @property
-    def n_inputs(self) -> int | None:
-        return None
-
-    @property
-    def n_outputs(self) -> int | None:
+    def shape(self) -> tuple[int, int] | None:
         return None
 
     def __call__(self, inputs) -> np.ndarray:
@@ -67,12 +64,17 @@ class DenseLayer(Layer):
         self.z = None
 
     @property
+    def shape(self) -> tuple[int, int]:
+        n_inputs, n_outputs = self.weights.shape
+        return n_inputs, n_outputs
+
+    @property
     def n_inputs(self) -> int:
-        return self.weights.shape[0]
+        return self.shape[0]
 
     @property
     def n_outputs(self) -> int:
-        return self.weights.shape[1]
+        return self.shape[1]
 
     def forward(self, inputs) -> np.ndarray:
         self.inputs = np.asarray(inputs, dtype=float)
