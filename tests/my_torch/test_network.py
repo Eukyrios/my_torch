@@ -79,17 +79,17 @@ def test_keeps_its_layers_in_order():
 def test_a_layer_without_weights_can_sit_between_dense_layers():
     hidden, output = hidden_layer(), output_layer()
     network = Network([hidden, PassThrough(), output])
-    assert network.dense_layers == [hidden, output]
+    assert network.sized_layers == [hidden, output]
     assert network([1, 2]) == pytest.approx(Network([hidden, output])([1, 2]))
 
 
 def test_rejects_a_network_without_layers():
-    with pytest.raises(ValueError, match="at least one dense layer"):
+    with pytest.raises(ValueError, match="at least one layer with a fixed size"):
         Network([])
 
 
-def test_rejects_a_network_without_a_dense_layer():
-    with pytest.raises(ValueError, match="at least one dense layer"):
+def test_rejects_a_network_without_a_layer_of_fixed_size():
+    with pytest.raises(ValueError, match="at least one layer with a fixed size"):
         Network([PassThrough()])
 
 
@@ -98,13 +98,26 @@ def test_rejects_something_that_is_not_a_layer():
         Network([hidden_layer(), [1, 2, 3]])
 
 
-def test_rejects_dense_layers_whose_sizes_do_not_chain():
+def test_rejects_layers_whose_sizes_do_not_chain():
     first = DenseLayer(np.zeros((768, 64)), np.zeros(64))
     second = DenseLayer(np.zeros((32, 3)), np.zeros(3))
-    with pytest.raises(ValueError, match="dense layer 0 gives 64 outputs but dense layer 1 expects 32 inputs"):
+    with pytest.raises(ValueError, match="layer 0 gives 64 outputs but layer 1 expects 32 inputs"):
         Network([first, second])
 
 
 def test_rejects_inputs_of_the_wrong_size():
     with pytest.raises(ValueError, match="expects 2 inputs per sample"):
         Network([hidden_layer(), output_layer()])([1, 2, 3])
+
+
+def test_size_errors_name_the_positions_in_the_whole_network():
+    first = DenseLayer(np.zeros((768, 64)), np.zeros(64))
+    second = DenseLayer(np.zeros((32, 3)), np.zeros(3))
+    with pytest.raises(ValueError, match="layer 0 gives 64 outputs but layer 2 expects 32 inputs"):
+        Network([first, PassThrough(), second])
+
+
+def test_sizes_skip_layers_without_a_fixed_size():
+    hidden, output = hidden_layer(), output_layer()
+    network = Network([PassThrough(), hidden, PassThrough(), output, PassThrough()])
+    assert (network.n_inputs, network.n_outputs) == (2, 3)
