@@ -1,4 +1,6 @@
-# A dense layer: n_outputs neurons that all read the same n_inputs values.
+# Layer is the base class of every layer: a subclass implements forward, and a layer is
+# called like a function, layer(inputs) running layer.forward(inputs).
+# DenseLayer: n_outputs neurons that all read the same n_inputs values.
 # Column j of the weight matrix (shape n_inputs x n_outputs) holds the weights of
 # neuron j, so the whole layer is one matrix product: outputs = inputs . weights + biases.
 # The same product runs a whole batch at once: inputs of shape (batch, n_inputs), one
@@ -8,6 +10,8 @@
 # It keeps its last inputs and z, which backpropagation needs to compute the gradients.
 # The checks come first: check_parameters validates the weights and biases a layer is
 # built with, and check_input_size the inputs given to forward.
+
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -29,7 +33,16 @@ def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
         )
 
 
-class DenseLayer:
+class Layer(ABC):
+    def __call__(self, inputs) -> np.ndarray:
+        return self.forward(inputs)
+
+    @abstractmethod
+    def forward(self, inputs) -> np.ndarray:
+        raise NotImplementedError
+
+
+class DenseLayer(Layer):
     def __init__(self, weights, biases, activation: Activation | None = None):
         self.weights = np.asarray(weights, dtype=float)
         self.biases = np.asarray(biases, dtype=float)

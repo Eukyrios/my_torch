@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from my_torch.activations import Linear, ReLU, Softmax
-from my_torch.layer import DenseLayer
+from my_torch.layer import DenseLayer, Layer
 from my_torch.neuron import Neuron
 
 WEIGHTS = [[0.5, -1.0], [0.25, 0.5]]
@@ -90,3 +90,22 @@ def test_batch_of_one_keeps_its_batch_dimension():
 def test_rejects_the_wrong_input_shape(inputs):
     with pytest.raises(ValueError, match="expects 2 inputs per sample"):
         DenseLayer(WEIGHTS, BIASES).forward(inputs)
+
+
+def test_a_dense_layer_is_a_layer():
+    assert isinstance(DenseLayer(WEIGHTS, BIASES), Layer)
+
+
+def test_calling_a_layer_runs_its_forward():
+    layer = DenseLayer(WEIGHTS, BIASES, activation=ReLU())
+    assert layer([1, 2]) == pytest.approx(layer.forward([1, 2]))
+
+
+def test_the_base_layer_cannot_be_used_on_its_own():
+    with pytest.raises(TypeError):
+        Layer()
+
+
+def test_the_base_forward_is_abstract():
+    with pytest.raises(NotImplementedError):
+        Layer.forward(DenseLayer(WEIGHTS, BIASES), [1, 2])
