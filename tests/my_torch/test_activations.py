@@ -8,9 +8,6 @@ from my_torch.activations import (
     Sigmoid,
     Softmax,
     Tanh,
-    activation_classes,
-    activation_names,
-    find_activation,
 )
 
 Z = np.array([-2.0, -0.5, 0.0, 0.5, 2.0])
@@ -89,18 +86,22 @@ def test_the_base_forward_is_abstract():
 
 
 def test_every_subclass_is_found():
-    assert set(activation_classes()) >= {Linear, ReLU, Sigmoid, Tanh, Softmax}
+    assert set(Activation.subclasses()) >= {Linear, ReLU, Sigmoid, Tanh, Softmax}
 
 
 def test_activation_names_are_unique():
-    assert len(set(activation_names())) == len(activation_classes())
+    assert len(set(Activation.names())) == len(Activation.subclasses())
 
 
 @pytest.mark.parametrize("activation_class", [Linear, ReLU, Sigmoid, Tanh, Softmax])
-def test_find_activation_builds_the_activation_named(activation_class):
-    assert type(find_activation(activation_class.name)) is activation_class
+def test_from_name_builds_the_activation_named(activation_class):
+    assert type(Activation.from_name(activation_class.name)) is activation_class
 
 
-def test_find_activation_rejects_an_unknown_name():
+def test_from_name_rejects_an_unknown_name():
     with pytest.raises(ValueError, match="unknown activation 'swish', expected one of: linear, relu"):
-        find_activation("swish")
+        Activation.from_name("swish")
+
+
+def test_names_lists_every_activation():
+    assert Activation.names() == ["linear", "relu", "sigmoid", "tanh", "softmax"]

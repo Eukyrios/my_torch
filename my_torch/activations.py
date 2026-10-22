@@ -6,8 +6,8 @@
 # Sigmoid is computed as 0.5 * (1 + tanh(z / 2)), the same function without the overflow
 # of exp(-z) for large negative z; Softmax subtracts each row's maximum before exp for the
 # same reason, which leaves the result unchanged.
-# The name is how a saved network will store an activation: find_activation turns it back
-# into an instance by searching the subclasses of Activation.
+# The name is how a saved network will store an activation: Activation.from_name turns it
+# back into an instance by searching Activation.subclasses().
 
 from abc import ABC, abstractmethod
 
@@ -16,6 +16,21 @@ import numpy as np
 
 class Activation(ABC):
     name: str
+
+    @classmethod
+    def subclasses(cls) -> list[type["Activation"]]:
+        return Activation.__subclasses__()
+
+    @classmethod
+    def names(cls) -> list[str]:
+        return [subclass.name for subclass in Activation.subclasses()]
+
+    @classmethod
+    def from_name(cls, name: str) -> "Activation":
+        for subclass in Activation.subclasses():
+            if subclass.name == name:
+                return subclass()
+        raise ValueError(f"unknown activation {name!r}, expected one of: {', '.join(Activation.names())}")
 
     def __call__(self, z: np.ndarray) -> np.ndarray:
         return self.forward(z)
@@ -60,17 +75,3 @@ class Softmax(Activation):
         exps = np.exp(z - np.max(z, axis=-1, keepdims=True))
         return exps / np.sum(exps, axis=-1, keepdims=True)
 
-
-def activation_classes() -> list[type[Activation]]:
-    return Activation.__subclasses__()
-
-
-def activation_names() -> list[str]:
-    return [activation_class.name for activation_class in activation_classes()]
-
-
-def find_activation(name: str) -> Activation:
-    for activation_class in activation_classes():
-        if activation_class.name == name:
-            return activation_class()
-    raise ValueError(f"unknown activation {name!r}, expected one of: {', '.join(activation_names())}")
