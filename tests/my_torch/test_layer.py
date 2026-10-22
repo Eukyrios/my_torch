@@ -96,6 +96,10 @@ def test_a_dense_layer_is_a_layer():
     assert isinstance(DenseLayer(WEIGHTS, BIASES), Layer)
 
 
+def test_a_dense_layer_is_named_dense():
+    assert DenseLayer(WEIGHTS, BIASES).name == "dense"
+
+
 def test_calling_a_layer_runs_its_forward():
     layer = DenseLayer(WEIGHTS, BIASES, activation=ReLU())
     assert layer([1, 2]) == pytest.approx(layer.forward([1, 2]))
@@ -103,7 +107,7 @@ def test_calling_a_layer_runs_its_forward():
 
 def test_the_base_layer_cannot_be_used_on_its_own():
     with pytest.raises(TypeError):
-        Layer()
+        Layer("dense")
 
 
 def test_the_base_forward_is_abstract():

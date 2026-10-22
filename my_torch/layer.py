@@ -1,5 +1,7 @@
-# Layer is the base class of every layer: a subclass implements forward, and a layer is
-# called like a function, layer(inputs) running layer.forward(inputs).
+# Layer is the base class of every layer: it takes the layer's name, which a saved network
+# will use to know which kind of layer to rebuild; a subclass passes its own name and
+# implements forward, and a layer is called like a function, layer(inputs) running
+# layer.forward(inputs).
 # DenseLayer: n_outputs neurons that all read the same n_inputs values.
 # Column j of the weight matrix (shape n_inputs x n_outputs) holds the weights of
 # neuron j, so the whole layer is one matrix product: outputs = inputs . weights + biases.
@@ -34,6 +36,9 @@ def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
 
 
 class Layer(ABC):
+    def __init__(self, name: str):
+        self.name = name
+
     def __call__(self, inputs) -> np.ndarray:
         return self.forward(inputs)
 
@@ -44,6 +49,7 @@ class Layer(ABC):
 
 class DenseLayer(Layer):
     def __init__(self, weights, biases, activation: Activation | None = None):
+        super().__init__("dense")
         self.weights = np.asarray(weights, dtype=float)
         self.biases = np.asarray(biases, dtype=float)
         check_parameters(self.weights, self.biases)
