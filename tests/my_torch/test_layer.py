@@ -3,7 +3,7 @@ import pytest
 
 from my_torch.activations import Linear, ReLU, Softmax
 from my_torch.layer import Dense
-from my_torch.neuron import weighted_sum
+from my_torch.neuron import Neuron
 
 WEIGHTS = [[0.5, -1.0], [0.25, 0.5]]
 BIASES = [0.1, -0.3]
@@ -44,7 +44,7 @@ def test_each_output_is_the_neuron_of_its_column():
     inputs = rng.normal(size=4)
     outputs = Dense(weights, biases).forward(inputs)
     for neuron in range(3):
-        assert outputs[neuron] == pytest.approx(weighted_sum(inputs, weights[:, neuron], biases[neuron]))
+        assert outputs[neuron] == pytest.approx(Neuron(weights[:, neuron], biases[neuron]).forward(inputs))
 
 
 def test_sizes_come_from_the_weight_matrix():
