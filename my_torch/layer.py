@@ -29,7 +29,7 @@ def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
         )
 
 
-class Dense:
+class DenseLayer:
     def __init__(self, weights, biases, activation: Activation | None = None):
         self.weights = np.asarray(weights, dtype=float)
         self.biases = np.asarray(biases, dtype=float)
