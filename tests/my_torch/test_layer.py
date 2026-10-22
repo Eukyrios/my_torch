@@ -13,6 +13,34 @@ def test_forward_matches_the_hand_computation():
     assert layer.forward([1, 2]) == pytest.approx([1.1, -0.3])
 
 
+def test_forward_applies_the_activation():
+    layer = Dense(WEIGHTS, BIASES, activation="relu")
+    assert layer.forward([1, 2]) == pytest.approx([1.1, 0.0])
+
+
+def test_default_activation_is_linear():
+    assert Dense(WEIGHTS, BIASES).activation_name == "linear"
+
+
+def test_forward_keeps_its_inputs_and_z_for_backpropagation():
+    layer = Dense(WEIGHTS, BIASES, activation="relu")
+    layer.forward([1, 2])
+    assert layer.inputs == pytest.approx([1.0, 2.0])
+    assert layer.z == pytest.approx([1.1, -0.3])
+
+
+def test_softmax_layer_outputs_one_probability_row_per_sample():
+    rng = np.random.default_rng(2)
+    layer = Dense(rng.normal(size=(6, 3)), rng.normal(size=3), activation="softmax")
+    outputs = layer.forward(rng.normal(size=(4, 6)))
+    assert outputs.sum(axis=1) == pytest.approx(np.ones(4))
+
+
+def test_rejects_an_unknown_activation():
+    with pytest.raises(ValueError, match="unknown activation"):
+        Dense(WEIGHTS, BIASES, activation="swish")
+
+
 def test_each_output_is_the_neuron_of_its_column():
     rng = np.random.default_rng(0)
     weights = rng.normal(size=(4, 3))

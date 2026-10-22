@@ -1,0 +1,45 @@
+# Activation functions, applied to a layer's weighted sums z.
+# linear keeps z as is, relu cuts negative values to 0, sigmoid squashes into (0, 1),
+# tanh into (-1, 1), and softmax turns each row of scores into probabilities summing to 1.
+# sigmoid is computed as 0.5 * (1 + tanh(z / 2)), the same function without the overflow
+# of exp(-z) for large negative z; softmax subtracts each row's maximum before exp for the
+# same reason, which leaves the result unchanged.
+# Layers refer to activations by name, which is also how a saved network will store them.
+
+import numpy as np
+
+
+def linear(z: np.ndarray) -> np.ndarray:
+    return z
+
+
+def relu(z: np.ndarray) -> np.ndarray:
+    return np.maximum(0.0, z)
+
+
+def sigmoid(z: np.ndarray) -> np.ndarray:
+    return 0.5 * (1.0 + np.tanh(0.5 * z))
+
+
+def tanh(z: np.ndarray) -> np.ndarray:
+    return np.tanh(z)
+
+
+def softmax(z: np.ndarray) -> np.ndarray:
+    exps = np.exp(z - np.max(z, axis=-1, keepdims=True))
+    return exps / np.sum(exps, axis=-1, keepdims=True)
+
+
+ACTIVATIONS = {
+    "linear": linear,
+    "relu": relu,
+    "sigmoid": sigmoid,
+    "tanh": tanh,
+    "softmax": softmax,
+}
+
+
+def get_activation(name: str):
+    if name not in ACTIVATIONS:
+        raise ValueError(f"unknown activation {name!r}, expected one of: {', '.join(ACTIVATIONS)}")
+    return ACTIVATIONS[name]
