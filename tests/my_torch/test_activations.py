@@ -95,7 +95,7 @@ def test_activation_names_are_unique():
 
 @pytest.mark.parametrize("activation_class", [Linear, ReLU, Sigmoid, Tanh, Softmax])
 def test_from_name_builds_the_activation_named(activation_class):
-    assert type(Activation.from_name(activation_class.name)) is activation_class
+    assert type(Activation.from_name(activation_class().name)) is activation_class
 
 
 def test_from_name_rejects_an_unknown_name():
