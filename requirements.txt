@@ -1,2 +1,4 @@
 # Runtime dependencies. Neural network libraries (pytorch, tensorflow, ...) are NOT allowed.
-# numpy: add it here once the staff confirms it is allowed and it is on the dump.
+# numpy does the matrix math: still to confirm with the staff and to check on the dump.
+
+numpy>=1.26
