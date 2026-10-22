@@ -1,6 +1,7 @@
 # A single neuron: it holds one weight per input and a bias, and its forward pass is
 # the weighted sum of its inputs plus the bias, z = x1*w1 + x2*w2 + ... + xn*wn + b.
 # This is the value an activation function is later applied to.
+# A neuron is called like a function: neuron(inputs) runs neuron.forward(inputs).
 # The checks come first: check_parameters validates the weights a neuron is built with,
 # and check_input_size the inputs given to forward.
 
@@ -26,6 +27,9 @@ class Neuron:
     @property
     def n_inputs(self) -> int:
         return self.weights.shape[0]
+
+    def __call__(self, inputs) -> float:
+        return self.forward(inputs)
 
     def forward(self, inputs) -> float:
         inputs = np.asarray(inputs, dtype=float)

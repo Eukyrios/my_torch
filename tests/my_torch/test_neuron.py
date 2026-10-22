@@ -19,6 +19,11 @@ def test_forward_returns_a_plain_float():
     assert isinstance(Neuron([1], 0).forward([1]), float)
 
 
+def test_calling_a_neuron_runs_its_forward():
+    neuron = Neuron([0.5, 0.25], 0.1)
+    assert neuron([1, 2]) == neuron.forward([1, 2])
+
+
 def test_n_inputs_is_the_number_of_weights():
     assert Neuron([1, 2, 3], 0).n_inputs == 3
 
