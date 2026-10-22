@@ -14,19 +14,11 @@ import numpy as np
 from my_torch.activations import Activation, Linear
 
 
-def check_weights_are_a_matrix(weights: np.ndarray) -> None:
+def check_parameters(weights: np.ndarray, biases: np.ndarray) -> None:
     if weights.ndim != 2:
         raise ValueError(f"weights must be a matrix (n_inputs x n_outputs), got shape {weights.shape}")
-
-
-def check_one_bias_per_neuron(weights: np.ndarray, biases: np.ndarray) -> None:
     if biases.shape != (weights.shape[1],):
         raise ValueError(f"expected {weights.shape[1]} biases, one per neuron, got shape {biases.shape}")
-
-
-def check_parameters(weights: np.ndarray, biases: np.ndarray) -> None:
-    check_weights_are_a_matrix(weights)
-    check_one_bias_per_neuron(weights, biases)
 
 
 def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
