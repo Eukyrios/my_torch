@@ -9,16 +9,16 @@
 
 import numpy as np
 
-from my_torch.activations import LINEAR, Activation
+from my_torch.activations import Activation, Linear
 
 
 class Dense:
-    def __init__(self, weights, biases, activation: Activation = LINEAR):
+    def __init__(self, weights, biases, activation: Activation | None = None):
         self.weights = np.asarray(weights, dtype=float)
         self.biases = np.asarray(biases, dtype=float)
         check_weights_are_a_matrix(self.weights)
         check_one_bias_per_neuron(self.weights, self.biases)
-        self.activation = activation
+        self.activation = activation or Linear()
         self.inputs = None
         self.z = None
 

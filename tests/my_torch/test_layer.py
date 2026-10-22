@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from my_torch.activations import LINEAR, RELU, SOFTMAX
+from my_torch.activations import Linear, ReLU, Softmax
 from my_torch.layer import Dense
 from my_torch.neuron import weighted_sum
 
@@ -15,16 +15,16 @@ def test_forward_matches_the_hand_computation():
 
 
 def test_forward_applies_the_activation():
-    layer = Dense(WEIGHTS, BIASES, activation=RELU)
+    layer = Dense(WEIGHTS, BIASES, activation=ReLU())
     assert layer.forward([1, 2]) == pytest.approx([1.1, 0.0])
 
 
 def test_default_activation_is_linear():
-    assert Dense(WEIGHTS, BIASES).activation is LINEAR
+    assert isinstance(Dense(WEIGHTS, BIASES).activation, Linear)
 
 
 def test_forward_keeps_its_inputs_and_z_for_backpropagation():
-    layer = Dense(WEIGHTS, BIASES, activation=RELU)
+    layer = Dense(WEIGHTS, BIASES, activation=ReLU())
     layer.forward([1, 2])
     assert layer.inputs == pytest.approx([1.0, 2.0])
     assert layer.z == pytest.approx([1.1, -0.3])
@@ -32,7 +32,7 @@ def test_forward_keeps_its_inputs_and_z_for_backpropagation():
 
 def test_softmax_layer_outputs_one_probability_row_per_sample():
     rng = np.random.default_rng(2)
-    layer = Dense(rng.normal(size=(6, 3)), rng.normal(size=3), activation=SOFTMAX)
+    layer = Dense(rng.normal(size=(6, 3)), rng.normal(size=3), activation=Softmax())
     outputs = layer.forward(rng.normal(size=(4, 6)))
     assert outputs.sum(axis=1) == pytest.approx(np.ones(4))
 
