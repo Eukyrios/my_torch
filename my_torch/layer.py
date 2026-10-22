@@ -4,22 +4,21 @@
 # The same product runs a whole batch at once: inputs of shape (batch, n_inputs), one
 # sample per row, give outputs of shape (batch, n_outputs), with the biases added to
 # every row. A single sample of shape (n_inputs,) still gives (n_outputs,).
-# The layer then applies its activation, chosen by name, to z = inputs . weights + biases.
+# The layer then applies its Activation (linear by default) to z = inputs . weights + biases.
 # It keeps its last inputs and z, which backpropagation needs to compute the gradients.
 
 import numpy as np
 
-from my_torch.activations import get_activation
+from my_torch.activations import LINEAR, Activation
 
 
 class Dense:
-    def __init__(self, weights, biases, activation: str = "linear"):
+    def __init__(self, weights, biases, activation: Activation = LINEAR):
         self.weights = np.asarray(weights, dtype=float)
         self.biases = np.asarray(biases, dtype=float)
         check_weights_are_a_matrix(self.weights)
         check_one_bias_per_neuron(self.weights, self.biases)
-        self.activation_name = activation
-        self.activation = get_activation(activation)
+        self.activation = activation
         self.inputs = None
         self.z = None
 
