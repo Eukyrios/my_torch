@@ -113,3 +113,16 @@ def test_the_base_layer_cannot_be_used_on_its_own():
 def test_the_base_forward_is_abstract():
     with pytest.raises(NotImplementedError):
         Layer.forward(DenseLayer(WEIGHTS, BIASES), [1, 2])
+
+
+class AnySize(Layer):
+    def __init__(self):
+        super().__init__("any_size")
+
+    def forward(self, inputs):
+        return inputs
+
+
+def test_a_layer_has_no_fixed_size_by_default():
+    layer = AnySize()
+    assert (layer.n_inputs, layer.n_outputs) == (None, None)
