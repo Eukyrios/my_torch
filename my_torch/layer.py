@@ -6,18 +6,42 @@
 # every row. A single sample of shape (n_inputs,) still gives (n_outputs,).
 # The layer then applies its Activation (linear by default) to z = inputs . weights + biases.
 # It keeps its last inputs and z, which backpropagation needs to compute the gradients.
+# The checks come first: check_parameters validates the weights and biases a layer is
+# built with, and check_input_size the inputs given to forward.
 
 import numpy as np
 
 from my_torch.activations import Activation, Linear
 
 
+def check_weights_are_a_matrix(weights: np.ndarray) -> None:
+    if weights.ndim != 2:
+        raise ValueError(f"weights must be a matrix (n_inputs x n_outputs), got shape {weights.shape}")
+
+
+def check_one_bias_per_neuron(weights: np.ndarray, biases: np.ndarray) -> None:
+    if biases.shape != (weights.shape[1],):
+        raise ValueError(f"expected {weights.shape[1]} biases, one per neuron, got shape {biases.shape}")
+
+
+def check_parameters(weights: np.ndarray, biases: np.ndarray) -> None:
+    check_weights_are_a_matrix(weights)
+    check_one_bias_per_neuron(weights, biases)
+
+
+def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
+    if inputs.ndim not in (1, 2) or inputs.shape[-1] != n_inputs:
+        raise ValueError(
+            f"the layer expects {n_inputs} inputs per sample, as (n_inputs,) or (batch, n_inputs), "
+            f"got shape {inputs.shape}"
+        )
+
+
 class Dense:
     def __init__(self, weights, biases, activation: Activation | None = None):
         self.weights = np.asarray(weights, dtype=float)
         self.biases = np.asarray(biases, dtype=float)
-        check_weights_are_a_matrix(self.weights)
-        check_one_bias_per_neuron(self.weights, self.biases)
+        check_parameters(self.weights, self.biases)
         self.activation = activation or Linear()
         self.inputs = None
         self.z = None
@@ -35,21 +59,3 @@ class Dense:
         check_input_size(self.inputs, self.n_inputs)
         self.z = self.inputs @ self.weights + self.biases
         return self.activation(self.z)
-
-
-def check_weights_are_a_matrix(weights: np.ndarray) -> None:
-    if weights.ndim != 2:
-        raise ValueError(f"weights must be a matrix (n_inputs x n_outputs), got shape {weights.shape}")
-
-
-def check_one_bias_per_neuron(weights: np.ndarray, biases: np.ndarray) -> None:
-    if biases.shape != (weights.shape[1],):
-        raise ValueError(f"expected {weights.shape[1]} biases, one per neuron, got shape {biases.shape}")
-
-
-def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
-    if inputs.ndim not in (1, 2) or inputs.shape[-1] != n_inputs:
-        raise ValueError(
-            f"the layer expects {n_inputs} inputs per sample, as (n_inputs,) or (batch, n_inputs), "
-            f"got shape {inputs.shape}"
-        )
