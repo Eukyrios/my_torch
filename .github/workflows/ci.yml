@@ -1,13 +1,7 @@
 name: CI
 
-# The mirror repo (Eukyrios/my_torch) is where code is pushed.
-# Build + tests + coverage (blocking under 85%), then, if everything passes on main,
-# the full history is pushed to the Epitech repo.
-#
-# `shell: bash` turns on pipefail, without which `... | tee` would hide a failing
-# command behind tee's own exit status. The mirror job checks out the full history
-# so every commit is kept. The SSH key is set up outside the run (see the README):
-# the run only loads the GIT_SSH_PRIVATE_KEY secret into an ssh-agent.
+# Build, tests and coverage (blocking under 85%) on every push; when main is green,
+# its full history is pushed to the Epitech repo with the key in GIT_SSH_PRIVATE_KEY.
 
 on:
   push:

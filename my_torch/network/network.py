@@ -1,14 +1,6 @@
-# A network: an ordered list of layers, each one reading the outputs of the previous one.
-# Its forward pass runs every layer in order, on one sample of shape (n_inputs,) or a batch
-# of shape (batch, n_inputs), and a network is called like a function: network(inputs)
-# runs network.forward(inputs).
-# It works with any Layer. Layers with a fixed size (a shape, like a dense layer) give the
-# network its shape (n_inputs, n_outputs): n_inputs from the first of them is how many
-# numbers each sample must have, n_outputs from the last how many scores it gives back.
-# Layers without a fixed size work on whatever they receive and are skipped there.
-# The checks come first: check_layers rejects anything that is not a layer, a network
-# without a layer of fixed size, and sized layers that do not chain: walking the layers
-# in order, each sized layer must expect as many inputs as the previous sized layer gives.
+# A network runs its layers in order, on one sample or a batch: network(inputs).
+# Its shape (n_inputs, n_outputs) comes from the first and last layers with a fixed size;
+# check_layers makes sure those sizes chain.
 
 import numpy as np
 

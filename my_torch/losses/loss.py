@@ -1,9 +1,5 @@
-# Loss functions: how wrong a network's predictions are compared to the expected outputs,
-# averaged over the batch. Loss is the base class: a name, forward giving the loss (also run
-# by calling it) and gradient giving d(loss)/d(predictions), where backpropagation starts.
-# CrossEntropy is for classification: predictions are probabilities (softmax output) and
-# expected is one-hot; predictions are clipped to at least epsilon (1e-12 by default) so
-# log never sees 0.
+# Loss functions: how wrong the predictions are, averaged over the batch, and the gradient
+# where backpropagation starts. CrossEntropy clips predictions to epsilon so log never sees 0.
 
 from abc import ABC, abstractmethod
 

@@ -1,18 +1,6 @@
-# Activation functions, applied to a layer's weighted sums z.
-# Activation is the base class: it takes the activation's name, each subclass passes its
-# own name and implements forward, and an instance is called like a function, activation(z).
-# Linear keeps z as is, ReLU cuts negative values to 0, Sigmoid squashes into (0, 1),
-# Tanh into (-1, 1), and Softmax turns each row of scores into probabilities summing to 1.
-# Sigmoid is computed as 0.5 * (1 + tanh(z / 2)), the same function without the overflow
-# of exp(-z) for large negative z; Softmax subtracts each row's maximum before exp for the
-# same reason, which leaves the result unchanged.
-# The name is how a saved network will store an activation: Activation.from_name turns it
-# back into an instance by searching Activation.subclasses().
-# For backpropagation, derivative(z) gives d(output)/dz and backward(z, gradient) turns the
-# gradient of the loss with respect to the outputs into the gradient with respect to z:
-# gradient * derivative(z) for the activations that work value by value. Each softmax output
-# depends on the whole row, so its derivative is a matrix per sample (the Jacobian) and its
-# backward is s * (gradient - sum(gradient * s)), with s the softmax output of the row.
+# Activation functions applied to a layer's z, called like functions: ReLU()(z).
+# backward(z, gradient) turns the loss gradient on the outputs into the gradient on z.
+# Sigmoid and Softmax are written so exp never overflows.
 
 from abc import ABC, abstractmethod
 
