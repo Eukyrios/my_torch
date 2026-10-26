@@ -1,6 +1,6 @@
 import pytest
 
-from analyzer import parse_fen, split_fen_line
+from analyzer.fen import parse_fen, split_fen_line
 from dataset import generate
 from dataset.generate import Collector, collect, describe, main, write_splits
 from dataset.labels import LABELS
