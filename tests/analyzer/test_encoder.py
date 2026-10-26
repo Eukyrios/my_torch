@@ -1,8 +1,8 @@
 import pytest
 
-from analyzer import INPUT_SIZE, FenError, encode_fen, encode_position, parse_fen
+from analyzer.encoder import INPUT_SIZE,  encode_fen, encode_position
 from analyzer.encoder import NUM_SQUARES, PLANE, SIDE_TO_MOVE_INDEX
-from analyzer.fen import STARTING_FEN, square_index
+from analyzer.fen import STARTING_FEN, FenError, square_index, parse_fen
 
 
 def test_input_size_is_769():
