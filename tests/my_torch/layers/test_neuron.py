@@ -1,6 +1,6 @@
 import pytest
 
-from my_torch.neuron import Neuron
+from my_torch.layers.neuron import Neuron
 
 
 def test_forward_matches_the_hand_computation():

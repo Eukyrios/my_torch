@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from my_torch.loss import CrossEntropy, Loss, MeanSquaredError
+from my_torch.losses.loss import CrossEntropy, Loss, MeanSquaredError
 
 PREDICTIONS = np.array([[0.7, 0.2, 0.1], [0.1, 0.8, 0.1]])
 EXPECTED = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])

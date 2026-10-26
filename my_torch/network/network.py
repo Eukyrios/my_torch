@@ -12,7 +12,7 @@
 
 import numpy as np
 
-from my_torch.layer import Layer
+from my_torch.layers.layer import Layer
 
 
 def is_sized(layer: Layer) -> bool:

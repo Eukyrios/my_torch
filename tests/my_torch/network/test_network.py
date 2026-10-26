@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
 
-from my_torch.activations import ReLU, Softmax
-from my_torch.layer import DenseLayer, Layer
-from my_torch.network import Network
+from my_torch.activations.activation import ReLU, Softmax
+from my_torch.layers.dense_layer import DenseLayer
+from my_torch.layers.layer import Layer
+from my_torch.network.network import Network
 
 
 def hidden_layer() -> DenseLayer:

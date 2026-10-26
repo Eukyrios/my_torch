@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from my_torch.activations import (
+from my_torch.activations.activation import (
     Activation,
     Linear,
     ReLU,

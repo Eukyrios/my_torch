@@ -1,14 +1,11 @@
-# Layers of a network. Layer is the base class: a name (used to save and reload a network),
-# an optional shape (n_inputs, n_outputs), and a forward pass, also run by calling the layer.
 # DenseLayer computes activation(inputs . weights + biases) for one sample or a batch
-# (one sample per row); column j of the weights belongs to neuron j.
-# It keeps its last inputs and z for backpropagation.
-
-from abc import ABC, abstractmethod
+# (one sample per row); column j of the weights belongs to neuron j, and its shape is the
+# shape of the weight matrix. It keeps its last inputs and z for backpropagation.
 
 import numpy as np
 
-from my_torch.activations import Activation, Linear
+from my_torch.activations.activation import Activation, Linear
+from my_torch.layers.layer import Layer
 
 
 def check_parameters(weights: np.ndarray, biases: np.ndarray) -> None:
@@ -24,22 +21,6 @@ def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
             f"the layer expects {n_inputs} inputs per sample, as (n_inputs,) or (batch, n_inputs), "
             f"got shape {inputs.shape}"
         )
-
-
-class Layer(ABC):
-    def __init__(self, name: str):
-        self.name = name
-
-    @property
-    def shape(self) -> tuple[int, int] | None:
-        return None
-
-    def __call__(self, inputs) -> np.ndarray:
-        return self.forward(inputs)
-
-    @abstractmethod
-    def forward(self, inputs) -> np.ndarray:
-        raise NotImplementedError
 
 
 class DenseLayer(Layer):
