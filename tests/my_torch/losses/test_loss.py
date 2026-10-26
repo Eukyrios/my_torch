@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from my_torch.activations.activation import Softmax
 from my_torch.losses.loss import CrossEntropy, Loss, MeanSquaredError
 
 PREDICTIONS = np.array([[0.7, 0.2, 0.1], [0.1, 0.8, 0.1]])
@@ -116,3 +117,12 @@ def test_cross_entropy_uses_its_epsilon_as_the_smallest_probability():
 def test_cross_entropy_rejects_an_epsilon_outside_0_and_1(epsilon):
     with pytest.raises(ValueError, match="epsilon must be between 0 and 1"):
         CrossEntropy(epsilon=epsilon)
+
+
+def test_cross_entropy_through_softmax_gives_predictions_minus_expected():
+    z = np.random.default_rng(7).normal(size=(4, 3))
+    expected = np.eye(3)[[0, 2, 1, 0]]
+    softmax = Softmax()
+    predictions = softmax(z)
+    gradient = softmax.backward(z, CrossEntropy().gradient(predictions, expected))
+    assert gradient == pytest.approx((predictions - expected) / 4)

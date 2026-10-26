@@ -8,6 +8,11 @@
 # same reason, which leaves the result unchanged.
 # The name is how a saved network will store an activation: Activation.from_name turns it
 # back into an instance by searching Activation.subclasses().
+# For backpropagation, derivative(z) gives d(output)/dz and backward(z, gradient) turns the
+# gradient of the loss with respect to the outputs into the gradient with respect to z:
+# gradient * derivative(z) for the activations that work value by value. Each softmax output
+# depends on the whole row, so its derivative is a matrix per sample (the Jacobian) and its
+# backward is s * (gradient - sum(gradient * s)), with s the softmax output of the row.
 
 from abc import ABC, abstractmethod
 
@@ -41,6 +46,13 @@ class Activation(ABC):
     def forward(self, z: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
+    @abstractmethod
+    def derivative(self, z: np.ndarray) -> np.ndarray:
+        raise NotImplementedError
+
+    def backward(self, z: np.ndarray, gradient: np.ndarray) -> np.ndarray:
+        return gradient * self.derivative(z)
+
 
 class Linear(Activation):
     def __init__(self):
@@ -48,6 +60,9 @@ class Linear(Activation):
 
     def forward(self, z: np.ndarray) -> np.ndarray:
         return z
+
+    def derivative(self, z: np.ndarray) -> np.ndarray:
+        return np.ones_like(z)
 
 
 class ReLU(Activation):
@@ -57,6 +72,9 @@ class ReLU(Activation):
     def forward(self, z: np.ndarray) -> np.ndarray:
         return np.maximum(0.0, z)
 
+    def derivative(self, z: np.ndarray) -> np.ndarray:
+        return (z > 0).astype(float)
+
 
 class Sigmoid(Activation):
     def __init__(self):
@@ -64,6 +82,10 @@ class Sigmoid(Activation):
 
     def forward(self, z: np.ndarray) -> np.ndarray:
         return 0.5 * (1.0 + np.tanh(0.5 * z))
+
+    def derivative(self, z: np.ndarray) -> np.ndarray:
+        sigmoid = self.forward(z)
+        return sigmoid * (1.0 - sigmoid)
 
 
 class Tanh(Activation):
@@ -73,6 +95,9 @@ class Tanh(Activation):
     def forward(self, z: np.ndarray) -> np.ndarray:
         return np.tanh(z)
 
+    def derivative(self, z: np.ndarray) -> np.ndarray:
+        return 1.0 - np.tanh(z) ** 2
+
 
 class Softmax(Activation):
     def __init__(self):
@@ -81,4 +106,13 @@ class Softmax(Activation):
     def forward(self, z: np.ndarray) -> np.ndarray:
         exps = np.exp(z - np.max(z, axis=-1, keepdims=True))
         return exps / np.sum(exps, axis=-1, keepdims=True)
+
+    def derivative(self, z: np.ndarray) -> np.ndarray:
+        softmax = self.forward(z)
+        diagonal = softmax[..., :, np.newaxis] * np.eye(softmax.shape[-1])
+        return diagonal - softmax[..., :, np.newaxis] * softmax[..., np.newaxis, :]
+
+    def backward(self, z: np.ndarray, gradient: np.ndarray) -> np.ndarray:
+        softmax = self.forward(z)
+        return softmax * (gradient - np.sum(gradient * softmax, axis=-1, keepdims=True))
 

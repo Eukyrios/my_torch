@@ -85,6 +85,11 @@ def test_the_base_forward_is_abstract():
         Activation.forward(Linear(), Z)
 
 
+def test_the_base_derivative_is_abstract():
+    with pytest.raises(NotImplementedError):
+        Activation.derivative(Linear(), Z)
+
+
 def test_every_subclass_is_found():
     assert set(Activation.subclasses()) >= {Linear, ReLU, Sigmoid, Tanh, Softmax}
 
@@ -105,3 +110,84 @@ def test_from_name_rejects_an_unknown_name():
 
 def test_names_lists_every_activation():
     assert Activation.names() == ["linear", "relu", "sigmoid", "tanh", "softmax"]
+
+
+ALL = [Linear, ReLU, Sigmoid, Tanh, Softmax]
+VALUE_BY_VALUE = [Linear, ReLU, Sigmoid, Tanh]
+BATCH = np.random.default_rng(3).normal(size=(4, 3)) * 2
+
+
+def numerical_derivative(activation: Activation, z: np.ndarray) -> np.ndarray:
+    step = 1e-6
+    return (activation(z + step) - activation(z - step)) / (2 * step)
+
+
+def numerical_backward(activation: Activation, z: np.ndarray, gradient: np.ndarray) -> np.ndarray:
+    step = 1e-6
+    result = np.zeros_like(z)
+    for index in np.ndindex(z.shape):
+        higher, lower = z.copy(), z.copy()
+        higher[index] += step
+        lower[index] -= step
+        result[index] = np.sum(gradient * (activation(higher) - activation(lower))) / (2 * step)
+    return result
+
+
+def test_linear_derivative_is_one():
+    assert Linear().derivative(Z) == pytest.approx(np.ones(5))
+
+
+def test_relu_derivative_is_one_for_positive_values_and_zero_otherwise():
+    assert ReLU().derivative(Z) == pytest.approx([0.0, 0.0, 0.0, 1.0, 1.0])
+
+
+def test_sigmoid_derivative_is_one_quarter_at_zero():
+    assert Sigmoid().derivative(np.array(0.0)) == pytest.approx(0.25)
+
+
+def test_tanh_derivative_is_one_at_zero():
+    assert Tanh().derivative(np.array(0.0)) == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("activation_class", [Linear, Sigmoid, Tanh])
+def test_derivative_matches_the_numerical_derivative(activation_class):
+    activation = activation_class()
+    assert activation.derivative(Z) == pytest.approx(numerical_derivative(activation, Z), rel=1e-5, abs=1e-8)
+
+
+def test_relu_derivative_matches_the_numerical_derivative_away_from_zero():
+    z = np.array([-2.0, -0.5, 0.5, 2.0])
+    assert ReLU().derivative(z) == pytest.approx(numerical_derivative(ReLU(), z))
+
+
+@pytest.mark.parametrize("activation_class", VALUE_BY_VALUE)
+def test_backward_multiplies_the_gradient_by_the_derivative(activation_class):
+    activation = activation_class()
+    gradient = np.random.default_rng(4).normal(size=BATCH.shape)
+    assert activation.backward(BATCH, gradient) == pytest.approx(gradient * activation.derivative(BATCH))
+
+
+@pytest.mark.parametrize("activation_class", ALL)
+def test_backward_matches_the_numerical_gradient(activation_class):
+    activation = activation_class()
+    gradient = np.random.default_rng(5).normal(size=BATCH.shape)
+    assert activation.backward(BATCH, gradient) == pytest.approx(
+        numerical_backward(activation, BATCH, gradient), rel=1e-5, abs=1e-8
+    )
+
+
+def test_softmax_derivative_is_one_jacobian_per_sample():
+    assert Softmax().derivative(BATCH).shape == (4, 3, 3)
+
+
+def test_softmax_derivative_matches_the_numerical_jacobian():
+    z = np.array([2.0, 1.0, 0.1])
+    step = 1e-6
+    columns = [(Softmax()(z + step * np.eye(3)[j]) - Softmax()(z - step * np.eye(3)[j])) / (2 * step) for j in range(3)]
+    assert Softmax().derivative(z) == pytest.approx(np.array(columns).T, abs=1e-8)
+
+
+def test_softmax_backward_is_the_jacobian_times_the_gradient():
+    gradient = np.random.default_rng(6).normal(size=BATCH.shape)
+    jacobians = Softmax().derivative(BATCH)
+    assert Softmax().backward(BATCH, gradient) == pytest.approx(np.einsum("bij,bi->bj", jacobians, gradient))
