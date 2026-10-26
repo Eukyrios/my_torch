@@ -119,6 +119,10 @@ make coverage           # tests + coverage report in reports/htmlcov
 
 ```
 my_torch/               the neural network module (create, train, save, load)
+  network/              Network: runs its layers in order
+  layers/               Layer base class, DenseLayer, Neuron
+  activations/          Activation base class and its subclasses (ReLU, Softmax, ...)
+  losses/               Loss base class, CrossEntropy, MeanSquaredError
 analyzer/               my_torch_analyzer: CLI, predict and train modes
 my_torch_analyzer.py    entry point, copied to ./my_torch_analyzer by make
 tests/                  one folder per package, mirroring the sources
