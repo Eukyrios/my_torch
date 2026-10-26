@@ -1,19 +1,8 @@
-# Layer is the base class of every layer: it takes the layer's name, which a saved network
-# will use to know which kind of layer to rebuild; a subclass passes its own name and
-# implements forward, and a layer is called like a function, layer(inputs) running
-# layer.forward(inputs). Its shape is (n_inputs, n_outputs) for a layer with a fixed size
-# and None by default, for layers that work on any size; DenseLayer overrides it with the
-# shape of its weight matrix.
-# DenseLayer: n_outputs neurons that all read the same n_inputs values.
-# Column j of the weight matrix (shape n_inputs x n_outputs) holds the weights of
-# neuron j, so the whole layer is one matrix product: outputs = inputs . weights + biases.
-# The same product runs a whole batch at once: inputs of shape (batch, n_inputs), one
-# sample per row, give outputs of shape (batch, n_outputs), with the biases added to
-# every row. A single sample of shape (n_inputs,) still gives (n_outputs,).
-# The layer then applies its Activation (linear by default) to z = inputs . weights + biases.
-# It keeps its last inputs and z, which backpropagation needs to compute the gradients.
-# The checks come first: check_parameters validates the weights and biases a layer is
-# built with, and check_input_size the inputs given to forward.
+# Layers of a network. Layer is the base class: a name (used to save and reload a network),
+# an optional shape (n_inputs, n_outputs), and a forward pass, also run by calling the layer.
+# DenseLayer computes activation(inputs . weights + biases) for one sample or a batch
+# (one sample per row); column j of the weights belongs to neuron j.
+# It keeps its last inputs and z for backpropagation.
 
 from abc import ABC, abstractmethod
 
