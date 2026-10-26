@@ -2,13 +2,12 @@
 # averaged over the batch. Loss is the base class: a name, forward giving the loss (also run
 # by calling it) and gradient giving d(loss)/d(predictions), where backpropagation starts.
 # CrossEntropy is for classification: predictions are probabilities (softmax output) and
-# expected is one-hot; predictions are clipped away from 0 so log never sees 0.
+# expected is one-hot; predictions are clipped to at least epsilon (1e-12 by default) so
+# log never sees 0.
 
 from abc import ABC, abstractmethod
 
 import numpy as np
-
-EPSILON = 1e-12
 
 
 def prepare(predictions, expected) -> tuple[np.ndarray, np.ndarray]:
@@ -20,6 +19,11 @@ def prepare(predictions, expected) -> tuple[np.ndarray, np.ndarray]:
             f"got {predictions.shape} and {expected.shape}"
         )
     return predictions, expected
+
+
+def check_epsilon(epsilon: float) -> None:
+    if not 0.0 < epsilon < 1.0:
+        raise ValueError(f"epsilon must be between 0 and 1, got {epsilon}")
 
 
 class Loss(ABC):
@@ -52,15 +56,17 @@ class MeanSquaredError(Loss):
 
 
 class CrossEntropy(Loss):
-    def __init__(self):
+    def __init__(self, epsilon: float = 1e-12):
         super().__init__("cross_entropy")
+        check_epsilon(epsilon)
+        self.epsilon = epsilon
 
     def forward(self, predictions, expected) -> float:
         predictions, expected = prepare(predictions, expected)
-        clipped = np.clip(predictions, EPSILON, 1.0)
+        clipped = np.clip(predictions, self.epsilon, 1.0)
         return float(-np.sum(expected * np.log(clipped)) / predictions.shape[0])
 
     def gradient(self, predictions, expected) -> np.ndarray:
         predictions, expected = prepare(predictions, expected)
-        clipped = np.clip(predictions, EPSILON, 1.0)
+        clipped = np.clip(predictions, self.epsilon, 1.0)
         return -expected / clipped / predictions.shape[0]

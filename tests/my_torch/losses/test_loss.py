@@ -100,3 +100,19 @@ def test_the_base_methods_are_abstract():
         Loss.forward(CrossEntropy(), PREDICTIONS, EXPECTED)
     with pytest.raises(NotImplementedError):
         Loss.gradient(CrossEntropy(), PREDICTIONS, EXPECTED)
+
+
+def test_cross_entropy_epsilon_is_1e_12_by_default():
+    assert CrossEntropy().epsilon == 1e-12
+
+
+def test_cross_entropy_uses_its_epsilon_as_the_smallest_probability():
+    loss = CrossEntropy(epsilon=0.01)
+    assert loss([0.0, 1.0, 0.0], [1, 0, 0]) == pytest.approx(-np.log(0.01))
+    assert loss.gradient([0.0, 1.0, 0.0], [1, 0, 0]) == pytest.approx(np.array([[-100.0, 0.0, 0.0]]))
+
+
+@pytest.mark.parametrize("epsilon", [0.0, -1e-3, 1.0, 2.0])
+def test_cross_entropy_rejects_an_epsilon_outside_0_and_1(epsilon):
+    with pytest.raises(ValueError, match="epsilon must be between 0 and 1"):
+        CrossEntropy(epsilon=epsilon)
