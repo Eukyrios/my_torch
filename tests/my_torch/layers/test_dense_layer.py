@@ -197,3 +197,43 @@ def test_backward_rejects_a_gradient_of_the_wrong_shape():
     layer.forward(INPUTS)
     with pytest.raises(ValueError, match=r"must have the shape of the last outputs \(5, 3\)"):
         layer.backward(OUTPUT_GRADIENT[:, :2])
+
+
+def test_create_builds_a_layer_of_the_requested_size():
+    layer = DenseLayer.create(769, 256, ReLU())
+    assert layer.shape == (769, 256)
+    assert layer.biases.shape == (256,)
+    assert isinstance(layer.activation, ReLU)
+
+
+def test_create_starts_with_zero_biases_and_random_weights():
+    layer = DenseLayer.create(50, 40, Tanh())
+    assert layer.biases == pytest.approx(np.zeros(40))
+    assert len(np.unique(layer.weights)) == layer.weights.size
+
+
+def test_create_uses_he_initialization_for_relu():
+    weights = DenseLayer.create(800, 400, ReLU(), np.random.default_rng(0)).weights
+    assert weights.mean() == pytest.approx(0.0, abs=0.005)
+    assert weights.std() == pytest.approx(np.sqrt(2 / 800), rel=0.02)
+
+
+def test_create_uses_xavier_initialization_otherwise():
+    weights = DenseLayer.create(800, 400, Tanh(), np.random.default_rng(0)).weights
+    assert weights.std() == pytest.approx(np.sqrt(2 / 1200), rel=0.02)
+
+
+def test_create_defaults_to_a_linear_activation():
+    assert isinstance(DenseLayer.create(3, 2).activation, Linear)
+
+
+def test_create_is_reproducible_with_the_same_random_generator():
+    first = DenseLayer.create(5, 4, Tanh(), np.random.default_rng(42))
+    second = DenseLayer.create(5, 4, Tanh(), np.random.default_rng(42))
+    assert first.weights == pytest.approx(second.weights)
+
+
+@pytest.mark.parametrize("n_inputs, n_outputs", [(0, 3), (3, 0), (-1, 2)])
+def test_create_rejects_sizes_below_one(n_inputs, n_outputs):
+    with pytest.raises(ValueError, match="at least 1 input and 1 output"):
+        DenseLayer.create(n_inputs, n_outputs)
