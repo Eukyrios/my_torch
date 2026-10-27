@@ -14,7 +14,8 @@ venv/
 .env
 /my_torch_analyzer
 datasets/
-dataset/
+data/
 .vscode/
+__init__.py
 .idea/
 .DS_Store
