@@ -78,16 +78,7 @@ class Network:
             gradient = layer.backward(gradient)
         return gradient
 
-    def train(
-        self,
-        inputs,
-        labels,
-        loss: Loss,
-        optimizer: Optimizer,
-        epochs: int = 1,
-        batch_size: int = 32,
-        rng: np.random.Generator | None = None,
-    ) -> list[float]:
+    def train(self, inputs, labels, loss: Loss, optimizer: Optimizer, epochs: int = 1, batch_size: int = 32, rng: np.random.Generator | None = None) -> list[float]:
         inputs = np.atleast_2d(np.asarray(inputs, dtype=float))
         labels = np.atleast_2d(np.asarray(labels, dtype=float))
         check_training_data(inputs, labels)
@@ -95,9 +86,7 @@ class Network:
         rng = rng or np.random.default_rng()
         return [self.train_epoch(inputs, labels, loss, optimizer, batch_size, rng) for _ in range(epochs)]
 
-    def train_epoch(
-        self, inputs: np.ndarray, labels: np.ndarray, loss: Loss, optimizer: Optimizer, batch_size: int, rng
-    ) -> float:
+    def train_epoch(self, inputs: np.ndarray, labels: np.ndarray, loss: Loss, optimizer: Optimizer, batch_size: int, rng: np.random.Generator) -> float:
         total = 0.0
         for batch in shuffled_batches(len(inputs), batch_size, rng):
             total += self.train_batch(inputs[batch], labels[batch], loss, optimizer) * len(batch)

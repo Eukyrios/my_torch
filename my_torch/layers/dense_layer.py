@@ -54,9 +54,7 @@ class DenseLayer(Layer):
         self.biases_gradient = None
 
     @classmethod
-    def create(
-        cls, n_inputs: int, n_outputs: int, activation: Activation | None = None, rng: np.random.Generator | None = None
-    ) -> "DenseLayer":
+    def create(cls, n_inputs: int, n_outputs: int, activation: Activation | None = None, rng: np.random.Generator | None = None) -> "DenseLayer":
         check_sizes(n_inputs, n_outputs)
         activation = activation or Linear()
         rng = rng or np.random.default_rng()
