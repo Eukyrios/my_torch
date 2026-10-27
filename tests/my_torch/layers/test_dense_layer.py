@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from my_torch.activations.activation import Linear, ReLU, Softmax
+from my_torch.activations.activation import Linear, ReLU, Sigmoid, Softmax, Tanh
 from my_torch.layers.dense_layer import DenseLayer
 from my_torch.layers.layer import Layer
 from my_torch.layers.neuron import Neuron
@@ -103,3 +103,97 @@ def test_a_dense_layer_is_named_dense():
 def test_calling_a_layer_runs_its_forward():
     layer = DenseLayer(WEIGHTS, BIASES, activation=ReLU())
     assert layer([1, 2]) == pytest.approx(layer.forward([1, 2]))
+
+
+def random_layer(activation, seed=10) -> DenseLayer:
+    rng = np.random.default_rng(seed)
+    return DenseLayer(rng.normal(size=(4, 3)), rng.normal(size=3), activation)
+
+
+def weighted_output(layer: DenseLayer, inputs: np.ndarray, gradient: np.ndarray) -> float:
+    return float(np.sum(gradient * layer.forward(inputs)))
+
+
+def numerical_gradient(value, array: np.ndarray) -> np.ndarray:
+    step = 1e-6
+    result = np.zeros_like(array)
+    for index in np.ndindex(array.shape):
+        original = array[index]
+        array[index] = original + step
+        higher = value()
+        array[index] = original - step
+        lower = value()
+        array[index] = original
+        result[index] = (higher - lower) / (2 * step)
+    return result
+
+
+ACTIVATIONS = [Linear(), ReLU(), Sigmoid(), Tanh(), Softmax()]
+INPUTS = np.random.default_rng(11).normal(size=(5, 4))
+OUTPUT_GRADIENT = np.random.default_rng(12).normal(size=(5, 3))
+
+
+@pytest.mark.parametrize("activation", ACTIVATIONS, ids=lambda activation: activation.name)
+def test_weights_gradient_matches_the_numerical_gradient(activation):
+    layer = random_layer(activation)
+    layer.forward(INPUTS)
+    layer.backward(OUTPUT_GRADIENT)
+    expected = numerical_gradient(lambda: weighted_output(layer, INPUTS, OUTPUT_GRADIENT), layer.weights)
+    assert layer.weights_gradient == pytest.approx(expected, rel=1e-5, abs=1e-7)
+
+
+@pytest.mark.parametrize("activation", ACTIVATIONS, ids=lambda activation: activation.name)
+def test_biases_gradient_matches_the_numerical_gradient(activation):
+    layer = random_layer(activation)
+    layer.forward(INPUTS)
+    layer.backward(OUTPUT_GRADIENT)
+    expected = numerical_gradient(lambda: weighted_output(layer, INPUTS, OUTPUT_GRADIENT), layer.biases)
+    assert layer.biases_gradient == pytest.approx(expected, rel=1e-5, abs=1e-7)
+
+
+@pytest.mark.parametrize("activation", ACTIVATIONS, ids=lambda activation: activation.name)
+def test_input_gradient_matches_the_numerical_gradient(activation):
+    layer = random_layer(activation)
+    inputs = INPUTS.copy()
+    layer.forward(inputs)
+    input_gradient = layer.backward(OUTPUT_GRADIENT)
+    expected = numerical_gradient(lambda: weighted_output(layer, inputs, OUTPUT_GRADIENT), inputs)
+    assert input_gradient == pytest.approx(expected, rel=1e-5, abs=1e-7)
+
+
+def test_gradients_have_the_shapes_of_what_they_belong_to():
+    layer = random_layer(Tanh())
+    layer.forward(INPUTS)
+    input_gradient = layer.backward(OUTPUT_GRADIENT)
+    assert layer.weights_gradient.shape == layer.weights.shape
+    assert layer.biases_gradient.shape == layer.biases.shape
+    assert input_gradient.shape == INPUTS.shape
+
+
+def test_backward_on_a_single_sample_matches_a_batch_of_one():
+    single, batch = random_layer(Tanh()), random_layer(Tanh())
+    single.forward(INPUTS[0])
+    batch.forward(INPUTS[:1])
+    single_input_gradient = single.backward(OUTPUT_GRADIENT[0])
+    batch_input_gradient = batch.backward(OUTPUT_GRADIENT[:1])
+    assert single_input_gradient.shape == (4,)
+    assert single_input_gradient == pytest.approx(batch_input_gradient[0])
+    assert single.weights_gradient == pytest.approx(batch.weights_gradient)
+    assert single.biases_gradient == pytest.approx(batch.biases_gradient)
+
+
+def test_gradients_are_empty_before_any_backward():
+    layer = random_layer(Tanh())
+    assert layer.weights_gradient is None and layer.biases_gradient is None
+
+
+def test_backward_before_forward_is_refused():
+    with pytest.raises(RuntimeError, match="call forward first"):
+        random_layer(Tanh()).backward(OUTPUT_GRADIENT)
+
+
+def test_backward_rejects_a_gradient_of_the_wrong_shape():
+    layer = random_layer(Tanh())
+    layer.forward(INPUTS)
+    with pytest.raises(ValueError, match=r"must have the shape of the last outputs \(5, 3\)"):
+        layer.backward(OUTPUT_GRADIENT[:, :2])

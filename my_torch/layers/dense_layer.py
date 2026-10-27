@@ -1,6 +1,7 @@
 # DenseLayer computes activation(inputs . weights + biases) for one sample or a batch
 # (one sample per row); column j of the weights belongs to neuron j, and its shape is the
-# shape of the weight matrix. It keeps its last inputs and z for backpropagation.
+# shape of the weight matrix. forward keeps inputs and z; backward uses them to store the
+# weight and bias gradients and returns the gradient for the previous layer.
 
 import numpy as np
 
@@ -23,6 +24,13 @@ def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
         )
 
 
+def check_backward(z: np.ndarray | None, gradient: np.ndarray) -> None:
+    if z is None:
+        raise RuntimeError("backward needs the values of a forward pass: call forward first")
+    if gradient.shape != z.shape:
+        raise ValueError(f"the gradient must have the shape of the last outputs {z.shape}, got {gradient.shape}")
+
+
 class DenseLayer(Layer):
     def __init__(self, weights, biases, activation: Activation | None = None):
         super().__init__("dense")
@@ -32,6 +40,8 @@ class DenseLayer(Layer):
         self.activation = activation or Linear()
         self.inputs = None
         self.z = None
+        self.weights_gradient = None
+        self.biases_gradient = None
 
     @property
     def shape(self) -> tuple[int, int]:
@@ -42,3 +52,11 @@ class DenseLayer(Layer):
         check_input_size(self.inputs, self.shape[0])
         self.z = self.inputs @ self.weights + self.biases
         return self.activation(self.z)
+
+    def backward(self, gradient) -> np.ndarray:
+        gradient = np.asarray(gradient, dtype=float)
+        check_backward(self.z, gradient)
+        z_gradient = self.activation.backward(self.z, gradient)
+        self.weights_gradient = np.atleast_2d(self.inputs).T @ np.atleast_2d(z_gradient)
+        self.biases_gradient = np.atleast_2d(z_gradient).sum(axis=0)
+        return z_gradient @ self.weights.T
