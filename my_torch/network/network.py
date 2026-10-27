@@ -1,6 +1,6 @@
-# A network runs its layers in order, on one sample or a batch: network(inputs).
-# Its shape (n_inputs, n_outputs) comes from the first and last layers with a fixed size;
-# check_layers makes sure those sizes chain.
+# A network runs its layers in order, on one sample or a batch: network(inputs), and
+# backward runs them in reverse, from the loss gradient back to the inputs.
+# Its shape comes from the first and last layers with a fixed size, which must chain.
 
 import numpy as np
 
@@ -49,3 +49,9 @@ class Network:
         for layer in self.layers:
             outputs = layer(outputs)
         return outputs
+
+    def backward(self, gradient) -> np.ndarray:
+        gradient = np.asarray(gradient, dtype=float)
+        for layer in reversed(self.layers):
+            gradient = layer.backward(gradient)
+        return gradient
