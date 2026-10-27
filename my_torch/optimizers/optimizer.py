@@ -1,6 +1,6 @@
 # Optimizers update a network's parameters from their gradients after each backward pass.
-# Optimizer is the base class: a name, a learning rate and step(parameters); SGD moves each
-# parameter against its gradient, value -= learning_rate * gradient, in place.
+# Optimizer is the base class: a name, a learning rate and step(parameters). SGD moves each
+# parameter against its gradient; Momentum keeps a velocity per parameter so steps build up speed.
 
 from abc import ABC, abstractmethod
 
@@ -15,6 +15,11 @@ def check_learning_rate(learning_rate: float) -> None:
 def check_gradient(gradient: np.ndarray | None) -> None:
     if gradient is None:
         raise RuntimeError("a parameter has no gradient yet: run backward before step")
+
+
+def check_momentum(momentum: float) -> None:
+    if not 0.0 <= momentum < 1.0:
+        raise ValueError(f"the momentum must be in [0, 1), got {momentum}")
 
 
 class Optimizer(ABC):
@@ -39,3 +44,17 @@ class SGD(Optimizer):
 
     def update(self, value: np.ndarray, gradient: np.ndarray) -> None:
         value -= self.learning_rate * gradient
+
+
+class Momentum(Optimizer):
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0.9):
+        super().__init__("momentum", learning_rate)
+        check_momentum(momentum)
+        self.momentum = momentum
+        self.velocities = {}
+
+    def update(self, value: np.ndarray, gradient: np.ndarray) -> None:
+        velocity = self.velocities.get(id(value), np.zeros_like(value))
+        velocity = self.momentum * velocity - self.learning_rate * gradient
+        self.velocities[id(value)] = velocity
+        value += velocity
