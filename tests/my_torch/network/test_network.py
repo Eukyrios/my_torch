@@ -1,9 +1,10 @@
 import numpy as np
 import pytest
 
-from my_torch.activations import ReLU, Softmax
-from my_torch.layer import DenseLayer, Layer
-from my_torch.network import Network
+from my_torch.activations.activation import ReLU, Softmax
+from my_torch.layers.dense_layer import DenseLayer
+from my_torch.layers.layer import Layer
+from my_torch.network.network import Network
 
 
 def hidden_layer() -> DenseLayer:
@@ -29,6 +30,9 @@ class PassThrough(Layer):
 
     def forward(self, inputs):
         return inputs
+
+    def backward(self, gradient):
+        return gradient
 
 
 def test_forward_matches_the_hand_computation():
@@ -120,3 +124,31 @@ def test_shape_skips_layers_without_a_fixed_size():
     hidden, output = hidden_layer(), output_layer()
     network = Network([PassThrough(), hidden, PassThrough(), output, PassThrough()])
     assert network.shape == (2, 3)
+
+
+def test_backward_runs_the_layers_in_reverse_order():
+    hidden, output = hidden_layer(), output_layer()
+    network = Network([hidden, output])
+    network([1, 2])
+    gradient = np.array([0.3, -0.2, 0.5])
+    reference_hidden, reference_output = hidden_layer(), output_layer()
+    reference_output.forward(reference_hidden.forward([1, 2]))
+    expected = reference_hidden.backward(reference_output.backward(gradient))
+    assert network.backward(gradient) == pytest.approx(expected)
+
+
+def test_backward_fills_the_gradients_of_every_dense_layer():
+    network = random_network([5, 4, 3])
+    network(np.ones((2, 5)))
+    network.backward(np.ones((2, 3)))
+    assert all(layer.weights_gradient is not None for layer in network.layers)
+
+
+def test_backward_passes_through_layers_without_weights():
+    hidden, output = hidden_layer(), output_layer()
+    with_pass_through = Network([hidden, PassThrough(), output])
+    with_pass_through([1, 2])
+    gradient = with_pass_through.backward([0.3, -0.2, 0.5])
+    plain = Network([hidden_layer(), output_layer()])
+    plain([1, 2])
+    assert gradient == pytest.approx(plain.backward([0.3, -0.2, 0.5]))

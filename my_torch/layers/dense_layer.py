@@ -1,14 +1,12 @@
-# Layers of a network. Layer is the base class: a name (used to save and reload a network),
-# an optional shape (n_inputs, n_outputs), and a forward pass, also run by calling the layer.
 # DenseLayer computes activation(inputs . weights + biases) for one sample or a batch
-# (one sample per row); column j of the weights belongs to neuron j.
-# It keeps its last inputs and z for backpropagation.
-
-from abc import ABC, abstractmethod
+# (one sample per row); column j of the weights belongs to neuron j, and its shape is the
+# shape of the weight matrix. forward keeps inputs and z; backward uses them to store the
+# weight and bias gradients and returns the gradient for the previous layer.
 
 import numpy as np
 
-from my_torch.activations import Activation, Linear
+from my_torch.activations.activation import Activation, Linear
+from my_torch.layers.layer import Layer
 
 
 def check_parameters(weights: np.ndarray, biases: np.ndarray) -> None:
@@ -26,20 +24,11 @@ def check_input_size(inputs: np.ndarray, n_inputs: int) -> None:
         )
 
 
-class Layer(ABC):
-    def __init__(self, name: str):
-        self.name = name
-
-    @property
-    def shape(self) -> tuple[int, int] | None:
-        return None
-
-    def __call__(self, inputs) -> np.ndarray:
-        return self.forward(inputs)
-
-    @abstractmethod
-    def forward(self, inputs) -> np.ndarray:
-        raise NotImplementedError
+def check_backward(z: np.ndarray | None, gradient: np.ndarray) -> None:
+    if z is None:
+        raise RuntimeError("backward needs the values of a forward pass: call forward first")
+    if gradient.shape != z.shape:
+        raise ValueError(f"the gradient must have the shape of the last outputs {z.shape}, got {gradient.shape}")
 
 
 class DenseLayer(Layer):
@@ -51,6 +40,8 @@ class DenseLayer(Layer):
         self.activation = activation or Linear()
         self.inputs = None
         self.z = None
+        self.weights_gradient = None
+        self.biases_gradient = None
 
     @property
     def shape(self) -> tuple[int, int]:
@@ -61,3 +52,11 @@ class DenseLayer(Layer):
         check_input_size(self.inputs, self.shape[0])
         self.z = self.inputs @ self.weights + self.biases
         return self.activation(self.z)
+
+    def backward(self, gradient) -> np.ndarray:
+        gradient = np.asarray(gradient, dtype=float)
+        check_backward(self.z, gradient)
+        z_gradient = self.activation.backward(self.z, gradient)
+        self.weights_gradient = np.atleast_2d(self.inputs).T @ np.atleast_2d(z_gradient)
+        self.biases_gradient = np.atleast_2d(z_gradient).sum(axis=0)
+        return z_gradient @ self.weights.T
