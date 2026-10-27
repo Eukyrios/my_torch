@@ -31,6 +31,9 @@ class PassThrough(Layer):
     def forward(self, inputs):
         return inputs
 
+    def backward(self, gradient):
+        return gradient
+
 
 def test_forward_matches_the_hand_computation():
     network = Network([hidden_layer(), output_layer()])

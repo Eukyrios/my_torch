@@ -11,6 +11,9 @@ class AnySize(Layer):
     def forward(self, inputs):
         return inputs
 
+    def backward(self, gradient):
+        return gradient
+
 
 def test_keeps_its_name():
     assert AnySize().name == "any_size"
@@ -33,3 +36,8 @@ def test_the_base_layer_cannot_be_used_on_its_own():
 def test_the_base_forward_is_abstract():
     with pytest.raises(NotImplementedError):
         Layer.forward(AnySize(), [1, 2])
+
+
+def test_the_base_backward_is_abstract():
+    with pytest.raises(NotImplementedError):
+        Layer.backward(AnySize(), [1, 2])

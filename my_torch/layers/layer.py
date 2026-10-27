@@ -1,6 +1,6 @@
 # Layer is the base class of every layer: a name (used to save and reload a network), an
-# optional shape (n_inputs, n_outputs), None for layers that work on any size, and a
-# forward pass, also run by calling the layer.
+# optional shape (n_inputs, n_outputs), None for layers that work on any size, a forward
+# pass (also run by calling the layer) and a backward pass returning the input gradient.
 
 from abc import ABC, abstractmethod
 
@@ -20,4 +20,8 @@ class Layer(ABC):
 
     @abstractmethod
     def forward(self, inputs) -> np.ndarray:
+        raise NotImplementedError
+
+    @abstractmethod
+    def backward(self, gradient) -> np.ndarray:
         raise NotImplementedError
