@@ -1,10 +1,12 @@
-# Optimizers update a network's parameters from their gradients after each backward pass.
-# Optimizer is the base class: a name, a learning rate and step(parameters). SGD moves each
-# parameter against its gradient; Momentum keeps a velocity per parameter so steps build up speed.
+# Optimizers update parameters from their gradients after each backward pass, with a learning
+# rate that follows a schedule (start_epoch). SGD steps against the gradient; Momentum keeps a
+# velocity per parameter so steps build up speed.
 
 from abc import ABC, abstractmethod
 
 import numpy as np
+
+from my_torch.optimizers.schedule import Constant, Schedule
 
 
 def check_learning_rate(learning_rate: float) -> None:
@@ -23,10 +25,15 @@ def check_momentum(momentum: float) -> None:
 
 
 class Optimizer(ABC):
-    def __init__(self, name: str, learning_rate: float):
+    def __init__(self, name: str, learning_rate: float, schedule: Schedule | None = None):
         check_learning_rate(learning_rate)
         self.name = name
+        self.initial_learning_rate = learning_rate
         self.learning_rate = learning_rate
+        self.schedule = schedule or Constant()
+
+    def start_epoch(self, epoch: int) -> None:
+        self.learning_rate = self.schedule(self.initial_learning_rate, epoch)
 
     def step(self, parameters: list[tuple[np.ndarray, np.ndarray | None]]) -> None:
         for value, gradient in parameters:
@@ -39,16 +46,16 @@ class Optimizer(ABC):
 
 
 class SGD(Optimizer):
-    def __init__(self, learning_rate: float = 0.01):
-        super().__init__("sgd", learning_rate)
+    def __init__(self, learning_rate: float = 0.01, schedule: Schedule | None = None):
+        super().__init__("sgd", learning_rate, schedule)
 
     def update(self, value: np.ndarray, gradient: np.ndarray) -> None:
         value -= self.learning_rate * gradient
 
 
 class Momentum(Optimizer):
-    def __init__(self, learning_rate: float = 0.01, momentum: float = 0.9):
-        super().__init__("momentum", learning_rate)
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0.9, schedule: Schedule | None = None):
+        super().__init__("momentum", learning_rate, schedule)
         check_momentum(momentum)
         self.momentum = momentum
         self.velocities = {}

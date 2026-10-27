@@ -6,6 +6,7 @@ from my_torch.layers.dense_layer import DenseLayer
 from my_torch.losses.loss import CrossEntropy
 from my_torch.network.network import Network
 from my_torch.optimizers.optimizer import SGD, Momentum, Optimizer
+from my_torch.optimizers.schedule import Constant, StepDecay, TimeDecay
 
 
 def test_sgd_moves_each_value_against_its_gradient():
@@ -136,3 +137,27 @@ def test_momentum_defaults():
 def test_rejects_a_momentum_outside_0_and_1(momentum):
     with pytest.raises(ValueError, match=r"momentum must be in \[0, 1\)"):
         Momentum(momentum=momentum)
+
+
+def test_the_schedule_is_constant_by_default():
+    optimizer = SGD(0.1)
+    optimizer.start_epoch(50)
+    assert isinstance(optimizer.schedule, Constant) and optimizer.learning_rate == 0.1
+
+
+@pytest.mark.parametrize("optimizer_class", [SGD, Momentum])
+def test_start_epoch_sets_the_learning_rate_from_the_schedule(optimizer_class):
+    optimizer = optimizer_class(learning_rate=0.1, schedule=StepDecay(0.5, every=10))
+    rates = []
+    for epoch in (0, 9, 10, 25):
+        optimizer.start_epoch(epoch)
+        rates.append(optimizer.learning_rate)
+    assert rates == pytest.approx([0.1, 0.1, 0.05, 0.025])
+    assert optimizer.initial_learning_rate == 0.1
+
+
+def test_steps_use_the_scheduled_learning_rate():
+    value, optimizer = np.array([1.0]), SGD(learning_rate=0.1, schedule=TimeDecay(1.0))
+    optimizer.start_epoch(1)
+    optimizer.step([(value, np.array([1.0]))])
+    assert value == pytest.approx([0.95])

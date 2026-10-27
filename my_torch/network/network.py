@@ -84,9 +84,10 @@ class Network:
         check_training_data(inputs, labels)
         check_training_settings(epochs, batch_size)
         rng = rng or np.random.default_rng()
-        return [self.train_epoch(inputs, labels, loss, optimizer, batch_size, rng) for _ in range(epochs)]
+        return [self.train_epoch(inputs, labels, loss, optimizer, batch_size, rng, epoch) for epoch in range(epochs)]
 
-    def train_epoch(self, inputs: np.ndarray, labels: np.ndarray, loss: Loss, optimizer: Optimizer, batch_size: int, rng: np.random.Generator) -> float:
+    def train_epoch(self, inputs: np.ndarray, labels: np.ndarray, loss: Loss, optimizer: Optimizer, batch_size: int, rng: np.random.Generator, epoch: int = 0) -> float:
+        optimizer.start_epoch(epoch)
         total = 0.0
         for batch in shuffled_batches(len(inputs), batch_size, rng):
             total += self.train_batch(inputs[batch], labels[batch], loss, optimizer) * len(batch)

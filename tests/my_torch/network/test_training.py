@@ -6,6 +6,7 @@ from my_torch.layers.dense_layer import DenseLayer
 from my_torch.losses.loss import CrossEntropy
 from my_torch.network.network import Network, shuffled_batches
 from my_torch.optimizers.optimizer import SGD
+from my_torch.optimizers.schedule import StepDecay
 
 RNG = np.random.default_rng(30)
 INPUTS = RNG.normal(size=(20, 4))
@@ -67,3 +68,20 @@ def test_rejects_a_different_number_of_samples_and_labels():
 def test_rejects_epochs_or_batch_size_below_one(epochs, batch_size):
     with pytest.raises(ValueError, match="must be at least 1"):
         small_network().train(INPUTS, LABELS, CrossEntropy(), SGD(), epochs=epochs, batch_size=batch_size)
+
+
+class RecordingSGD(SGD):
+    def __init__(self, learning_rate: float, schedule):
+        super().__init__(learning_rate, schedule)
+        self.rates_used = []
+
+    def update(self, value, gradient):
+        self.rates_used.append(self.learning_rate)
+        super().update(value, gradient)
+
+
+def test_training_follows_the_learning_rate_schedule_epoch_by_epoch():
+    optimizer = RecordingSGD(0.1, StepDecay(0.5, every=2))
+    small_network().train(INPUTS, LABELS, CrossEntropy(), optimizer, epochs=5, batch_size=len(INPUTS))
+    rates_per_epoch = optimizer.rates_used[::4]
+    assert rates_per_epoch == pytest.approx([0.1, 0.1, 0.05, 0.05, 0.025])
