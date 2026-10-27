@@ -237,3 +237,16 @@ def test_create_is_reproducible_with_the_same_random_generator():
 def test_create_rejects_sizes_below_one(n_inputs, n_outputs):
     with pytest.raises(ValueError, match="at least 1 input and 1 output"):
         DenseLayer.create(n_inputs, n_outputs)
+
+
+def test_parameters_are_the_weights_and_biases_with_their_gradients():
+    layer = random_layer(Tanh())
+    layer.forward(INPUTS)
+    layer.backward(OUTPUT_GRADIENT)
+    (weights, weights_gradient), (biases, biases_gradient) = layer.parameters
+    assert weights is layer.weights and weights_gradient is layer.weights_gradient
+    assert biases is layer.biases and biases_gradient is layer.biases_gradient
+
+
+def test_parameter_gradients_are_none_before_backward():
+    assert [gradient for _, gradient in random_layer(Tanh()).parameters] == [None, None]

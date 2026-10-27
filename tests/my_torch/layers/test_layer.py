@@ -41,3 +41,7 @@ def test_the_base_forward_is_abstract():
 def test_the_base_backward_is_abstract():
     with pytest.raises(NotImplementedError):
         Layer.backward(AnySize(), [1, 2])
+
+
+def test_a_layer_has_no_parameters_by_default():
+    assert AnySize().parameters == []

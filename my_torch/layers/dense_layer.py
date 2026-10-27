@@ -68,6 +68,10 @@ class DenseLayer(Layer):
     def shape(self) -> tuple[int, int]:
         return self.weights.shape
 
+    @property
+    def parameters(self) -> list[tuple[np.ndarray, np.ndarray | None]]:
+        return [(self.weights, self.weights_gradient), (self.biases, self.biases_gradient)]
+
     def forward(self, inputs) -> np.ndarray:
         self.inputs = np.asarray(inputs, dtype=float)
         check_input_size(self.inputs, self.shape[0])

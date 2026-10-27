@@ -41,6 +41,10 @@ class Network:
         sized_layers = [layer for layer in self.layers if is_sized(layer)]
         return sized_layers[0].shape[0], sized_layers[-1].shape[1]
 
+    @property
+    def parameters(self) -> list[tuple[np.ndarray, np.ndarray | None]]:
+        return [parameter for layer in self.layers for parameter in layer.parameters]
+
     def __call__(self, inputs) -> np.ndarray:
         return self.forward(inputs)
 
