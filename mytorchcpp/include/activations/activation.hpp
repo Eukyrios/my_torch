@@ -2,9 +2,9 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** Activation is the base class: each subclass gives its name, how a saved network stores it,
-** and its forward pass on z; an activation is called like a function, activation(z), and
-** Activation::from_name turns a stored name back into one by trying each of subclasses()
+** Activation is the base class: a name (how a saved network stores it, from_name reads it back),
+** forward on z, also run as activation(z), and backward from the output gradient to the z one;
+** Softmax's derivative is only its Jacobian's diagonal, so it overrides backward with the full one
 */
 
 #pragma once
@@ -32,6 +32,7 @@ public:
 
     virtual Matrix forward(const Matrix &z) const = 0;
     virtual Matrix derivative(const Matrix &z) const = 0;
+    virtual Matrix backward(const Matrix &z, const Matrix &gradient) const;
     Matrix operator()(const Matrix &z) const;
 
     std::string name;
@@ -70,6 +71,7 @@ public:
     Softmax();
     Matrix forward(const Matrix &z) const override;
     Matrix derivative(const Matrix &z) const override;
+    Matrix backward(const Matrix &z, const Matrix &gradient) const override;
 };
 
 }

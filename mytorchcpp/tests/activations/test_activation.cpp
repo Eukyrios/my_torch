@@ -122,6 +122,49 @@ Test(activations, softmax_derivative_is_the_diagonal_of_its_jacobian)
         cr_assert_float_eq(derivative(0, col), softmax(0, col) * (1 - softmax(0, col)), 1e-12);
 }
 
+static double weighted_output(const my_torch::Activation &activation, const my_torch::Matrix &z, const my_torch::Matrix &weights)
+{
+    return activation(z).hadamard(weights).sum();
+}
+
+static my_torch::Matrix numerical_backward(const my_torch::Activation &activation, const my_torch::Matrix &z, const my_torch::Matrix &gradient)
+{
+    const double step = 1e-6;
+    my_torch::Matrix result(z.rows(), z.cols());
+    for (std::size_t row = 0; row < z.rows(); row++)
+        for (std::size_t col = 0; col < z.cols(); col++) {
+            my_torch::Matrix higher = z;
+            my_torch::Matrix lower = z;
+            higher(row, col) += step;
+            lower(row, col) -= step;
+            result(row, col) = (weighted_output(activation, higher, gradient) - weighted_output(activation, lower, gradient)) / (2 * step);
+        }
+    return result;
+}
+
+static const my_torch::Matrix BATCH_Z({{0.5, -1.2, 2.0}, {-0.3, 0.8, 0.1}});
+static const my_torch::Matrix BATCH_GRADIENT({{1.0, -0.5, 0.25}, {0.3, 0.7, -1.1}});
+
+Test(activations, backward_multiplies_the_gradient_by_the_derivative)
+{
+    my_torch::Tanh tanh;
+
+    assert_matrix_eq(tanh.backward(BATCH_Z, BATCH_GRADIENT), BATCH_GRADIENT.hadamard(tanh.derivative(BATCH_Z)));
+}
+
+Test(activations, every_backward_matches_the_numerical_gradient)
+{
+    for (my_torch::ActivationMaker make_activation : my_torch::Activation::subclasses()) {
+        std::unique_ptr<my_torch::Activation> activation = make_activation();
+        assert_close(activation->backward(BATCH_Z, BATCH_GRADIENT), numerical_backward(*activation, BATCH_Z, BATCH_GRADIENT), 1e-6);
+    }
+}
+
+Test(activations, softmax_backward_gives_zero_for_a_uniform_gradient)
+{
+    assert_close(my_torch::Softmax().backward(BATCH_Z, my_torch::Matrix(2, 3, 1.0)), my_torch::Matrix(2, 3), 1e-12);
+}
+
 Test(activations, an_activation_is_called_like_its_forward)
 {
     my_torch::ReLU relu;
