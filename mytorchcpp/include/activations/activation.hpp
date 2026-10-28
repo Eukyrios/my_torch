@@ -31,6 +31,7 @@ public:
     static std::unique_ptr<Activation> from_name(const std::string &name);
 
     virtual Matrix forward(const Matrix &z) const = 0;
+    virtual Matrix derivative(const Matrix &z) const = 0;
     Matrix operator()(const Matrix &z) const;
 
     std::string name;
@@ -40,30 +41,35 @@ class Linear : public Activation {
 public:
     Linear();
     Matrix forward(const Matrix &z) const override;
+    Matrix derivative(const Matrix &z) const override;
 };
 
 class ReLU : public Activation {
 public:
     ReLU();
     Matrix forward(const Matrix &z) const override;
+    Matrix derivative(const Matrix &z) const override;
 };
 
 class Sigmoid : public Activation {
 public:
     Sigmoid();
     Matrix forward(const Matrix &z) const override;
+    Matrix derivative(const Matrix &z) const override;
 };
 
 class Tanh : public Activation {
 public:
     Tanh();
     Matrix forward(const Matrix &z) const override;
+    Matrix derivative(const Matrix &z) const override;
 };
 
 class Softmax : public Activation {
 public:
     Softmax();
     Matrix forward(const Matrix &z) const override;
+    Matrix derivative(const Matrix &z) const override;
 };
 
 }

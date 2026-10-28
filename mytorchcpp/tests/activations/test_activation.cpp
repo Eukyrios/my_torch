@@ -79,6 +79,49 @@ Test(activations, softmax_does_not_overflow_on_large_scores)
     assert_matrix_eq(my_torch::Softmax()(my_torch::Matrix::row({1000.0, 1000.0, 1000.0})), my_torch::Matrix::row({1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0}));
 }
 
+static my_torch::Matrix numerical_derivative(const my_torch::Activation &activation, const my_torch::Matrix &z)
+{
+    const double step = 1e-6;
+    return (activation(z + my_torch::Matrix(z.rows(), z.cols(), step)) - activation(z - my_torch::Matrix(z.rows(), z.cols(), step))) / (2 * step);
+}
+
+static void assert_close(const my_torch::Matrix &actual, const my_torch::Matrix &expected, double tolerance)
+{
+    for (std::size_t row = 0; row < expected.rows(); row++)
+        for (std::size_t col = 0; col < expected.cols(); col++)
+            cr_assert_float_eq(actual(row, col), expected(row, col), tolerance);
+}
+
+Test(activations, linear_derivative_is_one)
+{
+    assert_matrix_eq(my_torch::Linear().derivative(Z), my_torch::Matrix(1, 5, 1.0));
+}
+
+Test(activations, relu_derivative_is_one_for_positive_values_only)
+{
+    assert_matrix_eq(my_torch::ReLU().derivative(Z), my_torch::Matrix::row({0, 0, 0, 1, 1}));
+}
+
+Test(activations, sigmoid_derivative_matches_the_numerical_derivative)
+{
+    assert_close(my_torch::Sigmoid().derivative(Z), numerical_derivative(my_torch::Sigmoid(), Z), 1e-6);
+}
+
+Test(activations, tanh_derivative_matches_the_numerical_derivative)
+{
+    assert_close(my_torch::Tanh().derivative(Z), numerical_derivative(my_torch::Tanh(), Z), 1e-6);
+}
+
+Test(activations, softmax_derivative_is_the_diagonal_of_its_jacobian)
+{
+    my_torch::Matrix z = my_torch::Matrix::row({2.0, 1.0, 0.1});
+    my_torch::Matrix softmax = my_torch::Softmax()(z);
+    my_torch::Matrix derivative = my_torch::Softmax().derivative(z);
+
+    for (std::size_t col = 0; col < 3; col++)
+        cr_assert_float_eq(derivative(0, col), softmax(0, col) * (1 - softmax(0, col)), 1e-12);
+}
+
 Test(activations, an_activation_is_called_like_its_forward)
 {
     my_torch::ReLU relu;

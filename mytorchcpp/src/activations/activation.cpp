@@ -30,6 +30,23 @@ static double tanh_value(double z)
     return std::tanh(z);
 }
 
+static double relu_derivative_value(double z)
+{
+    return z > 0.0 ? 1.0 : 0.0;
+}
+
+static double sigmoid_derivative_value(double z)
+{
+    double sigmoid = sigmoid_value(z);
+    return sigmoid * (1.0 - sigmoid);
+}
+
+static double tanh_derivative_value(double z)
+{
+    double tanh = std::tanh(z);
+    return 1.0 - tanh * tanh;
+}
+
 Activation::Activation(const std::string &name) : name(name)
 {
 }
@@ -48,6 +65,11 @@ Matrix Linear::forward(const Matrix &z) const
     return z;
 }
 
+Matrix Linear::derivative(const Matrix &z) const
+{
+    return Matrix(z.rows(), z.cols(), 1.0);
+}
+
 ReLU::ReLU() : Activation("relu")
 {
 }
@@ -55,6 +77,11 @@ ReLU::ReLU() : Activation("relu")
 Matrix ReLU::forward(const Matrix &z) const
 {
     return z.apply(relu_value);
+}
+
+Matrix ReLU::derivative(const Matrix &z) const
+{
+    return z.apply(relu_derivative_value);
 }
 
 Sigmoid::Sigmoid() : Activation("sigmoid")
@@ -66,6 +93,11 @@ Matrix Sigmoid::forward(const Matrix &z) const
     return z.apply(sigmoid_value);
 }
 
+Matrix Sigmoid::derivative(const Matrix &z) const
+{
+    return z.apply(sigmoid_derivative_value);
+}
+
 Tanh::Tanh() : Activation("tanh")
 {
 }
@@ -73,6 +105,11 @@ Tanh::Tanh() : Activation("tanh")
 Matrix Tanh::forward(const Matrix &z) const
 {
     return z.apply(tanh_value);
+}
+
+Matrix Tanh::derivative(const Matrix &z) const
+{
+    return z.apply(tanh_derivative_value);
 }
 
 Softmax::Softmax() : Activation("softmax")
@@ -83,6 +120,12 @@ Matrix Softmax::forward(const Matrix &z) const
 {
     Matrix exps = (z - z.row_maxima()).apply(std::exp);
     return exps / exps.row_sums();
+}
+
+Matrix Softmax::derivative(const Matrix &z) const
+{
+    Matrix softmax = forward(z);
+    return softmax - softmax.hadamard(softmax);
 }
 
 template <typename Subclass>
