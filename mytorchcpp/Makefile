@@ -14,7 +14,8 @@ SRC	=	src/math/matrix.cpp	\
 		src/layers/layer.cpp	\
 		src/layers/dense_layer.cpp	\
 		src/network/network.cpp	\
-		src/losses/loss.cpp
+		src/losses/loss.cpp	\
+		src/optimizers/optimizer.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
 		tests/layers/test_neuron.cpp	\
@@ -23,7 +24,8 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/layers/test_dense_layer.cpp	\
 		tests/network/test_network.cpp	\
 		tests/network/test_gradient_check.cpp	\
-		tests/losses/test_loss.cpp
+		tests/losses/test_loss.cpp	\
+		tests/optimizers/test_optimizer.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
