@@ -56,32 +56,45 @@ Matrix softmax(const Matrix &z)
     return exps / exps.row_sums();
 }
 
-const std::map<std::string, ActivationFunction> &activations()
+Matrix Activation::operator()(const Matrix &z) const
 {
-    static const std::map<std::string, ActivationFunction> all = {
-        {"linear", linear},
-        {"relu", relu},
-        {"sigmoid", sigmoid},
-        {"tanh", tanh},
-        {"softmax", softmax},
-    };
+    return function(z);
+}
+
+const Activation LINEAR = {"linear", linear};
+const Activation RELU = {"relu", relu};
+const Activation SIGMOID = {"sigmoid", sigmoid};
+const Activation TANH = {"tanh", tanh};
+const Activation SOFTMAX = {"softmax", softmax};
+
+const std::vector<Activation> &all_activations()
+{
+    static const std::vector<Activation> all = {LINEAR, RELU, SIGMOID, TANH, SOFTMAX};
     return all;
 }
 
-static std::string activation_names()
+std::vector<std::string> activation_names()
 {
-    std::string names;
-    for (const auto &[name, function] : activations())
-        names += names.empty() ? name : ", " + name;
+    std::vector<std::string> names;
+    for (const Activation &activation : all_activations())
+        names.push_back(activation.name);
     return names;
 }
 
-ActivationFunction get_activation(const std::string &name)
+static std::string joined(const std::vector<std::string> &names)
 {
-    auto found = activations().find(name);
-    if (found == activations().end())
-        throw std::invalid_argument("unknown activation '" + name + "', expected one of: " + activation_names());
-    return found->second;
+    std::string text;
+    for (const std::string &name : names)
+        text += text.empty() ? name : ", " + name;
+    return text;
+}
+
+Activation find_activation(const std::string &name)
+{
+    for (const Activation &activation : all_activations())
+        if (activation.name == name)
+            return activation;
+    throw std::invalid_argument("unknown activation '" + name + "', expected one of: " + joined(activation_names()));
 }
 
 }

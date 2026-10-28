@@ -79,14 +79,26 @@ Test(activations, softmax_does_not_overflow_on_large_scores)
     assert_matrix_eq(my_torch::softmax(my_torch::Matrix::row({1000.0, 1000.0, 1000.0})), my_torch::Matrix::row({1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0}));
 }
 
-Test(activations, get_activation_finds_every_activation_by_name)
+Test(activations, an_activation_is_called_like_its_function)
 {
-    for (const auto &[name, function] : my_torch::activations())
-        cr_assert_eq(my_torch::get_activation(name), function);
-    cr_assert_eq(my_torch::get_activation("relu"), my_torch::relu);
+    assert_matrix_eq(my_torch::RELU(Z), my_torch::relu(Z));
 }
 
-Test(activations, get_activation_rejects_an_unknown_name)
+Test(activations, find_activation_finds_every_activation_by_name)
 {
-    cr_assert_throw(my_torch::get_activation("swish"), std::invalid_argument);
+    for (const my_torch::Activation &activation : my_torch::all_activations())
+        cr_assert_eq(my_torch::find_activation(activation.name).function, activation.function);
+    cr_assert_eq(my_torch::find_activation("relu").function, my_torch::relu);
+}
+
+Test(activations, names_list_every_activation)
+{
+    std::vector<std::string> expected = {"linear", "relu", "sigmoid", "tanh", "softmax"};
+
+    cr_assert(my_torch::activation_names() == expected);
+}
+
+Test(activations, find_activation_rejects_an_unknown_name)
+{
+    cr_assert_throw(my_torch::find_activation("swish"), std::invalid_argument);
 }
