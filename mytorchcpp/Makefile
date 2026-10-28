@@ -11,11 +11,13 @@ CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote include
 SRC	=	src/neuron.cpp	\
 		src/matrix.cpp	\
 		src/activations.cpp	\
+		src/layer.cpp	\
 		src/dense_layer.cpp
 
 TESTS	=	tests/test_neuron.cpp	\
 		tests/test_matrix.cpp	\
 		tests/test_activations.cpp	\
+		tests/test_layer.cpp	\
 		tests/test_dense_layer.cpp
 
 OBJ	=	$(SRC:.cpp=.o)

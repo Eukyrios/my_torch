@@ -14,17 +14,18 @@
 #include <vector>
 
 #include "activations.hpp"
+#include "layer.hpp"
 #include "matrix.hpp"
 
 namespace my_torch {
 
-class DenseLayer {
+class DenseLayer : public Layer {
 public:
     DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
 
     std::size_t n_inputs() const;
     std::size_t n_outputs() const;
-    Matrix forward(const Matrix &inputs);
+    Matrix forward(const Matrix &inputs) override;
 
     Matrix weights;
     Matrix biases;

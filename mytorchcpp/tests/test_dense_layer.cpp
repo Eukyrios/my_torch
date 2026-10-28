@@ -80,6 +80,13 @@ Test(dense_layer, biases_are_added_to_every_row)
     assert_matrix_eq(outputs, my_torch::Matrix({{0.1, -0.3}, {0.1, -0.3}, {0.1, -0.3}}));
 }
 
+Test(dense_layer, is_called_like_a_function)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    assert_matrix_eq(layer(my_torch::Matrix::row({1, 2})), my_torch::Matrix::row({1.1, -0.3}));
+}
+
 Test(dense_layer, forward_applies_the_activation)
 {
     assert_matrix_eq(my_torch::DenseLayer(WEIGHTS, BIASES, std::make_unique<my_torch::ReLU>()).forward(my_torch::Matrix::row({1, 2})), my_torch::Matrix::row({1.1, 0.0}));
