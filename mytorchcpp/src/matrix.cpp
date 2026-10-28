@@ -3,7 +3,7 @@
 ** my_torch
 ** File description:
 ** A matrix of doubles stored row by row; nested rows must all have the same size.
-** Like numpy, + and - repeat a single row on every row of the other matrix
+** Like numpy, element-wise operations repeat a single row or column over the other matrix
 */
 
 #include <algorithm>
@@ -112,28 +112,40 @@ static bool is_row_of(const Matrix &row, const Matrix &matrix)
     return row.rows() == 1 && row.cols() == matrix.cols();
 }
 
+static bool is_column_of(const Matrix &column, const Matrix &matrix)
+{
+    return column.cols() == 1 && column.rows() == matrix.rows();
+}
+
 static void check_broadcastable(const Matrix &left, const Matrix &right)
 {
     if (left.rows() == right.rows() && left.cols() == right.cols())
         return;
-    if (is_row_of(right, left))
+    if (is_row_of(right, left) || is_column_of(right, left))
         return;
-    throw std::invalid_argument("element-wise operations need matrices of the same shape or a single row to repeat, got " + std::to_string(left.rows()) + "x" + std::to_string(left.cols()) + " and " + std::to_string(right.rows()) + "x" + std::to_string(right.cols()));
+    throw std::invalid_argument("element-wise operations need matrices of the same shape, or a single row or column to repeat, got " + std::to_string(left.rows()) + "x" + std::to_string(left.cols()) + " and " + std::to_string(right.rows()) + "x" + std::to_string(right.cols()));
+}
+
+static double broadcast_value(const Matrix &other, std::size_t row, std::size_t col)
+{
+    return other(other.rows() == 1 ? 0 : row, other.cols() == 1 ? 0 : col);
 }
 
 Matrix &Matrix::operator+=(const Matrix &other)
 {
     check_broadcastable(*this, other);
-    for (std::size_t i = 0; i < _values.size(); i++)
-        _values[i] += other._values[i % other._values.size()];
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            (*this)(row, col) += broadcast_value(other, row, col);
     return *this;
 }
 
 Matrix &Matrix::operator-=(const Matrix &other)
 {
     check_broadcastable(*this, other);
-    for (std::size_t i = 0; i < _values.size(); i++)
-        _values[i] -= other._values[i % other._values.size()];
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            (*this)(row, col) -= broadcast_value(other, row, col);
     return *this;
 }
 

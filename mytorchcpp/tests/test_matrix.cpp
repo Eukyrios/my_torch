@@ -131,6 +131,7 @@ Test(matrix, element_wise_operations_reject_different_shapes)
     cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix(3, 2), std::invalid_argument);
     cr_assert_throw(my_torch::Matrix(2, 3) - my_torch::Matrix(2, 2), std::invalid_argument);
     cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix::row({1, 2}), std::invalid_argument);
+    cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix(3, 1), std::invalid_argument);
 }
 
 Test(matrix, repeats_a_single_row_on_every_row)
@@ -191,4 +192,13 @@ Test(matrix, column_sums_give_one_sum_per_column_as_a_row)
 Test(matrix, row_maxima_give_the_largest_value_of_each_row)
 {
     assert_matrix_eq(my_torch::Matrix({{1, 7, 3}, {-4, -5, -6}}).row_maxima(), my_torch::Matrix({{7}, {-4}}));
+}
+
+Test(matrix, repeats_a_single_column_on_every_column)
+{
+    my_torch::Matrix matrix({{1, 2}, {3, 4}, {5, 6}});
+    my_torch::Matrix column({{10}, {20}, {30}});
+
+    assert_matrix_eq(matrix + column, my_torch::Matrix({{11, 12}, {23, 24}, {35, 36}}));
+    assert_matrix_eq(matrix - column, my_torch::Matrix({{-9, -8}, {-17, -16}, {-25, -24}}));
 }
