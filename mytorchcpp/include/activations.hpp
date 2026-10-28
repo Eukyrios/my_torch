@@ -3,7 +3,8 @@
 ** my_torch
 ** File description:
 ** Activation is the base class: each subclass gives its name, how a saved network stores it,
-** and its forward pass on z; an activation is called like a function, activation(z)
+** and its forward pass on z; an activation is called like a function, activation(z), and
+** Activation::from_name turns a stored name back into one by trying each of subclasses()
 */
 
 #pragma once
@@ -16,9 +17,17 @@
 
 namespace my_torch {
 
+class Activation;
+
+using ActivationMaker = std::unique_ptr<Activation> (*)();
+
 class Activation {
 public:
     virtual ~Activation() = default;
+
+    static const std::vector<ActivationMaker> &subclasses();
+    static std::vector<std::string> names();
+    static std::unique_ptr<Activation> from_name(const std::string &name);
 
     virtual std::string name() const = 0;
     virtual Matrix forward(const Matrix &z) const = 0;
@@ -54,11 +63,5 @@ public:
     std::string name() const override;
     Matrix forward(const Matrix &z) const override;
 };
-
-using ActivationMaker = std::unique_ptr<Activation> (*)();
-
-const std::vector<ActivationMaker> &activation_classes();
-std::vector<std::string> activation_names();
-std::unique_ptr<Activation> find_activation(const std::string &name);
 
 }

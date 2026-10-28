@@ -86,21 +86,26 @@ Test(activations, an_activation_is_called_like_its_forward)
     assert_matrix_eq(relu(Z), relu.forward(Z));
 }
 
-Test(activations, find_activation_finds_every_activation_by_name)
+Test(activations, from_name_finds_every_activation_by_name)
 {
-    for (const std::string &name : my_torch::activation_names())
-        cr_assert_str_eq(my_torch::find_activation(name)->name().c_str(), name.c_str());
-    cr_assert_not_null(dynamic_cast<my_torch::ReLU *>(my_torch::find_activation("relu").get()));
+    for (const std::string &name : my_torch::Activation::names())
+        cr_assert_str_eq(my_torch::Activation::from_name(name)->name().c_str(), name.c_str());
+    cr_assert_not_null(dynamic_cast<my_torch::ReLU *>(my_torch::Activation::from_name("relu").get()));
+}
+
+Test(activations, subclasses_make_one_of_each_activation)
+{
+    cr_assert_eq(my_torch::Activation::subclasses().size(), 5u);
 }
 
 Test(activations, names_list_every_activation)
 {
     std::vector<std::string> expected = {"linear", "relu", "sigmoid", "tanh", "softmax"};
 
-    cr_assert(my_torch::activation_names() == expected);
+    cr_assert(my_torch::Activation::names() == expected);
 }
 
-Test(activations, find_activation_rejects_an_unknown_name)
+Test(activations, from_name_rejects_an_unknown_name)
 {
-    cr_assert_throw(my_torch::find_activation("swish"), std::invalid_argument);
+    cr_assert_throw(my_torch::Activation::from_name("swish"), std::invalid_argument);
 }

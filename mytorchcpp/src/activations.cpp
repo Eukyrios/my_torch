@@ -92,16 +92,16 @@ static std::unique_ptr<Activation> make()
     return std::make_unique<Subclass>();
 }
 
-const std::vector<ActivationMaker> &activation_classes()
+const std::vector<ActivationMaker> &Activation::subclasses()
 {
     static const std::vector<ActivationMaker> all = {make<Linear>, make<ReLU>, make<Sigmoid>, make<Tanh>, make<Softmax>};
     return all;
 }
 
-std::vector<std::string> activation_names()
+std::vector<std::string> Activation::names()
 {
     std::vector<std::string> names;
-    for (ActivationMaker make_activation : activation_classes())
+    for (ActivationMaker make_activation : subclasses())
         names.push_back(make_activation()->name());
     return names;
 }
@@ -114,14 +114,14 @@ static std::string joined(const std::vector<std::string> &names)
     return text;
 }
 
-std::unique_ptr<Activation> find_activation(const std::string &name)
+std::unique_ptr<Activation> Activation::from_name(const std::string &name)
 {
-    for (ActivationMaker make_activation : activation_classes()) {
+    for (ActivationMaker make_activation : subclasses()) {
         std::unique_ptr<Activation> activation = make_activation();
         if (activation->name() == name)
             return activation;
     }
-    throw std::invalid_argument("unknown activation '" + name + "', expected one of: " + joined(activation_names()));
+    throw std::invalid_argument("unknown activation '" + name + "', expected one of: " + joined(names()));
 }
 
 }
