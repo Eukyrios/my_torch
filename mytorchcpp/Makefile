@@ -22,6 +22,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/layers/test_layer.cpp	\
 		tests/layers/test_dense_layer.cpp	\
 		tests/network/test_network.cpp	\
+		tests/network/test_gradient_check.cpp	\
 		tests/losses/test_loss.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
