@@ -19,6 +19,12 @@ static void check_factor(double factor)
         throw std::invalid_argument("the decay factor must be in (0, 1], got " + std::to_string(factor));
 }
 
+static void check_every(std::size_t every)
+{
+    if (every < 1)
+        throw std::invalid_argument("the step must be at least 1 epoch, got " + std::to_string(every));
+}
+
 static void check_decay(double decay)
 {
     if (decay < 0.0)
@@ -61,5 +67,16 @@ ExponentialDecay::ExponentialDecay(double factor) : Schedule("exponential_decay"
 double ExponentialDecay::rate(double initial_rate, std::size_t epoch) const
 {
     return initial_rate * std::pow(factor, epoch);
+}
+
+StepDecay::StepDecay(double factor, std::size_t every) : Schedule("step_decay"), factor(factor), every(every)
+{
+    check_factor(factor);
+    check_every(every);
+}
+
+double StepDecay::rate(double initial_rate, std::size_t epoch) const
+{
+    return initial_rate * std::pow(factor, epoch / every);
 }
 }

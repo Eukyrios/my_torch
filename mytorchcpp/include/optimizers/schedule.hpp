@@ -48,4 +48,14 @@ public:
 
     double factor;
 };
+
+class StepDecay : public Schedule {
+public:
+    StepDecay(double factor, std::size_t every);
+
+    double rate(double initial_rate, std::size_t epoch) const override;
+
+    double factor;
+    std::size_t every;
+};
 }
