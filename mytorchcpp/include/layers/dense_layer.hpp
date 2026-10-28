@@ -27,6 +27,7 @@ public:
     static std::unique_ptr<DenseLayer> create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng);
 
     std::optional<Shape> shape() const override;
+    std::vector<Parameter> parameters() override;
     Matrix forward(const Matrix &inputs) override;
     Matrix backward(const Matrix &gradient) override;
 

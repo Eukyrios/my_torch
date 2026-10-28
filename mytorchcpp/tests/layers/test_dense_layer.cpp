@@ -254,3 +254,31 @@ Test(dense_layer, create_rejects_empty_sizes)
     cr_assert_throw(my_torch::DenseLayer::create(0, 3, nullptr, rng), std::invalid_argument);
     cr_assert_throw(my_torch::DenseLayer::create(3, 0, nullptr, rng), std::invalid_argument);
 }
+
+Test(dense_layer, parameters_are_the_weights_and_biases_with_their_gradients)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+    std::vector<my_torch::Parameter> parameters = layer.parameters();
+
+    cr_assert_eq(parameters.size(), 2u);
+    cr_assert_eq(parameters[0].value, &layer.weights);
+    cr_assert_eq(parameters[0].gradient, &layer.weights_gradient);
+    cr_assert_eq(parameters[1].value, &layer.biases);
+    cr_assert_eq(parameters[1].gradient, &layer.biases_gradient);
+}
+
+Test(dense_layer, parameter_gradients_are_empty_before_backward)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    cr_assert_eq(layer.parameters()[0].gradient->size(), 0u);
+}
+
+Test(dense_layer, parameters_see_the_gradients_after_backward)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    layer.forward(my_torch::Matrix::row({1, 2}));
+    layer.backward(my_torch::Matrix::row({1.0, -2.0}));
+    assert_matrix_eq(*layer.parameters()[0].gradient, my_torch::Matrix({{1, -2}, {2, -4}}));
+}

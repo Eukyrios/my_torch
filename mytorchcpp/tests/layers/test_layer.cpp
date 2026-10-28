@@ -64,3 +64,10 @@ Test(layer, backward_is_used_through_the_base_class)
 
     assert_matrix_eq(base.backward(my_torch::Matrix::row({1, -3})), my_torch::Matrix::row({2, -6}));
 }
+
+Test(layer, has_no_parameters_by_default)
+{
+    Double layer;
+
+    cr_assert(layer.parameters().empty());
+}

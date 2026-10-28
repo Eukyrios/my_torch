@@ -18,6 +18,11 @@ std::optional<Shape> Layer::shape() const
     return std::nullopt;
 }
 
+std::vector<Parameter> Layer::parameters()
+{
+    return {};
+}
+
 Matrix Layer::operator()(const Matrix &inputs)
 {
     return forward(inputs);

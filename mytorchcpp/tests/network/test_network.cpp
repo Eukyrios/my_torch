@@ -205,3 +205,19 @@ Test(network, backward_gives_one_input_gradient_row_per_sample)
     cr_assert_eq(input_gradient.rows(), 6u);
     cr_assert_eq(input_gradient.cols(), 5u);
 }
+
+Test(network, parameters_are_every_layer_parameter_in_order)
+{
+    LayerList layers = layers_of(hidden_layer(), std::make_unique<PassThrough>());
+    layers.push_back(output_layer());
+    my_torch::Network network(std::move(layers));
+    std::vector<my_torch::Parameter> parameters = network.parameters();
+    my_torch::DenseLayer &hidden = dynamic_cast<my_torch::DenseLayer &>(*network.layers[0]);
+    my_torch::DenseLayer &output = dynamic_cast<my_torch::DenseLayer &>(*network.layers[2]);
+
+    cr_assert_eq(parameters.size(), 4u);
+    cr_assert_eq(parameters[0].value, &hidden.weights);
+    cr_assert_eq(parameters[1].value, &hidden.biases);
+    cr_assert_eq(parameters[2].value, &output.weights);
+    cr_assert_eq(parameters[3].value, &output.biases);
+}

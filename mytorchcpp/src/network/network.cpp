@@ -60,6 +60,15 @@ Shape Network::shape() const
     return Shape(sized.front()->shape()->first, sized.back()->shape()->second);
 }
 
+std::vector<Parameter> Network::parameters()
+{
+    std::vector<Parameter> all;
+    for (const std::unique_ptr<Layer> &layer : layers)
+        for (const Parameter &parameter : layer->parameters())
+            all.push_back(parameter);
+    return all;
+}
+
 Matrix Network::forward(const Matrix &inputs)
 {
     Matrix outputs = inputs;

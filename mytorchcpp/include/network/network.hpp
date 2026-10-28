@@ -20,6 +20,7 @@ public:
     explicit Network(std::vector<std::unique_ptr<Layer>> layers);
 
     Shape shape() const;
+    std::vector<Parameter> parameters();
     Matrix forward(const Matrix &inputs);
     Matrix operator()(const Matrix &inputs);
     Matrix backward(const Matrix &gradient);

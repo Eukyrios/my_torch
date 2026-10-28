@@ -77,6 +77,11 @@ std::optional<Shape> DenseLayer::shape() const
     return Shape(weights.rows(), weights.cols());
 }
 
+std::vector<Parameter> DenseLayer::parameters()
+{
+    return {{&weights, &weights_gradient}, {&biases, &biases_gradient}};
+}
+
 Matrix DenseLayer::forward(const Matrix &inputs)
 {
     check_input_size(inputs, weights.rows());
