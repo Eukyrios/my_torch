@@ -107,6 +107,9 @@ tests/                  one folder per package, mirroring the sources
 
 ### Using the module
 
+The maths behind each class (equations, derivatives, shapes, gradient checks and results) is in
+[`docs/my_torch.md`](docs/my_torch.md).
+
 ```python
 from analyzer.encoder import encode_fen
 from my_torch.activations.activation import ReLU, Softmax
