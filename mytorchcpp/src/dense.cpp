@@ -24,6 +24,12 @@ static void check_one_bias_per_neuron(const Matrix &weights, const std::vector<d
         throw std::invalid_argument("expected " + std::to_string(weights.cols()) + " biases, one per neuron, got " + std::to_string(biases.size()));
 }
 
+static void check_parameters(const Matrix &weights, const std::vector<double> &biases)
+{
+    check_weights_are_a_matrix(weights);
+    check_one_bias_per_neuron(weights, biases);
+}
+
 static void check_input_size(const Matrix &inputs, std::size_t n_inputs)
 {
     if (inputs.cols() != n_inputs)
@@ -32,8 +38,7 @@ static void check_input_size(const Matrix &inputs, std::size_t n_inputs)
 
 Dense::Dense(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
 {
-    check_weights_are_a_matrix(this->weights);
-    check_one_bias_per_neuron(this->weights, biases);
+    check_parameters(this->weights, biases);
 }
 
 std::size_t Dense::n_inputs() const
