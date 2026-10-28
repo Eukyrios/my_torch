@@ -77,6 +77,24 @@ Matrix Matrix::apply(double (*function)(double)) const
     return result;
 }
 
+Matrix Matrix::row_sums() const
+{
+    Matrix result(_rows, 1);
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            result(row, 0) += (*this)(row, col);
+    return result;
+}
+
+Matrix Matrix::column_sums() const
+{
+    Matrix result(1, _cols);
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            result(0, col) += (*this)(row, col);
+    return result;
+}
+
 static bool is_row_of(const Matrix &row, const Matrix &matrix)
 {
     return row.rows() == 1 && row.cols() == matrix.cols();

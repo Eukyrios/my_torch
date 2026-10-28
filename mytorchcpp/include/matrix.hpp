@@ -26,6 +26,8 @@ public:
     double operator()(std::size_t row, std::size_t col) const;
     Matrix transpose() const;
     Matrix apply(double (*function)(double)) const;
+    Matrix row_sums() const;
+    Matrix column_sums() const;
     Matrix &operator+=(const Matrix &other);
     Matrix &operator-=(const Matrix &other);
     Matrix &operator*=(double scalar);

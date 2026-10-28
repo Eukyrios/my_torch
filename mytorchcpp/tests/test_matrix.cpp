@@ -177,3 +177,13 @@ Test(matrix, applies_a_function_from_cmath)
     cr_assert_float_eq(result(0, 0), 1.0, 1e-12);
     cr_assert_float_eq(result(0, 1), std::exp(1.0), 1e-12);
 }
+
+Test(matrix, row_sums_give_one_sum_per_row_as_a_column)
+{
+    assert_matrix_eq(my_torch::Matrix({{1, 2, 3}, {4, 5, 6}}).row_sums(), my_torch::Matrix({{6}, {15}}));
+}
+
+Test(matrix, column_sums_give_one_sum_per_column_as_a_row)
+{
+    assert_matrix_eq(my_torch::Matrix({{1, 2, 3}, {4, 5, 6}}).column_sums(), my_torch::Matrix::row({5, 7, 9}));
+}
