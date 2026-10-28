@@ -8,9 +8,11 @@
 CXX	=	g++
 CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote include
 
-SRC	=	src/neuron.cpp
+SRC	=	src/neuron.cpp	\
+		src/dense.cpp
 
-TESTS	=	tests/test_neuron.cpp
+TESTS	=	tests/test_neuron.cpp	\
+		tests/test_dense.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
