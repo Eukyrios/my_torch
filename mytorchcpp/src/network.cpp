@@ -49,19 +49,10 @@ Network::Network(std::vector<std::unique_ptr<Layer>> layers) : layers(std::move(
     check_layers(this->layers);
 }
 
-std::vector<Layer *> Network::sized_layers() const
+Shape Network::shape() const
 {
-    return find_sized_layers(layers);
-}
-
-std::size_t Network::n_inputs() const
-{
-    return sized_layers().front()->shape()->first;
-}
-
-std::size_t Network::n_outputs() const
-{
-    return sized_layers().back()->shape()->second;
+    std::vector<Layer *> sized = find_sized_layers(layers);
+    return Shape(sized.front()->shape()->first, sized.back()->shape()->second);
 }
 
 Matrix Network::forward(const Matrix &inputs)

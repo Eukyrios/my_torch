@@ -127,12 +127,11 @@ Test(network, softmax_output_gives_probabilities)
     assert_matrix_eq(network(my_torch::Matrix({{1, 2}, {0, 0}, {3, -1}})).row_sums(), my_torch::Matrix({{1}, {1}, {1}}));
 }
 
-Test(network, sizes_come_from_the_first_and_last_sized_layers)
+Test(network, shape_comes_from_the_first_and_last_sized_layers)
 {
     my_torch::Network network = random_network({768, 256, 64, 3});
 
-    cr_assert_eq(network.n_inputs(), 768u);
-    cr_assert_eq(network.n_outputs(), 3u);
+    cr_assert(network.shape() == my_torch::Shape(768, 3));
 }
 
 Test(network, keeps_its_layers_in_order)
@@ -154,7 +153,7 @@ Test(network, a_layer_without_weights_can_sit_between_dense_layers)
     my_torch::Network network(std::move(layers));
     my_torch::Network without(layers_of(hidden_layer(), output_layer()));
 
-    cr_assert_eq(network.sized_layers().size(), 2u);
+    cr_assert(network.shape() == my_torch::Shape(2, 3));
     assert_matrix_eq(network(my_torch::Matrix::row({1, 2})), without(my_torch::Matrix::row({1, 2})));
 }
 

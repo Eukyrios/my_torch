@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -20,9 +19,7 @@ class Network {
 public:
     explicit Network(std::vector<std::unique_ptr<Layer>> layers);
 
-    std::vector<Layer *> sized_layers() const;
-    std::size_t n_inputs() const;
-    std::size_t n_outputs() const;
+    Shape shape() const;
     Matrix forward(const Matrix &inputs);
     Matrix operator()(const Matrix &inputs);
 
