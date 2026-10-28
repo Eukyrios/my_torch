@@ -224,3 +224,17 @@ Test(matrix, sum_adds_every_value)
 {
     cr_assert_float_eq(my_torch::Matrix({{1, 2, 3}, {4, 5, -6}}).sum(), 9.0, 1e-12);
 }
+
+Test(matrix, hadamard_multiplies_element_by_element)
+{
+    my_torch::Matrix left({{1, 2}, {3, 4}});
+
+    assert_matrix_eq(left.hadamard(my_torch::Matrix({{2, 0}, {-1, 0.5}})), my_torch::Matrix({{2, 0}, {-3, 2}}));
+}
+
+Test(matrix, hadamard_broadcasts_a_single_row)
+{
+    my_torch::Matrix left({{1, 2}, {3, 4}});
+
+    assert_matrix_eq(left.hadamard(my_torch::Matrix::row({10, -1})), my_torch::Matrix({{10, -2}, {30, -4}}));
+}

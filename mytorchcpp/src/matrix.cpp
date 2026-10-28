@@ -171,6 +171,16 @@ Matrix &Matrix::operator/=(const Matrix &other)
     return *this;
 }
 
+Matrix Matrix::hadamard(const Matrix &other) const
+{
+    check_broadcastable(*this, other);
+    Matrix result = *this;
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            result(row, col) *= broadcast_value(other, row, col);
+    return result;
+}
+
 Matrix &Matrix::operator*=(double scalar)
 {
     for (double &value : _values)
