@@ -132,6 +132,16 @@ Test(matrix, element_wise_operations_reject_different_shapes)
 {
     cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix(3, 2), std::invalid_argument);
     cr_assert_throw(my_torch::Matrix(2, 3) - my_torch::Matrix(2, 2), std::invalid_argument);
+    cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix::row({1, 2}), std::invalid_argument);
+}
+
+Test(matrix, repeats_a_single_row_on_every_row)
+{
+    my_torch::Matrix matrix({{1, 2}, {3, 4}, {5, 6}});
+    my_torch::Matrix row = my_torch::Matrix::row({10, -1});
+
+    assert_matrix_eq(matrix + row, my_torch::Matrix({{11, 1}, {13, 3}, {15, 5}}));
+    assert_matrix_eq(matrix - row, my_torch::Matrix({{-9, 3}, {-7, 5}, {-5, 7}}));
 }
 
 Test(matrix, is_scaled_by_a_number_on_either_side)

@@ -2,7 +2,8 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** A matrix of doubles stored row by row; nested rows must all have the same size
+** A matrix of doubles stored row by row; nested rows must all have the same size.
+** Like numpy, + and - repeat a single row on every row of the other matrix
 */
 
 #include <stdexcept>
@@ -68,25 +69,33 @@ Matrix Matrix::transpose() const
     return result;
 }
 
-static void check_same_shape(const Matrix &left, const Matrix &right)
+static bool is_row_of(const Matrix &row, const Matrix &matrix)
 {
-    if (left.rows() != right.rows() || left.cols() != right.cols())
-        throw std::invalid_argument("element-wise operations need matrices of the same shape, got " + std::to_string(left.rows()) + "x" + std::to_string(left.cols()) + " and " + std::to_string(right.rows()) + "x" + std::to_string(right.cols()));
+    return row.rows() == 1 && row.cols() == matrix.cols();
+}
+
+static void check_broadcastable(const Matrix &left, const Matrix &right)
+{
+    if (left.rows() == right.rows() && left.cols() == right.cols())
+        return;
+    if (is_row_of(right, left))
+        return;
+    throw std::invalid_argument("element-wise operations need matrices of the same shape or a single row to repeat, got " + std::to_string(left.rows()) + "x" + std::to_string(left.cols()) + " and " + std::to_string(right.rows()) + "x" + std::to_string(right.cols()));
 }
 
 Matrix &Matrix::operator+=(const Matrix &other)
 {
-    check_same_shape(*this, other);
+    check_broadcastable(*this, other);
     for (std::size_t i = 0; i < _values.size(); i++)
-        _values[i] += other._values[i];
+        _values[i] += other._values[i % other._values.size()];
     return *this;
 }
 
 Matrix &Matrix::operator-=(const Matrix &other)
 {
-    check_same_shape(*this, other);
+    check_broadcastable(*this, other);
     for (std::size_t i = 0; i < _values.size(); i++)
-        _values[i] -= other._values[i];
+        _values[i] -= other._values[i % other._values.size()];
     return *this;
 }
 
