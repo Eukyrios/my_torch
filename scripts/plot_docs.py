@@ -1,8 +1,6 @@
 # Draws the figures of docs/my_torch.md from the my_torch code itself, into docs/images/.
-# Usage: python -m scripts.plot_docs [DATA_DIR], where DATA_DIR holds train.txt and
-# validation.txt from dataset.generate and enables the chess learning-curve figure.
+# Usage: python -m scripts.plot_docs
 
-import sys
 from pathlib import Path
 
 import matplotlib
@@ -166,44 +164,7 @@ def plot_xor() -> None:
     save(figure, "xor.png")
 
 
-def load_split(path: Path):
-    from analyzer.encoder import encode_fen
-    from analyzer.fen import split_fen_line
-    from dataset.labels import LABELS
-    pairs = [split_fen_line(line) for line in path.read_text().splitlines() if line.strip()]
-    inputs = np.array([encode_fen(fen) for fen, _ in pairs])
-    return inputs, np.eye(len(LABELS))[[LABELS.index(label) for _, label in pairs]]
-
-
-def accuracy(network: Network, inputs: np.ndarray, labels: np.ndarray) -> float:
-    return float((network(inputs).argmax(axis=1) == labels.argmax(axis=1)).mean())
-
-
-def plot_chess_learning(data: Path) -> None:
-    train, validation = load_split(data / "train.txt"), load_split(data / "validation.txt")
-    rng = np.random.default_rng(0)
-    network = Network([DenseLayer.create(769, 256, ReLU(), rng), DenseLayer.create(256, 64, ReLU(), rng), DenseLayer.create(64, 5, Softmax(), rng)])
-    optimizer, train_rng, history = SGD(0.05), np.random.default_rng(1), []
-    for epoch in range(30):
-        network.train_epoch(*train, CrossEntropy(), optimizer, 32, train_rng, epoch)
-        history.append((accuracy(network, *train), accuracy(network, *validation)))
-    history = np.array(history) * 100
-    figure, axes = new_figure(1, 1, 7, 3.6)
-    style_axes(axes[0, 0], f"Chess, 5 balanced classes: accuracy per epoch ({len(train[0])} training boards)", "epoch", "accuracy (%)")
-    epochs = np.arange(1, 31)
-    axes[0, 0].plot(epochs, history[:, 0], color=BLUE, linewidth=2, label="training")
-    axes[0, 0].plot(epochs, history[:, 1], color=ORANGE, linewidth=2, label="validation")
-    end_label(axes[0, 0], 30, history[-1, 0], f"training {history[-1, 0]:.0f}%")
-    end_label(axes[0, 0], 30, history[-1, 1], f"validation {history[-1, 1]:.0f}%")
-    axes[0, 0].axhline(20, color=TEXT_SECONDARY, linewidth=1)
-    axes[0, 0].annotate("chance 20%", (30, 20), xytext=(4, 4), textcoords="offset points", va="bottom", fontsize=8, color=TEXT)
-    axes[0, 0].set_xlim(1, 38)
-    axes[0, 0].set_ylim(0, 105)
-    axes[0, 0].legend(frameon=False, fontsize=8, labelcolor=TEXT, loc="center right")
-    save(figure, "chess_learning.png")
-
-
-def main(argv: list[str]) -> None:
+def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     plot_activations()
     plot_softmax()
@@ -211,9 +172,7 @@ def main(argv: list[str]) -> None:
     plot_momentum()
     plot_schedules()
     plot_xor()
-    if argv:
-        plot_chess_learning(Path(argv[0]))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
