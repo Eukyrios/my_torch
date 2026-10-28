@@ -15,6 +15,7 @@ SRC	=	src/math/matrix.cpp	\
 		src/layers/dense_layer.cpp	\
 		src/network/network.cpp	\
 		src/losses/loss.cpp	\
+		src/optimizers/schedule.cpp	\
 		src/optimizers/optimizer.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
@@ -27,6 +28,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/network/test_training.cpp	\
 		tests/network/test_xor.cpp	\
 		tests/losses/test_loss.cpp	\
+		tests/optimizers/test_schedule.cpp	\
 		tests/optimizers/test_optimizer.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
