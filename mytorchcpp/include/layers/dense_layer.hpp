@@ -4,7 +4,7 @@
 ** File description:
 ** A dense layer: column j of the weights (n_inputs x n_outputs) belongs to neuron j, and a
 ** batch with one sample per row gives z = inputs * weights + biases, then its activation;
-** the last inputs and z are kept for backpropagation
+** backward uses the kept inputs and z to store the weight and bias gradients
 */
 
 #pragma once
@@ -24,12 +24,15 @@ public:
 
     std::optional<Shape> shape() const override;
     Matrix forward(const Matrix &inputs) override;
+    Matrix backward(const Matrix &gradient);
 
     Matrix weights;
     Matrix biases;
     std::unique_ptr<Activation> activation;
     Matrix inputs;
     Matrix z;
+    Matrix weights_gradient;
+    Matrix biases_gradient;
 };
 
 }

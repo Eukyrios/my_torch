@@ -140,3 +140,57 @@ Test(dense_layer, rejects_the_wrong_number_of_inputs)
     cr_assert_throw(layer.forward(my_torch::Matrix::row({1})), std::invalid_argument);
     cr_assert_throw(layer.forward(my_torch::Matrix::row({1, 2, 3})), std::invalid_argument);
 }
+
+static my_torch::DenseLayer layer_after_forward()
+{
+    my_torch::DenseLayer layer(my_torch::Matrix({{0.5, -1.0, 0.2}, {0.25, 0.5, -0.4}}), {0.1, -0.3, 0.05}, std::make_unique<my_torch::Tanh>());
+    layer.forward(my_torch::Matrix({{1, 2}, {-0.5, 0.3}}));
+    return layer;
+}
+
+Test(dense_layer, backward_with_a_linear_activation_matches_the_hand_computation)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+    my_torch::Matrix gradient = my_torch::Matrix::row({1.0, -2.0});
+
+    layer.forward(my_torch::Matrix::row({1, 2}));
+    assert_matrix_eq(layer.backward(gradient), my_torch::Matrix::row({2.5, -0.75}));
+    assert_matrix_eq(layer.weights_gradient, my_torch::Matrix({{1, -2}, {2, -4}}));
+    assert_matrix_eq(layer.biases_gradient, gradient);
+}
+
+Test(dense_layer, backward_gives_gradients_of_the_parameter_shapes)
+{
+    my_torch::DenseLayer layer = layer_after_forward();
+    my_torch::Matrix input_gradient = layer.backward(my_torch::Matrix(2, 3, 1.0));
+
+    cr_assert_eq(input_gradient.rows(), 2u);
+    cr_assert_eq(input_gradient.cols(), 2u);
+    cr_assert_eq(layer.weights_gradient.rows(), 2u);
+    cr_assert_eq(layer.weights_gradient.cols(), 3u);
+    cr_assert_eq(layer.biases_gradient.rows(), 1u);
+    cr_assert_eq(layer.biases_gradient.cols(), 3u);
+}
+
+Test(dense_layer, backward_sums_the_bias_gradient_over_the_batch)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    layer.forward(my_torch::Matrix({{1, 2}, {3, 4}}));
+    layer.backward(my_torch::Matrix({{1, 2}, {3, 4}}));
+    assert_matrix_eq(layer.biases_gradient, my_torch::Matrix::row({4, 6}));
+}
+
+Test(dense_layer, backward_needs_a_forward_first)
+{
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    cr_assert_throw(layer.backward(my_torch::Matrix::row({1, 2})), std::runtime_error);
+}
+
+Test(dense_layer, backward_rejects_a_gradient_of_the_wrong_shape)
+{
+    my_torch::DenseLayer layer = layer_after_forward();
+
+    cr_assert_throw(layer.backward(my_torch::Matrix(2, 2)), std::invalid_argument);
+}

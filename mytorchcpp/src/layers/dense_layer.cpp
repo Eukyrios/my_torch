@@ -26,6 +26,14 @@ static void check_input_size(const Matrix &inputs, std::size_t n_inputs)
         throw std::invalid_argument("the layer expects " + std::to_string(n_inputs) + " inputs per sample, got " + std::to_string(inputs.cols()));
 }
 
+static void check_backward(const Matrix &z, const Matrix &gradient)
+{
+    if (z.size() == 0)
+        throw std::runtime_error("backward needs the values of a forward pass: call forward first");
+    if (gradient.rows() != z.rows() || gradient.cols() != z.cols())
+        throw std::invalid_argument("the gradient must have the shape of the last outputs " + std::to_string(z.rows()) + "x" + std::to_string(z.cols()) + ", got " + std::to_string(gradient.rows()) + "x" + std::to_string(gradient.cols()));
+}
+
 DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : Layer("dense"), weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
 {
     check_parameters(this->weights, biases);
@@ -42,6 +50,15 @@ Matrix DenseLayer::forward(const Matrix &inputs)
     this->inputs = inputs;
     z = inputs * weights + biases;
     return (*activation)(z);
+}
+
+Matrix DenseLayer::backward(const Matrix &gradient)
+{
+    check_backward(z, gradient);
+    Matrix z_gradient = activation->backward(z, gradient);
+    weights_gradient = inputs.transpose() * z_gradient;
+    biases_gradient = z_gradient.column_sums();
+    return z_gradient * weights.transpose();
 }
 
 }
