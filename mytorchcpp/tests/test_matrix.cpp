@@ -10,6 +10,15 @@
 
 #include "matrix.hpp"
 
+static void assert_matrix_eq(const my_torch::Matrix &actual, const my_torch::Matrix &expected)
+{
+    cr_assert_eq(actual.rows(), expected.rows());
+    cr_assert_eq(actual.cols(), expected.cols());
+    for (std::size_t row = 0; row < expected.rows(); row++)
+        for (std::size_t col = 0; col < expected.cols(); col++)
+            cr_assert_float_eq(actual(row, col), expected(row, col), 1e-9);
+}
+
 Test(matrix, is_filled_with_one_value)
 {
     my_torch::Matrix matrix(2, 3, 1.5);
@@ -51,4 +60,26 @@ Test(matrix, is_empty_without_rows)
 Test(matrix, rejects_rows_of_different_sizes)
 {
     cr_assert_throw(my_torch::Matrix({{1, 2}, {3}}), std::invalid_argument);
+}
+
+Test(matrix, product_matches_the_hand_computation)
+{
+    my_torch::Matrix left({{1, 2}, {3, 4}, {5, 6}});
+    my_torch::Matrix right({{1, 0, -1}, {2, 1, 0}});
+
+    assert_matrix_eq(left * right, my_torch::Matrix({{5, 2, -1}, {11, 4, -3}, {17, 6, -5}}));
+}
+
+Test(matrix, product_with_the_identity_keeps_the_matrix)
+{
+    my_torch::Matrix matrix({{1.5, -2}, {0.25, 3}});
+    my_torch::Matrix identity({{1, 0}, {0, 1}});
+
+    assert_matrix_eq(matrix * identity, matrix);
+    assert_matrix_eq(identity * matrix, matrix);
+}
+
+Test(matrix, product_rejects_sizes_that_do_not_chain)
+{
+    cr_assert_throw(my_torch::Matrix(2, 3) * my_torch::Matrix(2, 3), std::invalid_argument);
 }

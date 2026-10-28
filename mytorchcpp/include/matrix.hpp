@@ -29,4 +29,6 @@ private:
     std::vector<double> _values;
 };
 
+Matrix operator*(const Matrix &left, const Matrix &right);
+
 }

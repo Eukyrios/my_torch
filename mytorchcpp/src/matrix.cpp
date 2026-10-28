@@ -6,6 +6,7 @@
 */
 
 #include <stdexcept>
+#include <string>
 
 #include "matrix.hpp"
 
@@ -51,6 +52,23 @@ double &Matrix::operator()(std::size_t row, std::size_t col)
 double Matrix::operator()(std::size_t row, std::size_t col) const
 {
     return _values[row * _cols + col];
+}
+
+static void check_product_sizes(const Matrix &left, const Matrix &right)
+{
+    if (left.cols() != right.rows())
+        throw std::invalid_argument("a matrix product needs as many columns on the left (" + std::to_string(left.cols()) + ") as rows on the right (" + std::to_string(right.rows()) + ")");
+}
+
+Matrix operator*(const Matrix &left, const Matrix &right)
+{
+    check_product_sizes(left, right);
+    Matrix result(left.rows(), right.cols());
+    for (std::size_t i = 0; i < left.rows(); i++)
+        for (std::size_t k = 0; k < left.cols(); k++)
+            for (std::size_t j = 0; j < right.cols(); j++)
+                result(i, j) += left(i, k) * right(k, j);
+    return result;
 }
 
 }
