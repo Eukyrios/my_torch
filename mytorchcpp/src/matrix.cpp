@@ -181,6 +181,14 @@ Matrix Matrix::hadamard(const Matrix &other) const
     return result;
 }
 
+Matrix Matrix::clip(double low, double high) const
+{
+    Matrix result = *this;
+    for (double &value : result._values)
+        value = std::clamp(value, low, high);
+    return result;
+}
+
 Matrix &Matrix::operator*=(double scalar)
 {
     for (double &value : _values)

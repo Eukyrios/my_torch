@@ -28,6 +28,7 @@ public:
     Matrix transpose() const;
     Matrix apply(double (*function)(double)) const;
     Matrix hadamard(const Matrix &other) const;
+    Matrix clip(double low, double high) const;
     double sum() const;
     Matrix row_sums() const;
     Matrix column_sums() const;

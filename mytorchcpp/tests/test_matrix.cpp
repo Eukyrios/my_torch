@@ -238,3 +238,8 @@ Test(matrix, hadamard_broadcasts_a_single_row)
 
     assert_matrix_eq(left.hadamard(my_torch::Matrix::row({10, -1})), my_torch::Matrix({{10, -2}, {30, -4}}));
 }
+
+Test(matrix, clip_keeps_every_value_between_two_bounds)
+{
+    assert_matrix_eq(my_torch::Matrix({{-5, 0.5}, {2, 1}}).clip(0.0, 1.0), my_torch::Matrix({{0, 0.5}, {1, 1}}));
+}
