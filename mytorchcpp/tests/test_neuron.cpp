@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** Tests of the neuron's weighted sum
+** Tests of the neuron
 */
 
 #include <criterion/criterion.h>
@@ -10,27 +10,45 @@
 
 #include "neuron.hpp"
 
-Test(weighted_sum, matches_the_hand_computation)
+Test(neuron, forward_matches_the_hand_computation)
 {
-    cr_assert_float_eq(my_torch::weighted_sum({1, 2}, {0.5, 0.25}, 0.1), 1.1, 1e-9);
+    cr_assert_float_eq(my_torch::Neuron({0.5, 0.25}, 0.1).forward({1, 2}), 1.1, 1e-9);
 }
 
-Test(weighted_sum, gives_the_bias_alone_when_every_input_is_zero)
+Test(neuron, gives_the_bias_alone_when_every_input_is_zero)
 {
-    cr_assert_float_eq(my_torch::weighted_sum({0, 0, 0}, {3, -2, 7}, -0.5), -0.5, 1e-9);
+    cr_assert_float_eq(my_torch::Neuron({3, -2, 7}, -0.5).forward({0, 0, 0}), -0.5, 1e-9);
 }
 
-Test(weighted_sum, is_lowered_by_negative_weights)
+Test(neuron, is_lowered_by_negative_weights)
 {
-    cr_assert_float_eq(my_torch::weighted_sum({1, 2}, {-1, 0.5}, -0.3), -0.3, 1e-9);
+    cr_assert_float_eq(my_torch::Neuron({-1, 0.5}, -0.3).forward({1, 2}), -0.3, 1e-9);
 }
 
-Test(weighted_sum, rejects_more_inputs_than_weights)
+Test(neuron, has_one_input_per_weight)
 {
-    cr_assert_throw(my_torch::weighted_sum({1, 2, 3}, {1, 2}, 0), std::invalid_argument);
+    cr_assert_eq(my_torch::Neuron({1, 2, 3}, 0).n_inputs(), 3u);
 }
 
-Test(weighted_sum, rejects_more_weights_than_inputs)
+Test(neuron, keeps_its_weights_and_bias)
 {
-    cr_assert_throw(my_torch::weighted_sum({1, 2}, {1, 2, 3}, 0), std::invalid_argument);
+    my_torch::Neuron neuron({1, 2}, 0.5);
+
+    cr_assert(neuron.weights == std::vector<double>({1, 2}));
+    cr_assert_float_eq(neuron.bias, 0.5, 1e-12);
+}
+
+Test(neuron, rejects_a_neuron_without_weights)
+{
+    cr_assert_throw(my_torch::Neuron({}, 0), std::invalid_argument);
+}
+
+Test(neuron, rejects_more_inputs_than_weights)
+{
+    cr_assert_throw(my_torch::Neuron({1, 2}, 0).forward({1, 2, 3}), std::invalid_argument);
+}
+
+Test(neuron, rejects_fewer_inputs_than_weights)
+{
+    cr_assert_throw(my_torch::Neuron({1, 2, 3}, 0).forward({1, 2}), std::invalid_argument);
 }

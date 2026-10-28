@@ -44,7 +44,7 @@ Test(dense, each_output_is_the_neuron_of_its_column)
     my_torch::Matrix outputs = my_torch::Dense(weights, biases).forward(my_torch::Matrix::row(inputs));
 
     for (std::size_t j = 0; j < 3; j++)
-        cr_assert_float_eq(outputs(0, j), my_torch::weighted_sum(inputs, column(weights, j), biases[j]), 1e-9);
+        cr_assert_float_eq(outputs(0, j), my_torch::Neuron(column(weights, j), biases[j]).forward(inputs), 1e-9);
 }
 
 Test(dense, sizes_come_from_the_weight_matrix)
