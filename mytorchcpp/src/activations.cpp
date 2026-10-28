@@ -30,14 +30,17 @@ static double tanh_value(double z)
     return std::tanh(z);
 }
 
+Activation::Activation(const std::string &name) : name(name)
+{
+}
+
 Matrix Activation::operator()(const Matrix &z) const
 {
     return forward(z);
 }
 
-std::string Linear::name() const
+Linear::Linear() : Activation("linear")
 {
-    return "linear";
 }
 
 Matrix Linear::forward(const Matrix &z) const
@@ -45,9 +48,8 @@ Matrix Linear::forward(const Matrix &z) const
     return z;
 }
 
-std::string ReLU::name() const
+ReLU::ReLU() : Activation("relu")
 {
-    return "relu";
 }
 
 Matrix ReLU::forward(const Matrix &z) const
@@ -55,9 +57,8 @@ Matrix ReLU::forward(const Matrix &z) const
     return z.apply(relu_value);
 }
 
-std::string Sigmoid::name() const
+Sigmoid::Sigmoid() : Activation("sigmoid")
 {
-    return "sigmoid";
 }
 
 Matrix Sigmoid::forward(const Matrix &z) const
@@ -65,9 +66,8 @@ Matrix Sigmoid::forward(const Matrix &z) const
     return z.apply(sigmoid_value);
 }
 
-std::string Tanh::name() const
+Tanh::Tanh() : Activation("tanh")
 {
-    return "tanh";
 }
 
 Matrix Tanh::forward(const Matrix &z) const
@@ -75,9 +75,8 @@ Matrix Tanh::forward(const Matrix &z) const
     return z.apply(tanh_value);
 }
 
-std::string Softmax::name() const
+Softmax::Softmax() : Activation("softmax")
 {
-    return "softmax";
 }
 
 Matrix Softmax::forward(const Matrix &z) const
@@ -102,7 +101,7 @@ std::vector<std::string> Activation::names()
 {
     std::vector<std::string> names;
     for (ActivationMaker make_activation : subclasses())
-        names.push_back(make_activation()->name());
+        names.push_back(make_activation()->name);
     return names;
 }
 
@@ -118,7 +117,7 @@ std::unique_ptr<Activation> Activation::from_name(const std::string &name)
 {
     for (ActivationMaker make_activation : subclasses()) {
         std::unique_ptr<Activation> activation = make_activation();
-        if (activation->name() == name)
+        if (activation->name == name)
             return activation;
     }
     throw std::invalid_argument("unknown activation '" + name + "', expected one of: " + joined(names()));

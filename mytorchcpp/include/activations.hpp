@@ -23,44 +23,46 @@ using ActivationMaker = std::unique_ptr<Activation> (*)();
 
 class Activation {
 public:
+    explicit Activation(const std::string &name);
     virtual ~Activation() = default;
 
     static const std::vector<ActivationMaker> &subclasses();
     static std::vector<std::string> names();
     static std::unique_ptr<Activation> from_name(const std::string &name);
 
-    virtual std::string name() const = 0;
     virtual Matrix forward(const Matrix &z) const = 0;
     Matrix operator()(const Matrix &z) const;
+
+    std::string name;
 };
 
 class Linear : public Activation {
 public:
-    std::string name() const override;
+    Linear();
     Matrix forward(const Matrix &z) const override;
 };
 
 class ReLU : public Activation {
 public:
-    std::string name() const override;
+    ReLU();
     Matrix forward(const Matrix &z) const override;
 };
 
 class Sigmoid : public Activation {
 public:
-    std::string name() const override;
+    Sigmoid();
     Matrix forward(const Matrix &z) const override;
 };
 
 class Tanh : public Activation {
 public:
-    std::string name() const override;
+    Tanh();
     Matrix forward(const Matrix &z) const override;
 };
 
 class Softmax : public Activation {
 public:
-    std::string name() const override;
+    Softmax();
     Matrix forward(const Matrix &z) const override;
 };
 

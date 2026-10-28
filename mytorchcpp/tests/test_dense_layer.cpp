@@ -87,7 +87,7 @@ Test(dense_layer, forward_applies_the_activation)
 
 Test(dense_layer, default_activation_is_linear)
 {
-    cr_assert_str_eq(my_torch::DenseLayer(WEIGHTS, BIASES).activation->name().c_str(), "linear");
+    cr_assert_str_eq(my_torch::DenseLayer(WEIGHTS, BIASES).activation->name.c_str(), "linear");
 }
 
 Test(dense_layer, forward_keeps_its_inputs_and_z_for_backpropagation)
