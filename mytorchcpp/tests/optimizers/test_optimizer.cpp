@@ -123,3 +123,40 @@ Test(momentum, rejects_a_momentum_outside_0_and_1)
     cr_assert_throw(my_torch::Momentum(0.1, -0.1), std::invalid_argument);
     cr_assert_throw(my_torch::Momentum(0.1, 1.0), std::invalid_argument);
 }
+
+Test(optimizer, uses_a_constant_schedule_by_default)
+{
+    my_torch::SGD optimizer(0.1);
+
+    optimizer.start_epoch(50);
+    cr_assert_str_eq(optimizer.schedule->name.c_str(), "constant");
+    cr_assert_float_eq(optimizer.learning_rate, 0.1, 1e-15);
+}
+
+Test(optimizer, start_epoch_follows_the_schedule)
+{
+    my_torch::SGD optimizer(0.1, std::make_unique<my_torch::StepDecay>(0.5, 10));
+
+    optimizer.start_epoch(25);
+    cr_assert_float_eq(optimizer.learning_rate, 0.025, 1e-15);
+    cr_assert_float_eq(optimizer.initial_learning_rate, 0.1, 1e-15);
+}
+
+Test(optimizer, start_epoch_always_starts_from_the_initial_rate)
+{
+    my_torch::Momentum optimizer(0.1, 0.9, std::make_unique<my_torch::ExponentialDecay>(0.5));
+
+    optimizer.start_epoch(3);
+    optimizer.start_epoch(1);
+    cr_assert_float_eq(optimizer.learning_rate, 0.05, 1e-15);
+}
+
+Test(optimizer, steps_use_the_scheduled_rate)
+{
+    my_torch::SGD optimizer(1.0, std::make_unique<my_torch::ExponentialDecay>(0.5));
+    my_torch::Matrix value = my_torch::Matrix::row({0.0});
+
+    optimizer.start_epoch(1);
+    optimizer.update(value, my_torch::Matrix::row({1.0}));
+    cr_assert_float_eq(value(0, 0), -0.5, 1e-15);
+}

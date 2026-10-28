@@ -31,7 +31,7 @@ public:
     Matrix operator()(const Matrix &inputs);
     Matrix backward(const Matrix &gradient);
     std::vector<double> train(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t epochs, std::size_t batch_size, std::mt19937 &rng);
-    double train_epoch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t batch_size, std::mt19937 &rng);
+    double train_epoch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t batch_size, std::mt19937 &rng, std::size_t epoch = 0);
     double train_batch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer);
 
     std::vector<std::unique_ptr<Layer>> layers;

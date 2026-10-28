@@ -134,3 +134,21 @@ Test(training, rejects_epochs_or_batch_size_below_one)
     cr_assert_throw(small_network().train(INPUTS, LABELS, my_torch::CrossEntropy(), optimizer, 0, 4, rng), std::invalid_argument);
     cr_assert_throw(small_network().train(INPUTS, LABELS, my_torch::CrossEntropy(), optimizer, 1, 0, rng), std::invalid_argument);
 }
+
+Test(training, the_optimizer_follows_its_schedule_over_the_epochs)
+{
+    std::mt19937 rng(0);
+    my_torch::SGD optimizer(0.1, std::make_unique<my_torch::StepDecay>(0.5, 1));
+
+    small_network().train(INPUTS, LABELS, my_torch::CrossEntropy(), optimizer, 3, 4, rng);
+    cr_assert_float_eq(optimizer.learning_rate, 0.025, 1e-15);
+}
+
+Test(training, a_decaying_rate_still_lowers_the_loss)
+{
+    std::mt19937 rng(0);
+    my_torch::Momentum optimizer(0.05, 0.9, std::make_unique<my_torch::TimeDecay>(0.01));
+    std::vector<double> losses = small_network().train(INPUTS, LABELS, my_torch::CrossEntropy(), optimizer, 100, 4, rng);
+
+    cr_assert_lt(losses.back(), losses.front() / 2);
+}

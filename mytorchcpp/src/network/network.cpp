@@ -121,12 +121,13 @@ std::vector<double> Network::train(const Matrix &inputs, const Matrix &labels, c
     check_training_settings(epochs, batch_size);
     std::vector<double> losses;
     for (std::size_t epoch = 0; epoch < epochs; epoch++)
-        losses.push_back(train_epoch(inputs, labels, loss, optimizer, batch_size, rng));
+        losses.push_back(train_epoch(inputs, labels, loss, optimizer, batch_size, rng, epoch));
     return losses;
 }
 
-double Network::train_epoch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t batch_size, std::mt19937 &rng)
+double Network::train_epoch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t batch_size, std::mt19937 &rng, std::size_t epoch)
 {
+    optimizer.start_epoch(epoch);
     double total = 0.0;
     for (const std::vector<std::size_t> &batch : shuffled_batches(inputs.rows(), batch_size, rng))
         total += train_batch(inputs.select_rows(batch), labels.select_rows(batch), loss, optimizer) * batch.size();
