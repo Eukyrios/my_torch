@@ -54,6 +54,15 @@ double Matrix::operator()(std::size_t row, std::size_t col) const
     return _values[row * _cols + col];
 }
 
+Matrix Matrix::transpose() const
+{
+    Matrix result(_cols, _rows);
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            result(col, row) = (*this)(row, col);
+    return result;
+}
+
 static void check_product_sizes(const Matrix &left, const Matrix &right)
 {
     if (left.cols() != right.rows())

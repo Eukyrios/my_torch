@@ -83,3 +83,17 @@ Test(matrix, product_rejects_sizes_that_do_not_chain)
 {
     cr_assert_throw(my_torch::Matrix(2, 3) * my_torch::Matrix(2, 3), std::invalid_argument);
 }
+
+Test(matrix, transpose_swaps_rows_and_columns)
+{
+    my_torch::Matrix matrix({{1, 2, 3}, {4, 5, 6}});
+
+    assert_matrix_eq(matrix.transpose(), my_torch::Matrix({{1, 4}, {2, 5}, {3, 6}}));
+}
+
+Test(matrix, transpose_twice_gives_the_matrix_back)
+{
+    my_torch::Matrix matrix({{1.5, -2}, {0.25, 3}, {7, 8}});
+
+    assert_matrix_eq(matrix.transpose().transpose(), matrix);
+}
