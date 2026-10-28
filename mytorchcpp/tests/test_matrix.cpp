@@ -6,10 +6,16 @@
 */
 
 #include <criterion/criterion.h>
+#include <cmath>
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
 #include "matrix.hpp"
+
+static double square(double value)
+{
+    return value * value;
+}
 
 Test(matrix, is_filled_with_one_value)
 {
@@ -157,4 +163,17 @@ Test(matrix, is_scaled_in_place)
     matrix *= 4.0;
     matrix /= 2.0;
     assert_matrix_eq(matrix, my_torch::Matrix({{2, -4}, {1, 8}}));
+}
+
+Test(matrix, applies_a_function_to_every_value)
+{
+    assert_matrix_eq(my_torch::Matrix({{1, -2}, {3, 0.5}}).apply(square), my_torch::Matrix({{1, 4}, {9, 0.25}}));
+}
+
+Test(matrix, applies_a_function_from_cmath)
+{
+    my_torch::Matrix result = my_torch::Matrix({{0, 1}}).apply(std::exp);
+
+    cr_assert_float_eq(result(0, 0), 1.0, 1e-12);
+    cr_assert_float_eq(result(0, 1), std::exp(1.0), 1e-12);
 }

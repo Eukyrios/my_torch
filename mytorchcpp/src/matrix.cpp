@@ -69,6 +69,14 @@ Matrix Matrix::transpose() const
     return result;
 }
 
+Matrix Matrix::apply(double (*function)(double)) const
+{
+    Matrix result = *this;
+    for (double &value : result._values)
+        value = function(value);
+    return result;
+}
+
 static bool is_row_of(const Matrix &row, const Matrix &matrix)
 {
     return row.rows() == 1 && row.cols() == matrix.cols();
