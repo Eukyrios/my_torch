@@ -181,3 +181,27 @@ Test(network, rejects_dense_layers_whose_sizes_do_not_chain)
 {
     cr_assert_throw(my_torch::Network(layers_of(output_layer(), hidden_layer())), std::invalid_argument);
 }
+
+Test(network, backward_runs_the_layers_in_reverse)
+{
+    std::unique_ptr<my_torch::Layer> hidden = hidden_layer();
+    std::unique_ptr<my_torch::Layer> output = output_layer();
+    my_torch::Matrix inputs = my_torch::Matrix::row({1, 2});
+    my_torch::Matrix gradient = my_torch::Matrix::row({0.5, -1.0, 0.25});
+    (*output)((*hidden)(inputs));
+    my_torch::Matrix expected = hidden->backward(output->backward(gradient));
+    my_torch::Network network(layers_of(hidden_layer(), output_layer()));
+
+    network(inputs);
+    assert_matrix_eq(network.backward(gradient), expected);
+}
+
+Test(network, backward_gives_one_input_gradient_row_per_sample)
+{
+    my_torch::Network network = random_network({5, 4, 3});
+    network(my_torch::Matrix(6, 5, 0.5));
+    my_torch::Matrix input_gradient = network.backward(my_torch::Matrix(6, 3, 1.0));
+
+    cr_assert_eq(input_gradient.rows(), 6u);
+    cr_assert_eq(input_gradient.cols(), 5u);
+}

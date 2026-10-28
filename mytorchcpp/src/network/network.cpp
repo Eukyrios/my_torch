@@ -73,4 +73,12 @@ Matrix Network::operator()(const Matrix &inputs)
     return forward(inputs);
 }
 
+Matrix Network::backward(const Matrix &gradient)
+{
+    Matrix result = gradient;
+    for (auto layer = layers.rbegin(); layer != layers.rend(); layer++)
+        result = (*layer)->backward(result);
+    return result;
+}
+
 }
