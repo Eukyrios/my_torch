@@ -116,3 +116,30 @@ To check the key reaches the Epitech repo before pushing:
 GIT_SSH_COMMAND="ssh -i ~/.ssh/ci_deploy -o IdentitiesOnly=yes" \
   git ls-remote git@github.com:EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20.git
 ```
+## Crédits
+
+### Données d'entraînement
+
+Les positions du dataset proviennent de la **base de données ouverte de Lichess**
+([database.lichess.org](https://database.lichess.org/)) :
+
+- **Fichier utilisé :** `lichess_db_standard_rated_2016-12.pgn`, soit les parties
+  « standard » classées de décembre 2016 (9 433 412 parties).
+- **Licence :** les exports de la base Lichess sont publiés sous licence
+  [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/) :
+  ils peuvent être téléchargés, modifiés et redistribués sans autorisation, y compris pour la recherche.
+- **Ce que nous en avons tiré :** à partir des coups de chaque partie, nous avons
+  reconstitué des positions au format FEN, puis nous les avons étiquetées
+  (`Nothing`, `Check White/Black`, `Checkmate White/Black`) avec la bibliothèque
+  [python-chess](https://github.com/niklasf/python-chess), qui sert uniquement à
+  produire les étiquettes. Le réseau de neurones lui-même est entièrement
+  codé par nous, sans bibliothèque d'apprentissage.
+- **Reproductibilité :** le dataset n'est pas versionné (le fichier source fait environ 8 Go).
+  Il se régénère avec :
+  `python -m dataset.generate dataset/lichess_db_standard_rated_2016-12.pgn --seed 42`
+  (la graine fixe donne toujours les mêmes fichiers).
+
+### Bibliothèques
+
+- [python-chess](https://github.com/niklasf/python-chess) : lecture des parties PGN et étiquetage des positions.
+- [NumPy](https://numpy.org/) : calcul matriciel du réseau et format de sauvegarde `.nn`.
