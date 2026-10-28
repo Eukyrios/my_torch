@@ -12,22 +12,12 @@
 
 namespace my_torch {
 
-static void check_weights_are_a_matrix(const Matrix &weights)
+static void check_parameters(const Matrix &weights, const std::vector<double> &biases)
 {
     if (weights.rows() == 0 || weights.cols() == 0)
         throw std::invalid_argument("weights must be a matrix (n_inputs x n_outputs), got an empty one");
-}
-
-static void check_one_bias_per_neuron(const Matrix &weights, const std::vector<double> &biases)
-{
     if (biases.size() != weights.cols())
         throw std::invalid_argument("expected " + std::to_string(weights.cols()) + " biases, one per neuron, got " + std::to_string(biases.size()));
-}
-
-static void check_parameters(const Matrix &weights, const std::vector<double> &biases)
-{
-    check_weights_are_a_matrix(weights);
-    check_one_bias_per_neuron(weights, biases);
 }
 
 static void check_input_size(const Matrix &inputs, std::size_t n_inputs)
