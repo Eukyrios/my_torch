@@ -31,19 +31,24 @@ DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases,
     check_parameters(this->weights, biases);
 }
 
-std::optional<std::size_t> DenseLayer::n_inputs() const
+std::optional<Shape> DenseLayer::shape() const
 {
-    return weights.rows();
+    return Shape(weights.rows(), weights.cols());
 }
 
-std::optional<std::size_t> DenseLayer::n_outputs() const
+std::size_t DenseLayer::n_inputs() const
 {
-    return weights.cols();
+    return shape()->first;
+}
+
+std::size_t DenseLayer::n_outputs() const
+{
+    return shape()->second;
 }
 
 Matrix DenseLayer::forward(const Matrix &inputs)
 {
-    check_input_size(inputs, weights.rows());
+    check_input_size(inputs, n_inputs());
     this->inputs = inputs;
     z = inputs * weights + biases;
     return (*activation)(z);

@@ -13,12 +13,7 @@ Layer::Layer(const std::string &name) : name(name)
 {
 }
 
-std::optional<std::size_t> Layer::n_inputs() const
-{
-    return std::nullopt;
-}
-
-std::optional<std::size_t> Layer::n_outputs() const
+std::optional<Shape> Layer::shape() const
 {
     return std::nullopt;
 }

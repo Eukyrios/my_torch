@@ -14,7 +14,7 @@ namespace my_torch {
 
 static bool is_sized(const Layer &layer)
 {
-    return layer.n_inputs().has_value();
+    return layer.shape().has_value();
 }
 
 static std::vector<Layer *> find_sized_layers(const std::vector<std::unique_ptr<Layer>> &layers)
@@ -29,8 +29,8 @@ static std::vector<Layer *> find_sized_layers(const std::vector<std::unique_ptr<
 static void check_sizes_chain(const std::vector<Layer *> &sized)
 {
     for (std::size_t position = 0; position + 1 < sized.size(); position++)
-        if (sized[position]->n_outputs() != sized[position + 1]->n_inputs())
-            throw std::invalid_argument("sized layer " + std::to_string(position) + " gives " + std::to_string(*sized[position]->n_outputs()) + " outputs but sized layer " + std::to_string(position + 1) + " expects " + std::to_string(*sized[position + 1]->n_inputs()) + " inputs");
+        if (sized[position]->shape()->second != sized[position + 1]->shape()->first)
+            throw std::invalid_argument("sized layer " + std::to_string(position) + " gives " + std::to_string(sized[position]->shape()->second) + " outputs but sized layer " + std::to_string(position + 1) + " expects " + std::to_string(sized[position + 1]->shape()->first) + " inputs");
 }
 
 static void check_layers(const std::vector<std::unique_ptr<Layer>> &layers)
@@ -56,12 +56,12 @@ std::vector<Layer *> Network::sized_layers() const
 
 std::size_t Network::n_inputs() const
 {
-    return *sized_layers().front()->n_inputs();
+    return sized_layers().front()->shape()->first;
 }
 
 std::size_t Network::n_outputs() const
 {
-    return *sized_layers().back()->n_outputs();
+    return sized_layers().back()->shape()->second;
 }
 
 Matrix Network::forward(const Matrix &inputs)

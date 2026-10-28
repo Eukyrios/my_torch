@@ -51,8 +51,9 @@ Test(dense_layer, sizes_come_from_the_weight_matrix)
 {
     my_torch::DenseLayer layer(my_torch::Matrix(768, 256), std::vector<double>(256));
 
-    cr_assert_eq(*layer.n_inputs(), 768u);
-    cr_assert_eq(*layer.n_outputs(), 256u);
+    cr_assert_eq(layer.n_inputs(), 768u);
+    cr_assert_eq(layer.n_outputs(), 256u);
+    cr_assert(layer.shape() == my_torch::Shape(768, 256));
 }
 
 Test(dense_layer, batch_gives_one_output_row_per_sample)
