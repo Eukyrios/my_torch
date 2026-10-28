@@ -5,12 +5,19 @@
 ** Each schedule turns the initial learning rate and the epoch into the rate to use
 */
 
+#include <cmath>
 #include <stdexcept>
 #include <string>
 
 #include "optimizers/schedule.hpp"
 
 namespace my_torch {
+
+static void check_factor(double factor)
+{
+    if (!(factor > 0.0 && factor <= 1.0))
+        throw std::invalid_argument("the decay factor must be in (0, 1], got " + std::to_string(factor));
+}
 
 static void check_decay(double decay)
 {
@@ -44,5 +51,15 @@ TimeDecay::TimeDecay(double decay) : Schedule("time_decay"), decay(decay)
 double TimeDecay::rate(double initial_rate, std::size_t epoch) const
 {
     return initial_rate / (1.0 + decay * epoch);
+}
+
+ExponentialDecay::ExponentialDecay(double factor) : Schedule("exponential_decay"), factor(factor)
+{
+    check_factor(factor);
+}
+
+double ExponentialDecay::rate(double initial_rate, std::size_t epoch) const
+{
+    return initial_rate * std::pow(factor, epoch);
 }
 }

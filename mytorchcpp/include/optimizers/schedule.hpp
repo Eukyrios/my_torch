@@ -39,4 +39,13 @@ public:
 
     double decay;
 };
+
+class ExponentialDecay : public Schedule {
+public:
+    explicit ExponentialDecay(double factor);
+
+    double rate(double initial_rate, std::size_t epoch) const override;
+
+    double factor;
+};
 }

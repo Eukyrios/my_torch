@@ -44,3 +44,18 @@ Test(schedule, time_decay_rejects_a_negative_decay)
 {
     cr_assert_throw(my_torch::TimeDecay(-0.1), std::invalid_argument);
 }
+
+Test(schedule, exponential_decay_multiplies_by_the_factor_each_epoch)
+{
+    my_torch::ExponentialDecay schedule(0.5);
+
+    cr_assert_float_eq(schedule(0.1, 0), 0.1, 1e-15);
+    cr_assert_float_eq(schedule(0.1, 1), 0.05, 1e-15);
+    cr_assert_float_eq(schedule(0.1, 3), 0.0125, 1e-15);
+}
+
+Test(schedule, exponential_decay_rejects_a_factor_outside_0_and_1)
+{
+    cr_assert_throw(my_torch::ExponentialDecay(0.0), std::invalid_argument);
+    cr_assert_throw(my_torch::ExponentialDecay(1.5), std::invalid_argument);
+}
