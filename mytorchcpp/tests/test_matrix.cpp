@@ -57,6 +57,11 @@ Test(matrix, is_empty_without_rows)
     cr_assert_eq(matrix.cols(), 0u);
 }
 
+Test(matrix, row_is_one_row_of_values)
+{
+    assert_matrix_eq(my_torch::Matrix::row({1, 2, 3}), my_torch::Matrix({{1, 2, 3}}));
+}
+
 Test(matrix, rejects_rows_of_different_sizes)
 {
     cr_assert_throw(my_torch::Matrix({{1, 2}, {3}}), std::invalid_argument);

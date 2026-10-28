@@ -18,6 +18,8 @@ public:
     Matrix(std::size_t rows, std::size_t cols, double value = 0.0);
     Matrix(const std::vector<std::vector<double>> &values);
 
+    static Matrix row(const std::vector<double> &values);
+
     std::size_t rows() const;
     std::size_t cols() const;
     double &operator()(std::size_t row, std::size_t col);

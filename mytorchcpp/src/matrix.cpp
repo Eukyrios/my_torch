@@ -34,6 +34,11 @@ Matrix::Matrix(const std::vector<std::vector<double>> &values)
         _values.insert(_values.end(), row.begin(), row.end());
 }
 
+Matrix Matrix::row(const std::vector<double> &values)
+{
+    return Matrix(std::vector<std::vector<double>>{values});
+}
+
 std::size_t Matrix::rows() const
 {
     return _rows;
