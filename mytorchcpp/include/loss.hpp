@@ -36,10 +36,12 @@ public:
 
 class CrossEntropy : public Loss {
 public:
-    CrossEntropy();
+    explicit CrossEntropy(double epsilon = 1e-12);
 
     double forward(const Matrix &predictions, const Matrix &expected) const override;
     Matrix gradient(const Matrix &predictions, const Matrix &expected) const override;
+
+    double epsilon;
 };
 
 }

@@ -3,7 +3,8 @@
 ** my_torch
 ** File description:
 ** MeanSquaredError is the mean of (prediction - expected)^2 over every value; CrossEntropy
-** compares softmax probabilities to one-hot outputs, clipped away from 0 so log never sees 0
+** compares softmax probabilities to one-hot outputs, clipped to at least epsilon (1e-12 by
+** default) so log never sees 0
 */
 
 #include <cmath>
@@ -14,8 +15,6 @@
 
 namespace my_torch {
 
-static const double EPSILON = 1e-12;
-
 static double square(double value)
 {
     return value * value;
@@ -25,6 +24,12 @@ static void check_same_shape(const Matrix &predictions, const Matrix &expected)
 {
     if (predictions.rows() != expected.rows() || predictions.cols() != expected.cols())
         throw std::invalid_argument("predictions and expected outputs must have the same shape, got " + std::to_string(predictions.rows()) + "x" + std::to_string(predictions.cols()) + " and " + std::to_string(expected.rows()) + "x" + std::to_string(expected.cols()));
+}
+
+static void check_epsilon(double epsilon)
+{
+    if (!(epsilon > 0.0 && epsilon < 1.0))
+        throw std::invalid_argument("epsilon must be between 0 and 1, got " + std::to_string(epsilon));
 }
 
 Loss::Loss(const std::string &name) : name(name)
@@ -52,21 +57,22 @@ Matrix MeanSquaredError::gradient(const Matrix &predictions, const Matrix &expec
     return (predictions - expected) * (2.0 / predictions.size());
 }
 
-CrossEntropy::CrossEntropy() : Loss("cross_entropy")
+CrossEntropy::CrossEntropy(double epsilon) : Loss("cross_entropy"), epsilon(epsilon)
 {
+    check_epsilon(epsilon);
 }
 
 double CrossEntropy::forward(const Matrix &predictions, const Matrix &expected) const
 {
     check_same_shape(predictions, expected);
-    Matrix clipped = predictions.clip(EPSILON, 1.0);
+    Matrix clipped = predictions.clip(epsilon, 1.0);
     return -expected.hadamard(clipped.apply(std::log)).sum() / predictions.rows();
 }
 
 Matrix CrossEntropy::gradient(const Matrix &predictions, const Matrix &expected) const
 {
     check_same_shape(predictions, expected);
-    Matrix clipped = predictions.clip(EPSILON, 1.0);
+    Matrix clipped = predictions.clip(epsilon, 1.0);
     return expected / clipped * (-1.0 / predictions.rows());
 }
 

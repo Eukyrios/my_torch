@@ -141,3 +141,26 @@ Test(cross_entropy, has_its_name)
 
     cr_assert_str_eq(loss.name.c_str(), "cross_entropy");
 }
+
+Test(cross_entropy, epsilon_is_1e_12_by_default)
+{
+    cr_assert_float_eq(my_torch::CrossEntropy().epsilon, 1e-12, 1e-20);
+}
+
+Test(cross_entropy, uses_its_epsilon_as_the_smallest_probability)
+{
+    my_torch::CrossEntropy loss(0.01);
+    my_torch::Matrix predictions = my_torch::Matrix::row({0.0, 1.0, 0.0});
+    my_torch::Matrix expected = my_torch::Matrix::row({1, 0, 0});
+
+    cr_assert_float_eq(loss(predictions, expected), -std::log(0.01), 1e-9);
+    assert_matrix_eq(loss.gradient(predictions, expected), my_torch::Matrix::row({-100.0, 0.0, 0.0}));
+}
+
+Test(cross_entropy, rejects_an_epsilon_outside_0_and_1)
+{
+    cr_assert_throw(my_torch::CrossEntropy(0.0), std::invalid_argument);
+    cr_assert_throw(my_torch::CrossEntropy(-1e-3), std::invalid_argument);
+    cr_assert_throw(my_torch::CrossEntropy(1.0), std::invalid_argument);
+    cr_assert_throw(my_torch::CrossEntropy(2.0), std::invalid_argument);
+}
