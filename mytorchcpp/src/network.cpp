@@ -12,20 +12,25 @@
 
 namespace my_torch {
 
-static std::vector<DenseLayer *> find_dense_layers(const std::vector<std::unique_ptr<Layer>> &layers)
+static bool is_sized(const Layer &layer)
 {
-    std::vector<DenseLayer *> dense_layers;
-    for (const std::unique_ptr<Layer> &layer : layers)
-        if (DenseLayer *dense = dynamic_cast<DenseLayer *>(layer.get()))
-            dense_layers.push_back(dense);
-    return dense_layers;
+    return layer.n_inputs().has_value();
 }
 
-static void check_sizes_chain(const std::vector<DenseLayer *> &dense_layers)
+static std::vector<Layer *> find_sized_layers(const std::vector<std::unique_ptr<Layer>> &layers)
 {
-    for (std::size_t position = 0; position + 1 < dense_layers.size(); position++)
-        if (dense_layers[position]->n_outputs() != dense_layers[position + 1]->n_inputs())
-            throw std::invalid_argument("dense layer " + std::to_string(position) + " gives " + std::to_string(*dense_layers[position]->n_outputs()) + " outputs but dense layer " + std::to_string(position + 1) + " expects " + std::to_string(*dense_layers[position + 1]->n_inputs()) + " inputs");
+    std::vector<Layer *> sized;
+    for (const std::unique_ptr<Layer> &layer : layers)
+        if (is_sized(*layer))
+            sized.push_back(layer.get());
+    return sized;
+}
+
+static void check_sizes_chain(const std::vector<Layer *> &sized)
+{
+    for (std::size_t position = 0; position + 1 < sized.size(); position++)
+        if (sized[position]->n_outputs() != sized[position + 1]->n_inputs())
+            throw std::invalid_argument("sized layer " + std::to_string(position) + " gives " + std::to_string(*sized[position]->n_outputs()) + " outputs but sized layer " + std::to_string(position + 1) + " expects " + std::to_string(*sized[position + 1]->n_inputs()) + " inputs");
 }
 
 static void check_layers(const std::vector<std::unique_ptr<Layer>> &layers)
@@ -33,10 +38,10 @@ static void check_layers(const std::vector<std::unique_ptr<Layer>> &layers)
     for (const std::unique_ptr<Layer> &layer : layers)
         if (!layer)
             throw std::invalid_argument("a network is made of layers, got an empty one");
-    std::vector<DenseLayer *> dense_layers = find_dense_layers(layers);
-    if (dense_layers.empty())
-        throw std::invalid_argument("a network needs at least one dense layer");
-    check_sizes_chain(dense_layers);
+    std::vector<Layer *> sized = find_sized_layers(layers);
+    if (sized.empty())
+        throw std::invalid_argument("a network needs at least one layer with a fixed size, such as a dense layer");
+    check_sizes_chain(sized);
 }
 
 Network::Network(std::vector<std::unique_ptr<Layer>> layers) : layers(std::move(layers))
@@ -44,19 +49,19 @@ Network::Network(std::vector<std::unique_ptr<Layer>> layers) : layers(std::move(
     check_layers(this->layers);
 }
 
-std::vector<DenseLayer *> Network::dense_layers() const
+std::vector<Layer *> Network::sized_layers() const
 {
-    return find_dense_layers(layers);
+    return find_sized_layers(layers);
 }
 
 std::size_t Network::n_inputs() const
 {
-    return *dense_layers().front()->n_inputs();
+    return *sized_layers().front()->n_inputs();
 }
 
 std::size_t Network::n_outputs() const
 {
-    return *dense_layers().back()->n_outputs();
+    return *sized_layers().back()->n_outputs();
 }
 
 Matrix Network::forward(const Matrix &inputs)

@@ -10,6 +10,7 @@
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
+#include "dense_layer.hpp"
 #include "network.hpp"
 
 using LayerList = std::vector<std::unique_ptr<my_torch::Layer>>;
@@ -126,7 +127,7 @@ Test(network, softmax_output_gives_probabilities)
     assert_matrix_eq(network(my_torch::Matrix({{1, 2}, {0, 0}, {3, -1}})).row_sums(), my_torch::Matrix({{1}, {1}, {1}}));
 }
 
-Test(network, sizes_come_from_the_first_and_last_dense_layers)
+Test(network, sizes_come_from_the_first_and_last_sized_layers)
 {
     my_torch::Network network = random_network({768, 256, 64, 3});
 
@@ -153,7 +154,7 @@ Test(network, a_layer_without_weights_can_sit_between_dense_layers)
     my_torch::Network network(std::move(layers));
     my_torch::Network without(layers_of(hidden_layer(), output_layer()));
 
-    cr_assert_eq(network.dense_layers().size(), 2u);
+    cr_assert_eq(network.sized_layers().size(), 2u);
     assert_matrix_eq(network(my_torch::Matrix::row({1, 2})), without(my_torch::Matrix::row({1, 2})));
 }
 
@@ -162,7 +163,7 @@ Test(network, rejects_a_network_without_layers)
     cr_assert_throw(my_torch::Network(LayerList{}), std::invalid_argument);
 }
 
-Test(network, rejects_a_network_without_dense_layers)
+Test(network, rejects_a_network_without_sized_layers)
 {
     cr_assert_throw(my_torch::Network(layers_of(std::make_unique<PassThrough>(), std::make_unique<PassThrough>())), std::invalid_argument);
 }
