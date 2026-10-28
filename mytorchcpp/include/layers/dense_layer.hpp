@@ -24,7 +24,7 @@ public:
 
     std::optional<Shape> shape() const override;
     Matrix forward(const Matrix &inputs) override;
-    Matrix backward(const Matrix &gradient);
+    Matrix backward(const Matrix &gradient) override;
 
     Matrix weights;
     Matrix biases;

@@ -2,8 +2,9 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** Layer is the base class of every layer: a name, used to save and reload a network, its
-** shape (n_inputs, n_outputs), empty for layers that work on any size, and a forward pass
+** Layer is the base class of every layer: a name, used to save and reload a network, its shape
+** (n_inputs, n_outputs), empty for layers that work on any size, a forward pass (also run by
+** calling the layer) and a backward pass returning the input gradient
 */
 
 #pragma once
@@ -26,6 +27,7 @@ public:
 
     virtual std::optional<Shape> shape() const;
     virtual Matrix forward(const Matrix &inputs) = 0;
+    virtual Matrix backward(const Matrix &gradient) = 0;
     Matrix operator()(const Matrix &inputs);
 
     std::string name;

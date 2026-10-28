@@ -20,6 +20,11 @@ public:
     {
         return inputs * 2.0;
     }
+
+    my_torch::Matrix backward(const my_torch::Matrix &gradient) override
+    {
+        return gradient * 2.0;
+    }
 };
 
 Test(layer, is_called_like_its_forward)
@@ -50,4 +55,12 @@ Test(layer, has_no_size_by_default)
     Double layer;
 
     cr_assert_not(layer.shape().has_value());
+}
+
+Test(layer, backward_is_used_through_the_base_class)
+{
+    Double layer;
+    my_torch::Layer &base = layer;
+
+    assert_matrix_eq(base.backward(my_torch::Matrix::row({1, -3})), my_torch::Matrix::row({2, -6}));
 }

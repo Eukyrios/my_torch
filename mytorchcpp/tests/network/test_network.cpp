@@ -25,6 +25,11 @@ public:
     {
         return inputs;
     }
+
+    my_torch::Matrix backward(const my_torch::Matrix &gradient) override
+    {
+        return gradient;
+    }
 };
 
 static std::unique_ptr<my_torch::Layer> hidden_layer()
