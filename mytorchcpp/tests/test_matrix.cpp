@@ -97,3 +97,34 @@ Test(matrix, transpose_twice_gives_the_matrix_back)
 
     assert_matrix_eq(matrix.transpose().transpose(), matrix);
 }
+
+Test(matrix, adds_element_by_element)
+{
+    my_torch::Matrix left({{1, 2}, {3, 4}});
+    my_torch::Matrix right({{0.5, -2}, {10, 0}});
+
+    assert_matrix_eq(left + right, my_torch::Matrix({{1.5, 0}, {13, 4}}));
+}
+
+Test(matrix, subtracts_element_by_element)
+{
+    my_torch::Matrix left({{1, 2}, {3, 4}});
+    my_torch::Matrix right({{0.5, -2}, {10, 0}});
+
+    assert_matrix_eq(left - right, my_torch::Matrix({{0.5, 4}, {-7, 4}}));
+}
+
+Test(matrix, adds_and_subtracts_in_place)
+{
+    my_torch::Matrix matrix({{1, 2}, {3, 4}});
+
+    matrix += my_torch::Matrix({{1, 1}, {1, 1}});
+    matrix -= my_torch::Matrix({{0, 2}, {4, 0}});
+    assert_matrix_eq(matrix, my_torch::Matrix({{2, 1}, {0, 5}}));
+}
+
+Test(matrix, element_wise_operations_reject_different_shapes)
+{
+    cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix(3, 2), std::invalid_argument);
+    cr_assert_throw(my_torch::Matrix(2, 3) - my_torch::Matrix(2, 2), std::invalid_argument);
+}

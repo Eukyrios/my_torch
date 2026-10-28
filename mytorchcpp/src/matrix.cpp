@@ -63,6 +63,28 @@ Matrix Matrix::transpose() const
     return result;
 }
 
+static void check_same_shape(const Matrix &left, const Matrix &right)
+{
+    if (left.rows() != right.rows() || left.cols() != right.cols())
+        throw std::invalid_argument("element-wise operations need matrices of the same shape, got " + std::to_string(left.rows()) + "x" + std::to_string(left.cols()) + " and " + std::to_string(right.rows()) + "x" + std::to_string(right.cols()));
+}
+
+Matrix &Matrix::operator+=(const Matrix &other)
+{
+    check_same_shape(*this, other);
+    for (std::size_t i = 0; i < _values.size(); i++)
+        _values[i] += other._values[i];
+    return *this;
+}
+
+Matrix &Matrix::operator-=(const Matrix &other)
+{
+    check_same_shape(*this, other);
+    for (std::size_t i = 0; i < _values.size(); i++)
+        _values[i] -= other._values[i];
+    return *this;
+}
+
 static void check_product_sizes(const Matrix &left, const Matrix &right)
 {
     if (left.cols() != right.rows())
@@ -78,6 +100,16 @@ Matrix operator*(const Matrix &left, const Matrix &right)
             for (std::size_t j = 0; j < right.cols(); j++)
                 result(i, j) += left(i, k) * right(k, j);
     return result;
+}
+
+Matrix operator+(Matrix left, const Matrix &right)
+{
+    return left += right;
+}
+
+Matrix operator-(Matrix left, const Matrix &right)
+{
+    return left -= right;
 }
 
 }

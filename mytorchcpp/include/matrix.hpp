@@ -23,6 +23,8 @@ public:
     double &operator()(std::size_t row, std::size_t col);
     double operator()(std::size_t row, std::size_t col) const;
     Matrix transpose() const;
+    Matrix &operator+=(const Matrix &other);
+    Matrix &operator-=(const Matrix &other);
 
 private:
     std::size_t _rows = 0;
@@ -31,5 +33,7 @@ private:
 };
 
 Matrix operator*(const Matrix &left, const Matrix &right);
+Matrix operator+(Matrix left, const Matrix &right);
+Matrix operator-(Matrix left, const Matrix &right);
 
 }
