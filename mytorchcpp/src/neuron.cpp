@@ -41,4 +41,9 @@ double Neuron::forward(const std::vector<double> &inputs) const
     return std::inner_product(inputs.begin(), inputs.end(), weights.begin(), bias);
 }
 
+double Neuron::operator()(const std::vector<double> &inputs) const
+{
+    return forward(inputs);
+}
+
 }

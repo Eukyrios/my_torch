@@ -25,6 +25,13 @@ Test(neuron, is_lowered_by_negative_weights)
     cr_assert_float_eq(my_torch::Neuron({-1, 0.5}, -0.3).forward({1, 2}), -0.3, 1e-9);
 }
 
+Test(neuron, is_called_like_a_function)
+{
+    my_torch::Neuron neuron({0.5, 0.25}, 0.1);
+
+    cr_assert_float_eq(neuron({1, 2}), neuron.forward({1, 2}), 1e-12);
+}
+
 Test(neuron, has_one_input_per_weight)
 {
     cr_assert_eq(my_torch::Neuron({1, 2, 3}, 0).n_inputs(), 3u);
