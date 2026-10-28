@@ -1,7 +1,7 @@
 # my_torch: how the network works
 
 The maths behind `my_torch`, written from scratch with numpy: the equations each class implements, the
-shape of every matrix, the derivatives used to learn, and what training gives on real chess positions.
+shape of every matrix, the derivatives used to learn, and what training gives on XOR.
 Every figure is drawn from the `my_torch` code itself by [`scripts/plot_docs.py`](../scripts/plot_docs.py).
 
 1. [Notation and shapes](#1-notation-and-shapes)
@@ -424,33 +424,10 @@ backpropagation and the optimizer all working together.
 
 It is learned from 5 different random starts (`tests/my_torch/network/test_xor.py`).
 
-### Chess positions
-
-Data: 121,332 games from the [Lichess database](https://database.lichess.org/) (January 2013), turned by
-`python -m dataset.generate … --per-class 2000` into 8,000 training, 1,000 validation and 1,000 test positions,
-**balanced over the 5 classes** (blind guessing scores 20%). Network 769 → 256 → 64 → 5 (ReLU, ReLU, softmax),
-cross-entropy, batch size 32, same starting weights for every run.
-
-![Training and validation accuracy on chess positions](images/chess_learning.png)
-
-| Optimizer | Best validation accuracy | Test accuracy |
-|---|---|---|
-| `SGD(0.05)` | 70.8% (epoch 11) | 72.3% |
-| `SGD(0.05)` + `StepDecay(0.5, every=8)` | 71.5% (epoch 11) | 72.6% |
-| `Momentum(0.05, 0.9)` + `StepDecay(0.5, every=8)` | 70.1% (epoch 14) | 72.5% |
-| `Momentum(0.01, 0.9)` + `StepDecay(0.5, every=8)` | **71.7%** (epoch 9) | **72.9%** |
-
-- The network does learn the task: about **72%** on positions from games it never saw, against 20% for chance.
-- Momentum learns faster in the first epochs; a schedule keeps the validation accuracy from sliding down later.
-  The differences between optimizers are within the noise of a 1,000-position test set (about ±3%).
-- **The limit is overfitting:** training accuracy reaches 100% while validation stalls around 70% from epoch 10.
-  The network memorizes 8,000 positions instead of learning the rules of check. More data (20,000 per class)
-  and the overfitting prevention of #13 (early stopping, dropout, L2) are the next levers.
-
-To redraw every figure, including this one when a dataset is given:
+To redraw every figure:
 
 ```bash
-python -m scripts.plot_docs data        # data/ holds train.txt and validation.txt from dataset.generate
+python -m scripts.plot_docs
 ```
 
 ## 14. Code map
