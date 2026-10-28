@@ -13,14 +13,16 @@ SRC	=	src/neuron.cpp	\
 		src/activations.cpp	\
 		src/layer.cpp	\
 		src/dense_layer.cpp	\
-		src/network.cpp
+		src/network.cpp	\
+		src/loss.cpp
 
 TESTS	=	tests/test_neuron.cpp	\
 		tests/test_matrix.cpp	\
 		tests/test_activations.cpp	\
 		tests/test_layer.cpp	\
 		tests/test_dense_layer.cpp	\
-		tests/test_network.cpp
+		tests/test_network.cpp	\
+		tests/test_loss.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
