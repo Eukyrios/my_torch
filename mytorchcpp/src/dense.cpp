@@ -30,7 +30,7 @@ static void check_input_size(const Matrix &inputs, std::size_t n_inputs)
         throw std::invalid_argument("the layer expects " + std::to_string(n_inputs) + " inputs per sample, got " + std::to_string(inputs.cols()));
 }
 
-Dense::Dense(const Matrix &weights, const std::vector<double> &biases, const Activation &activation) : weights(weights), biases(Matrix::row(biases)), activation(activation)
+Dense::Dense(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
 {
     check_weights_are_a_matrix(this->weights);
     check_one_bias_per_neuron(this->weights, biases);
@@ -51,7 +51,7 @@ Matrix Dense::forward(const Matrix &inputs)
     check_input_size(inputs, n_inputs());
     this->inputs = inputs;
     z = inputs * weights + biases;
-    return activation(z);
+    return (*activation)(z);
 }
 
 }

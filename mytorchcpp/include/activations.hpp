@@ -2,12 +2,13 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** Activation functions applied to a layer's weighted sums z. An Activation holds its name,
-** how a saved network will store it, and its function, and is called like the function
+** Activation is the base class: each subclass gives its name, how a saved network stores it,
+** and its forward pass on z; an activation is called like a function, activation(z)
 */
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -15,29 +16,49 @@
 
 namespace my_torch {
 
-using ActivationFunction = Matrix (*)(const Matrix &);
+class Activation {
+public:
+    virtual ~Activation() = default;
 
-Matrix linear(const Matrix &z);
-Matrix relu(const Matrix &z);
-Matrix sigmoid(const Matrix &z);
-Matrix tanh(const Matrix &z);
-Matrix softmax(const Matrix &z);
-
-struct Activation {
-    std::string name;
-    ActivationFunction function;
-
+    virtual std::string name() const = 0;
+    virtual Matrix forward(const Matrix &z) const = 0;
     Matrix operator()(const Matrix &z) const;
 };
 
-extern const Activation LINEAR;
-extern const Activation RELU;
-extern const Activation SIGMOID;
-extern const Activation TANH;
-extern const Activation SOFTMAX;
+class Linear : public Activation {
+public:
+    std::string name() const override;
+    Matrix forward(const Matrix &z) const override;
+};
 
-const std::vector<Activation> &all_activations();
+class ReLU : public Activation {
+public:
+    std::string name() const override;
+    Matrix forward(const Matrix &z) const override;
+};
+
+class Sigmoid : public Activation {
+public:
+    std::string name() const override;
+    Matrix forward(const Matrix &z) const override;
+};
+
+class Tanh : public Activation {
+public:
+    std::string name() const override;
+    Matrix forward(const Matrix &z) const override;
+};
+
+class Softmax : public Activation {
+public:
+    std::string name() const override;
+    Matrix forward(const Matrix &z) const override;
+};
+
+using ActivationMaker = std::unique_ptr<Activation> (*)();
+
+const std::vector<ActivationMaker> &activation_classes();
 std::vector<std::string> activation_names();
-Activation find_activation(const std::string &name);
+std::unique_ptr<Activation> find_activation(const std::string &name);
 
 }

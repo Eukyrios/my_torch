@@ -2,8 +2,8 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** linear keeps z, relu cuts negatives to 0, sigmoid squashes into (0, 1) as
-** 0.5 * (1 + tanh(z / 2)) so exp never overflows, tanh squashes into (-1, 1), and softmax
+** Linear keeps z, ReLU cuts negatives to 0, Sigmoid squashes into (0, 1) as
+** 0.5 * (1 + tanh(z / 2)) so exp never overflows, Tanh squashes into (-1, 1), and Softmax
 ** turns each row into probabilities, minus the row maximum first for the same reason
 */
 
@@ -30,54 +30,79 @@ static double tanh_value(double z)
     return std::tanh(z);
 }
 
-Matrix linear(const Matrix &z)
+Matrix Activation::operator()(const Matrix &z) const
+{
+    return forward(z);
+}
+
+std::string Linear::name() const
+{
+    return "linear";
+}
+
+Matrix Linear::forward(const Matrix &z) const
 {
     return z;
 }
 
-Matrix relu(const Matrix &z)
+std::string ReLU::name() const
+{
+    return "relu";
+}
+
+Matrix ReLU::forward(const Matrix &z) const
 {
     return z.apply(relu_value);
 }
 
-Matrix sigmoid(const Matrix &z)
+std::string Sigmoid::name() const
+{
+    return "sigmoid";
+}
+
+Matrix Sigmoid::forward(const Matrix &z) const
 {
     return z.apply(sigmoid_value);
 }
 
-Matrix tanh(const Matrix &z)
+std::string Tanh::name() const
+{
+    return "tanh";
+}
+
+Matrix Tanh::forward(const Matrix &z) const
 {
     return z.apply(tanh_value);
 }
 
-Matrix softmax(const Matrix &z)
+std::string Softmax::name() const
+{
+    return "softmax";
+}
+
+Matrix Softmax::forward(const Matrix &z) const
 {
     Matrix exps = (z - z.row_maxima()).apply(std::exp);
     return exps / exps.row_sums();
 }
 
-Matrix Activation::operator()(const Matrix &z) const
+template <typename Subclass>
+static std::unique_ptr<Activation> make()
 {
-    return function(z);
+    return std::make_unique<Subclass>();
 }
 
-const Activation LINEAR = {"linear", linear};
-const Activation RELU = {"relu", relu};
-const Activation SIGMOID = {"sigmoid", sigmoid};
-const Activation TANH = {"tanh", tanh};
-const Activation SOFTMAX = {"softmax", softmax};
-
-const std::vector<Activation> &all_activations()
+const std::vector<ActivationMaker> &activation_classes()
 {
-    static const std::vector<Activation> all = {LINEAR, RELU, SIGMOID, TANH, SOFTMAX};
+    static const std::vector<ActivationMaker> all = {make<Linear>, make<ReLU>, make<Sigmoid>, make<Tanh>, make<Softmax>};
     return all;
 }
 
 std::vector<std::string> activation_names()
 {
     std::vector<std::string> names;
-    for (const Activation &activation : all_activations())
-        names.push_back(activation.name);
+    for (ActivationMaker make_activation : activation_classes())
+        names.push_back(make_activation()->name());
     return names;
 }
 
@@ -89,11 +114,13 @@ static std::string joined(const std::vector<std::string> &names)
     return text;
 }
 
-Activation find_activation(const std::string &name)
+std::unique_ptr<Activation> find_activation(const std::string &name)
 {
-    for (const Activation &activation : all_activations())
-        if (activation.name == name)
+    for (ActivationMaker make_activation : activation_classes()) {
+        std::unique_ptr<Activation> activation = make_activation();
+        if (activation->name() == name)
             return activation;
+    }
     throw std::invalid_argument("unknown activation '" + name + "', expected one of: " + joined(activation_names()));
 }
 

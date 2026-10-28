@@ -10,6 +10,7 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 #include "activations.hpp"
@@ -19,7 +20,7 @@ namespace my_torch {
 
 class Dense {
 public:
-    Dense(const Matrix &weights, const std::vector<double> &biases, const Activation &activation = LINEAR);
+    Dense(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
 
     std::size_t n_inputs() const;
     std::size_t n_outputs() const;
@@ -27,7 +28,7 @@ public:
 
     Matrix weights;
     Matrix biases;
-    Activation activation;
+    std::unique_ptr<Activation> activation;
     Matrix inputs;
     Matrix z;
 };
