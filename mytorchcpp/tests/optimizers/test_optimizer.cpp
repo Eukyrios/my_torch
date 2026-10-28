@@ -65,3 +65,61 @@ Test(sgd, step_needs_a_backward_first)
 
     cr_assert_throw(my_torch::SGD().step(layer.parameters()), std::runtime_error);
 }
+
+Test(momentum, first_step_is_a_plain_gradient_step)
+{
+    my_torch::Matrix value = my_torch::Matrix::row({1, 2});
+
+    my_torch::Momentum(0.1, 0.9).update(value, my_torch::Matrix::row({1, -1}));
+    assert_matrix_eq(value, my_torch::Matrix::row({0.9, 2.1}));
+}
+
+Test(momentum, steps_build_up_speed_with_the_same_gradient)
+{
+    my_torch::Momentum optimizer(0.1, 0.9);
+    my_torch::Matrix value = my_torch::Matrix::row({0.0});
+    my_torch::Matrix gradient = my_torch::Matrix::row({1.0});
+
+    optimizer.update(value, gradient);
+    optimizer.update(value, gradient);
+    cr_assert_float_eq(value(0, 0), -0.1 - 0.19, 1e-12);
+}
+
+Test(momentum, keeps_one_velocity_per_parameter)
+{
+    my_torch::Momentum optimizer(0.1, 0.9);
+    my_torch::Matrix first = my_torch::Matrix::row({0.0});
+    my_torch::Matrix second = my_torch::Matrix::row({0.0, 0.0});
+
+    optimizer.update(first, my_torch::Matrix::row({1.0}));
+    optimizer.update(second, my_torch::Matrix::row({-1.0, 2.0}));
+    cr_assert_eq(optimizer.velocities.size(), 2u);
+    assert_matrix_eq(optimizer.velocities.at(&second), my_torch::Matrix::row({0.1, -0.2}));
+}
+
+Test(momentum, of_zero_is_sgd)
+{
+    my_torch::Matrix with_momentum = my_torch::Matrix::row({1, 2});
+    my_torch::Matrix with_sgd = my_torch::Matrix::row({1, 2});
+    my_torch::Momentum momentum(0.1, 0.0);
+    my_torch::SGD sgd(0.1);
+
+    for (int step = 0; step < 3; step++) {
+        momentum.update(with_momentum, my_torch::Matrix::row({1, -1}));
+        sgd.update(with_sgd, my_torch::Matrix::row({1, -1}));
+    }
+    assert_matrix_eq(with_momentum, with_sgd);
+}
+
+Test(momentum, has_its_name)
+{
+    my_torch::Momentum optimizer;
+
+    cr_assert_str_eq(optimizer.name.c_str(), "momentum");
+}
+
+Test(momentum, rejects_a_momentum_outside_0_and_1)
+{
+    cr_assert_throw(my_torch::Momentum(0.1, -0.1), std::invalid_argument);
+    cr_assert_throw(my_torch::Momentum(0.1, 1.0), std::invalid_argument);
+}

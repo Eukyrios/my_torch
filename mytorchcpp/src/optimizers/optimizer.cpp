@@ -24,6 +24,12 @@ static void check_gradient(const Matrix &gradient)
         throw std::runtime_error("a parameter has no gradient yet: run backward before step");
 }
 
+static void check_momentum(double momentum)
+{
+    if (!(momentum >= 0.0 && momentum < 1.0))
+        throw std::invalid_argument("the momentum must be in [0, 1), got " + std::to_string(momentum));
+}
+
 Optimizer::Optimizer(const std::string &name, double learning_rate) : name(name), learning_rate(learning_rate)
 {
     check_learning_rate(learning_rate);
@@ -44,6 +50,20 @@ SGD::SGD(double learning_rate) : Optimizer("sgd", learning_rate)
 void SGD::update(Matrix &value, const Matrix &gradient)
 {
     value -= gradient * learning_rate;
+}
+
+Momentum::Momentum(double learning_rate, double momentum) : Optimizer("momentum", learning_rate), momentum(momentum)
+{
+    check_momentum(momentum);
+}
+
+void Momentum::update(Matrix &value, const Matrix &gradient)
+{
+    auto found = velocities.find(&value);
+    Matrix velocity = found == velocities.end() ? Matrix(value.rows(), value.cols()) : found->second;
+    velocity = velocity * momentum - gradient * learning_rate;
+    velocities[&value] = velocity;
+    value += velocity;
 }
 
 }
