@@ -47,12 +47,10 @@ Test(dense_layer, each_output_is_the_neuron_of_its_column)
         cr_assert_float_eq(outputs(0, j), my_torch::Neuron(column(weights, j), biases[j]).forward(inputs), 1e-9);
 }
 
-Test(dense_layer, sizes_come_from_the_weight_matrix)
+Test(dense_layer, shape_comes_from_the_weight_matrix)
 {
     my_torch::DenseLayer layer(my_torch::Matrix(768, 256), std::vector<double>(256));
 
-    cr_assert_eq(layer.n_inputs(), 768u);
-    cr_assert_eq(layer.n_outputs(), 256u);
     cr_assert(layer.shape() == my_torch::Shape(768, 256));
 }
 

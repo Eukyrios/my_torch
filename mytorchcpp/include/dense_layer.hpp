@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -24,8 +23,6 @@ public:
     DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
 
     std::optional<Shape> shape() const override;
-    std::size_t n_inputs() const;
-    std::size_t n_outputs() const;
     Matrix forward(const Matrix &inputs) override;
 
     Matrix weights;
