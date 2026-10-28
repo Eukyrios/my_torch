@@ -6,6 +6,7 @@
 ** Like numpy, + and - repeat a single row on every row of the other matrix
 */
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 
@@ -92,6 +93,17 @@ Matrix Matrix::column_sums() const
     for (std::size_t row = 0; row < _rows; row++)
         for (std::size_t col = 0; col < _cols; col++)
             result(0, col) += (*this)(row, col);
+    return result;
+}
+
+Matrix Matrix::row_maxima() const
+{
+    Matrix result(_rows, 1);
+    for (std::size_t row = 0; row < _rows; row++) {
+        result(row, 0) = (*this)(row, 0);
+        for (std::size_t col = 1; col < _cols; col++)
+            result(row, 0) = std::max(result(row, 0), (*this)(row, col));
+    }
     return result;
 }
 

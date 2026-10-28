@@ -28,6 +28,7 @@ public:
     Matrix apply(double (*function)(double)) const;
     Matrix row_sums() const;
     Matrix column_sums() const;
+    Matrix row_maxima() const;
     Matrix &operator+=(const Matrix &other);
     Matrix &operator-=(const Matrix &other);
     Matrix &operator*=(double scalar);

@@ -187,3 +187,8 @@ Test(matrix, column_sums_give_one_sum_per_column_as_a_row)
 {
     assert_matrix_eq(my_torch::Matrix({{1, 2, 3}, {4, 5, 6}}).column_sums(), my_torch::Matrix::row({5, 7, 9}));
 }
+
+Test(matrix, row_maxima_give_the_largest_value_of_each_row)
+{
+    assert_matrix_eq(my_torch::Matrix({{1, 7, 3}, {-4, -5, -6}}).row_maxima(), my_torch::Matrix({{7}, {-4}}));
+}
