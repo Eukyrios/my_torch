@@ -13,6 +13,16 @@ Layer::Layer(const std::string &name) : name(name)
 {
 }
 
+std::optional<std::size_t> Layer::n_inputs() const
+{
+    return std::nullopt;
+}
+
+std::optional<std::size_t> Layer::n_outputs() const
+{
+    return std::nullopt;
+}
+
 Matrix Layer::operator()(const Matrix &inputs)
 {
     return forward(inputs);

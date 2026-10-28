@@ -42,3 +42,11 @@ Test(layer, keeps_its_name)
 {
     cr_assert_str_eq(Double().name.c_str(), "double");
 }
+
+Test(layer, has_no_size_by_default)
+{
+    Double layer;
+
+    cr_assert_not(layer.n_inputs().has_value());
+    cr_assert_not(layer.n_outputs().has_value());
+}

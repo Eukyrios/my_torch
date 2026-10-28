@@ -23,8 +23,8 @@ class DenseLayer : public Layer {
 public:
     DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
 
-    std::size_t n_inputs() const;
-    std::size_t n_outputs() const;
+    std::optional<std::size_t> n_inputs() const override;
+    std::optional<std::size_t> n_outputs() const override;
     Matrix forward(const Matrix &inputs) override;
 
     Matrix weights;
