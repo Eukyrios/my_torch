@@ -8,51 +8,81 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
+#include "assert_matrix.hpp"
 #include "dense.hpp"
 #include "neuron.hpp"
 
-static const std::vector<std::vector<double>> WEIGHTS = {{0.5, -1.0}, {0.25, 0.5}};
+static const my_torch::Matrix WEIGHTS({{0.5, -1.0}, {0.25, 0.5}});
 static const std::vector<double> BIASES = {0.1, -0.3};
 
-static std::vector<double> column(const std::vector<std::vector<double>> &weights, std::size_t j)
+static std::vector<double> column(const my_torch::Matrix &matrix, std::size_t col)
 {
     std::vector<double> values;
-    for (const std::vector<double> &row : weights)
-        values.push_back(row[j]);
+    for (std::size_t row = 0; row < matrix.rows(); row++)
+        values.push_back(matrix(row, col));
+    return values;
+}
+
+static std::vector<double> row(const my_torch::Matrix &matrix, std::size_t row)
+{
+    std::vector<double> values;
+    for (std::size_t col = 0; col < matrix.cols(); col++)
+        values.push_back(matrix(row, col));
     return values;
 }
 
 Test(dense, forward_matches_the_hand_computation)
 {
-    std::vector<double> outputs = my_torch::Dense(WEIGHTS, BIASES).forward({1, 2});
-
-    cr_assert_float_eq(outputs[0], 1.1, 1e-9);
-    cr_assert_float_eq(outputs[1], -0.3, 1e-9);
+    assert_matrix_eq(my_torch::Dense(WEIGHTS, BIASES).forward(my_torch::Matrix::row({1, 2})), my_torch::Matrix({{1.1, -0.3}}));
 }
 
 Test(dense, each_output_is_the_neuron_of_its_column)
 {
-    std::vector<std::vector<double>> weights = {{0.3, -0.7, 1.2}, {-0.4, 0.9, 0.1}, {2.0, -1.5, 0.6}, {0.8, 0.2, -0.9}};
+    my_torch::Matrix weights({{0.3, -0.7, 1.2}, {-0.4, 0.9, 0.1}, {2.0, -1.5, 0.6}, {0.8, 0.2, -0.9}});
     std::vector<double> biases = {0.5, -0.2, 0.05};
     std::vector<double> inputs = {1.5, -0.5, 0.25, 2.0};
-    std::vector<double> outputs = my_torch::Dense(weights, biases).forward(inputs);
+    my_torch::Matrix outputs = my_torch::Dense(weights, biases).forward(my_torch::Matrix::row(inputs));
 
     for (std::size_t j = 0; j < 3; j++)
-        cr_assert_float_eq(outputs[j], my_torch::weighted_sum(inputs, column(weights, j), biases[j]), 1e-9);
+        cr_assert_float_eq(outputs(0, j), my_torch::weighted_sum(inputs, column(weights, j), biases[j]), 1e-9);
 }
 
 Test(dense, sizes_come_from_the_weight_matrix)
 {
-    my_torch::Dense layer(std::vector<std::vector<double>>(768, std::vector<double>(256)), std::vector<double>(256));
+    my_torch::Dense layer(my_torch::Matrix(768, 256), std::vector<double>(256));
 
     cr_assert_eq(layer.n_inputs(), 768u);
     cr_assert_eq(layer.n_outputs(), 256u);
 }
 
-Test(dense, rejects_weights_that_are_not_a_matrix)
+Test(dense, batch_gives_one_output_row_per_sample)
 {
-    cr_assert_throw(my_torch::Dense({{1, 2}, {3}}, {0, 0}), std::invalid_argument);
-    cr_assert_throw(my_torch::Dense({}, {}), std::invalid_argument);
+    my_torch::Matrix outputs = my_torch::Dense(my_torch::Matrix(768, 3), std::vector<double>(3)).forward(my_torch::Matrix(32, 768));
+
+    cr_assert_eq(outputs.rows(), 32u);
+    cr_assert_eq(outputs.cols(), 3u);
+}
+
+Test(dense, each_batch_row_matches_the_single_sample_forward)
+{
+    my_torch::Dense layer(my_torch::Matrix({{0.3, -0.7}, {-0.4, 0.9}, {2.0, -1.5}}), {0.5, -0.2});
+    my_torch::Matrix batch({{1, 2, 3}, {-1, 0.5, 0}, {0.25, -2, 4}});
+    my_torch::Matrix outputs = layer.forward(batch);
+
+    for (std::size_t sample = 0; sample < batch.rows(); sample++)
+        assert_matrix_eq(my_torch::Matrix::row(row(outputs, sample)), layer.forward(my_torch::Matrix::row(row(batch, sample))));
+}
+
+Test(dense, biases_are_added_to_every_row)
+{
+    my_torch::Matrix outputs = my_torch::Dense(my_torch::Matrix(2, 2), BIASES).forward(my_torch::Matrix(3, 2, 1.0));
+
+    assert_matrix_eq(outputs, my_torch::Matrix({{0.1, -0.3}, {0.1, -0.3}, {0.1, -0.3}}));
+}
+
+Test(dense, rejects_empty_weights)
+{
+    cr_assert_throw(my_torch::Dense(my_torch::Matrix(), {}), std::invalid_argument);
 }
 
 Test(dense, rejects_a_bias_count_that_does_not_match_the_neurons)
@@ -65,6 +95,6 @@ Test(dense, rejects_the_wrong_number_of_inputs)
 {
     my_torch::Dense layer(WEIGHTS, BIASES);
 
-    cr_assert_throw(layer.forward({1}), std::invalid_argument);
-    cr_assert_throw(layer.forward({1, 2, 3}), std::invalid_argument);
+    cr_assert_throw(layer.forward(my_torch::Matrix::row({1})), std::invalid_argument);
+    cr_assert_throw(layer.forward(my_torch::Matrix::row({1, 2, 3})), std::invalid_argument);
 }
