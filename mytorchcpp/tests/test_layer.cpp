@@ -12,6 +12,10 @@
 
 class Double : public my_torch::Layer {
 public:
+    Double() : Layer("double")
+    {
+    }
+
     my_torch::Matrix forward(const my_torch::Matrix &inputs) override
     {
         return inputs * 2.0;
@@ -32,4 +36,9 @@ Test(layer, is_used_through_the_base_class)
     my_torch::Layer &base = layer;
 
     assert_matrix_eq(base(my_torch::Matrix::row({1, 2})), my_torch::Matrix::row({2, 4}));
+}
+
+Test(layer, keeps_its_name)
+{
+    cr_assert_str_eq(Double().name.c_str(), "double");
 }

@@ -2,12 +2,16 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** Calling a layer runs its forward pass
+** Every layer has a name, and calling a layer runs its forward pass
 */
 
 #include "layer.hpp"
 
 namespace my_torch {
+
+Layer::Layer(const std::string &name) : name(name)
+{
+}
 
 Matrix Layer::operator()(const Matrix &inputs)
 {

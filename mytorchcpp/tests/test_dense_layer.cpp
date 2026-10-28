@@ -80,6 +80,11 @@ Test(dense_layer, biases_are_added_to_every_row)
     assert_matrix_eq(outputs, my_torch::Matrix({{0.1, -0.3}, {0.1, -0.3}, {0.1, -0.3}}));
 }
 
+Test(dense_layer, is_named_dense)
+{
+    cr_assert_str_eq(my_torch::DenseLayer(WEIGHTS, BIASES).name.c_str(), "dense");
+}
+
 Test(dense_layer, is_called_like_a_function)
 {
     my_torch::DenseLayer layer(WEIGHTS, BIASES);
