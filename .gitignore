@@ -1,5 +1,5 @@
-# Python caches and test reports, environments, the entry points built by make,
-# training datasets (too heavy to push, but kept for the defense) and IDE files.
+# Python caches and test reports, environments, the entry points built by make, C++ build
+# outputs, training datasets (too heavy to push, but kept for the defense) and IDE files.
 
 __pycache__/
 *.py[cod]
@@ -19,3 +19,8 @@ data/
 __init__.py
 .idea/
 .DS_Store
+*.o
+*.a
+*.gcno
+*.gcda
+/mytorchcpp/unit_tests
