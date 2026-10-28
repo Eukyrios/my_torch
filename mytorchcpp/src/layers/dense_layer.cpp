@@ -58,7 +58,9 @@ static void check_backward(const Matrix &z, const Matrix &gradient)
         throw std::invalid_argument("the gradient must have the shape of the last outputs " + std::to_string(z.rows()) + "x" + std::to_string(z.cols()) + ", got " + std::to_string(gradient.rows()) + "x" + std::to_string(gradient.cols()));
 }
 
-DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : Layer("dense"), weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
+DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation)
+:
+    Layer("dense"), weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
 {
     check_parameters(this->weights, biases);
 }

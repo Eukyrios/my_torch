@@ -21,9 +21,10 @@ static void check_rows_have_the_same_size(const std::vector<std::vector<double>>
             throw std::invalid_argument("a matrix needs rows of the same size");
 }
 
-Matrix::Matrix(std::size_t rows, std::size_t cols, double value) : _rows(rows), _cols(cols), _values(rows * cols, value)
-{
-}
+Matrix::Matrix(std::size_t rows, std::size_t cols, double value)
+:
+    _rows(rows), _cols(cols), _values(rows * cols, value)
+{}
 
 Matrix::Matrix(const std::vector<std::vector<double>> &values)
 {

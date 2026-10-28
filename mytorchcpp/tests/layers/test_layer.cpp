@@ -12,9 +12,10 @@
 
 class Double : public my_torch::Layer {
 public:
-    Double() : Layer("double")
-    {
-    }
+    Double()
+    :
+        Layer("double")
+    {}
 
     my_torch::Matrix forward(const my_torch::Matrix &inputs) override
     {

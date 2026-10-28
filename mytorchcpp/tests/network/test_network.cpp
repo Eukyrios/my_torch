@@ -17,9 +17,10 @@ using LayerList = std::vector<std::unique_ptr<my_torch::Layer>>;
 
 class PassThrough : public my_torch::Layer {
 public:
-    PassThrough() : Layer("pass_through")
-    {
-    }
+    PassThrough()
+    :
+        Layer("pass_through")
+    {}
 
     my_torch::Matrix forward(const my_torch::Matrix &inputs) override
     {

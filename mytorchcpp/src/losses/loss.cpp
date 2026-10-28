@@ -32,18 +32,20 @@ static void check_epsilon(double epsilon)
         throw std::invalid_argument("epsilon must be between 0 and 1, got " + std::to_string(epsilon));
 }
 
-Loss::Loss(const std::string &name) : name(name)
-{
-}
+Loss::Loss(const std::string &name)
+:
+    name(name)
+{}
 
 double Loss::operator()(const Matrix &predictions, const Matrix &expected) const
 {
     return forward(predictions, expected);
 }
 
-MeanSquaredError::MeanSquaredError() : Loss("mean_squared_error")
-{
-}
+MeanSquaredError::MeanSquaredError()
+:
+    Loss("mean_squared_error")
+{}
 
 double MeanSquaredError::forward(const Matrix &predictions, const Matrix &expected) const
 {
@@ -57,7 +59,9 @@ Matrix MeanSquaredError::gradient(const Matrix &predictions, const Matrix &expec
     return (predictions - expected) * (2.0 / predictions.size());
 }
 
-CrossEntropy::CrossEntropy(double epsilon) : Loss("cross_entropy"), epsilon(epsilon)
+CrossEntropy::CrossEntropy(double epsilon)
+:
+    Loss("cross_entropy"), epsilon(epsilon)
 {
     check_epsilon(epsilon);
 }

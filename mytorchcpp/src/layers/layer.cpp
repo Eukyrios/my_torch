@@ -9,9 +9,10 @@
 
 namespace my_torch {
 
-Layer::Layer(const std::string &name) : name(name)
-{
-}
+Layer::Layer(const std::string &name)
+:
+    name(name)
+{}
 
 std::optional<Shape> Layer::shape() const
 {

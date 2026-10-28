@@ -74,7 +74,9 @@ std::vector<std::vector<std::size_t>> shuffled_batches(std::size_t n_samples, st
     return batches;
 }
 
-Network::Network(std::vector<std::unique_ptr<Layer>> layers) : layers(std::move(layers))
+Network::Network(std::vector<std::unique_ptr<Layer>> layers)
+:
+    layers(std::move(layers))
 {
     check_layers(this->layers);
 }

@@ -31,25 +31,29 @@ static void check_decay(double decay)
         throw std::invalid_argument("the decay must not be negative, got " + std::to_string(decay));
 }
 
-Schedule::Schedule(const std::string &name) : name(name)
-{
-}
+Schedule::Schedule(const std::string &name)
+:
+    name(name)
+{}
 
 double Schedule::operator()(double initial_rate, std::size_t epoch) const
 {
     return rate(initial_rate, epoch);
 }
 
-Constant::Constant() : Schedule("constant")
-{
-}
+Constant::Constant()
+:
+    Schedule("constant")
+{}
 
 double Constant::rate(double initial_rate, std::size_t) const
 {
     return initial_rate;
 }
 
-TimeDecay::TimeDecay(double decay) : Schedule("time_decay"), decay(decay)
+TimeDecay::TimeDecay(double decay)
+:
+    Schedule("time_decay"), decay(decay)
 {
     check_decay(decay);
 }
@@ -59,7 +63,9 @@ double TimeDecay::rate(double initial_rate, std::size_t epoch) const
     return initial_rate / (1.0 + decay * epoch);
 }
 
-ExponentialDecay::ExponentialDecay(double factor) : Schedule("exponential_decay"), factor(factor)
+ExponentialDecay::ExponentialDecay(double factor)
+:
+    Schedule("exponential_decay"), factor(factor)
 {
     check_factor(factor);
 }
@@ -69,7 +75,9 @@ double ExponentialDecay::rate(double initial_rate, std::size_t epoch) const
     return initial_rate * std::pow(factor, epoch);
 }
 
-StepDecay::StepDecay(double factor, std::size_t every) : Schedule("step_decay"), factor(factor), every(every)
+StepDecay::StepDecay(double factor, std::size_t every)
+:
+    Schedule("step_decay"), factor(factor), every(every)
 {
     check_factor(factor);
     check_every(every);

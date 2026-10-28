@@ -25,7 +25,9 @@ static void check_input_size(const std::vector<double> &inputs, std::size_t n_in
         throw std::invalid_argument("the neuron needs one input per weight (" + std::to_string(n_inputs) + "), got " + std::to_string(inputs.size()));
 }
 
-Neuron::Neuron(const std::vector<double> &weights, double bias) : weights(weights), bias(bias)
+Neuron::Neuron(const std::vector<double> &weights, double bias)
+:
+    weights(weights), bias(bias)
 {
     check_parameters(this->weights);
 }

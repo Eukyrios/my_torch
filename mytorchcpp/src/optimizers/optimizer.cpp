@@ -30,7 +30,9 @@ static void check_momentum(double momentum)
         throw std::invalid_argument("the momentum must be in [0, 1), got " + std::to_string(momentum));
 }
 
-Optimizer::Optimizer(const std::string &name, double learning_rate, std::unique_ptr<Schedule> schedule) : name(name), initial_learning_rate(learning_rate), learning_rate(learning_rate), schedule(schedule ? std::move(schedule) : std::make_unique<Constant>())
+Optimizer::Optimizer(const std::string &name, double learning_rate, std::unique_ptr<Schedule> schedule)
+:
+    name(name), initial_learning_rate(learning_rate), learning_rate(learning_rate), schedule(schedule ? std::move(schedule) : std::make_unique<Constant>())
 {
     check_learning_rate(learning_rate);
 }
@@ -48,16 +50,19 @@ void Optimizer::step(const std::vector<Parameter> &parameters)
     }
 }
 
-SGD::SGD(double learning_rate, std::unique_ptr<Schedule> schedule) : Optimizer("sgd", learning_rate, std::move(schedule))
-{
-}
+SGD::SGD(double learning_rate, std::unique_ptr<Schedule> schedule)
+:
+    Optimizer("sgd", learning_rate, std::move(schedule))
+{}
 
 void SGD::update(Matrix &value, const Matrix &gradient)
 {
     value -= gradient * learning_rate;
 }
 
-Momentum::Momentum(double learning_rate, double momentum, std::unique_ptr<Schedule> schedule) : Optimizer("momentum", learning_rate, std::move(schedule)), momentum(momentum)
+Momentum::Momentum(double learning_rate, double momentum, std::unique_ptr<Schedule> schedule)
+:
+    Optimizer("momentum", learning_rate, std::move(schedule)), momentum(momentum)
 {
     check_momentum(momentum);
 }

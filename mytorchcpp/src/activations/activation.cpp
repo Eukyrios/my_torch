@@ -47,9 +47,10 @@ static double tanh_derivative_value(double z)
     return 1.0 - tanh * tanh;
 }
 
-Activation::Activation(const std::string &name) : name(name)
-{
-}
+Activation::Activation(const std::string &name)
+:
+    name(name)
+{}
 
 Matrix Activation::backward(const Matrix &z, const Matrix &gradient) const
 {
@@ -61,9 +62,10 @@ Matrix Activation::operator()(const Matrix &z) const
     return forward(z);
 }
 
-Linear::Linear() : Activation("linear")
-{
-}
+Linear::Linear()
+:
+    Activation("linear")
+{}
 
 Matrix Linear::forward(const Matrix &z) const
 {
@@ -75,9 +77,10 @@ Matrix Linear::derivative(const Matrix &z) const
     return Matrix(z.rows(), z.cols(), 1.0);
 }
 
-ReLU::ReLU() : Activation("relu")
-{
-}
+ReLU::ReLU()
+:
+    Activation("relu")
+{}
 
 Matrix ReLU::forward(const Matrix &z) const
 {
@@ -89,9 +92,10 @@ Matrix ReLU::derivative(const Matrix &z) const
     return z.apply(relu_derivative_value);
 }
 
-Sigmoid::Sigmoid() : Activation("sigmoid")
-{
-}
+Sigmoid::Sigmoid()
+:
+    Activation("sigmoid")
+{}
 
 Matrix Sigmoid::forward(const Matrix &z) const
 {
@@ -103,9 +107,10 @@ Matrix Sigmoid::derivative(const Matrix &z) const
     return z.apply(sigmoid_derivative_value);
 }
 
-Tanh::Tanh() : Activation("tanh")
-{
-}
+Tanh::Tanh()
+:
+    Activation("tanh")
+{}
 
 Matrix Tanh::forward(const Matrix &z) const
 {
@@ -117,9 +122,10 @@ Matrix Tanh::derivative(const Matrix &z) const
     return z.apply(tanh_derivative_value);
 }
 
-Softmax::Softmax() : Activation("softmax")
-{
-}
+Softmax::Softmax()
+:
+    Activation("softmax")
+{}
 
 Matrix Softmax::forward(const Matrix &z) const
 {
