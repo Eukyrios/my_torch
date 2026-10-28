@@ -51,6 +51,11 @@ std::size_t Matrix::cols() const
     return _cols;
 }
 
+std::size_t Matrix::size() const
+{
+    return _values.size();
+}
+
 double &Matrix::operator()(std::size_t row, std::size_t col)
 {
     return _values[row * _cols + col];
@@ -76,6 +81,14 @@ Matrix Matrix::apply(double (*function)(double)) const
     for (double &value : result._values)
         value = function(value);
     return result;
+}
+
+double Matrix::sum() const
+{
+    double total = 0.0;
+    for (double value : _values)
+        total += value;
+    return total;
 }
 
 Matrix Matrix::row_sums() const

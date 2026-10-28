@@ -22,10 +22,12 @@ public:
 
     std::size_t rows() const;
     std::size_t cols() const;
+    std::size_t size() const;
     double &operator()(std::size_t row, std::size_t col);
     double operator()(std::size_t row, std::size_t col) const;
     Matrix transpose() const;
     Matrix apply(double (*function)(double)) const;
+    double sum() const;
     Matrix row_sums() const;
     Matrix column_sums() const;
     Matrix row_maxima() const;

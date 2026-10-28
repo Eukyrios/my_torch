@@ -214,3 +214,13 @@ Test(matrix, divides_each_row_by_its_own_value)
 
     assert_matrix_eq(matrix / my_torch::Matrix({{2}, {3}}), my_torch::Matrix({{1, 2}, {3, 1}}));
 }
+
+Test(matrix, size_counts_every_value)
+{
+    cr_assert_eq(my_torch::Matrix(3, 4).size(), 12u);
+}
+
+Test(matrix, sum_adds_every_value)
+{
+    cr_assert_float_eq(my_torch::Matrix({{1, 2, 3}, {4, 5, -6}}).sum(), 9.0, 1e-12);
+}
