@@ -6,6 +6,7 @@
 */
 
 #include <criterion/criterion.h>
+#include <stdexcept>
 
 #include "neuron.hpp"
 
@@ -22,4 +23,14 @@ Test(weighted_sum, gives_the_bias_alone_when_every_input_is_zero)
 Test(weighted_sum, is_lowered_by_negative_weights)
 {
     cr_assert_float_eq(my_torch::weighted_sum({1, 2}, {-1, 0.5}, -0.3), -0.3, 1e-9);
+}
+
+Test(weighted_sum, rejects_more_inputs_than_weights)
+{
+    cr_assert_throw(my_torch::weighted_sum({1, 2, 3}, {1, 2}, 0), std::invalid_argument);
+}
+
+Test(weighted_sum, rejects_more_weights_than_inputs)
+{
+    cr_assert_throw(my_torch::weighted_sum({1, 2}, {1, 2, 3}, 0), std::invalid_argument);
 }
