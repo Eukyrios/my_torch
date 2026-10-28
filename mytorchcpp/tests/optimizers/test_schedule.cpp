@@ -25,3 +25,22 @@ Test(schedule, constant_has_its_name)
 
     cr_assert_str_eq(schedule.name.c_str(), "constant");
 }
+
+Test(schedule, time_decay_divides_by_one_plus_decay_times_epoch)
+{
+    my_torch::TimeDecay schedule(0.5);
+
+    cr_assert_float_eq(schedule(0.1, 0), 0.1, 1e-15);
+    cr_assert_float_eq(schedule(0.1, 2), 0.05, 1e-15);
+    cr_assert_float_eq(schedule(0.1, 6), 0.025, 1e-15);
+}
+
+Test(schedule, time_decay_of_zero_is_constant)
+{
+    cr_assert_float_eq(my_torch::TimeDecay(0.0)(0.1, 100), 0.1, 1e-15);
+}
+
+Test(schedule, time_decay_rejects_a_negative_decay)
+{
+    cr_assert_throw(my_torch::TimeDecay(-0.1), std::invalid_argument);
+}

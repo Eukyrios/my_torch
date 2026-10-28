@@ -31,4 +31,12 @@ public:
     double rate(double initial_rate, std::size_t epoch) const override;
 };
 
+class TimeDecay : public Schedule {
+public:
+    explicit TimeDecay(double decay);
+
+    double rate(double initial_rate, std::size_t epoch) const override;
+
+    double decay;
+};
 }
