@@ -26,11 +26,17 @@ static std::vector<Layer *> find_sized_layers(const std::vector<std::unique_ptr<
     return sized;
 }
 
-static void check_sizes_chain(const std::vector<Layer *> &sized)
+static void check_sizes_chain(const std::vector<std::unique_ptr<Layer>> &layers)
 {
-    for (std::size_t position = 0; position + 1 < sized.size(); position++)
-        if (sized[position]->shape()->second != sized[position + 1]->shape()->first)
-            throw std::invalid_argument("sized layer " + std::to_string(position) + " gives " + std::to_string(sized[position]->shape()->second) + " outputs but sized layer " + std::to_string(position + 1) + " expects " + std::to_string(sized[position + 1]->shape()->first) + " inputs");
+    std::optional<std::size_t> received;
+    for (std::size_t position = 0; position < layers.size(); position++) {
+        std::optional<Shape> shape = layers[position]->shape();
+        if (!shape)
+            continue;
+        if (received && shape->first != *received)
+            throw std::invalid_argument("layer " + std::to_string(position) + " expects " + std::to_string(shape->first) + " inputs but receives " + std::to_string(*received));
+        received = shape->second;
+    }
 }
 
 static void check_layers(const std::vector<std::unique_ptr<Layer>> &layers)
@@ -38,10 +44,9 @@ static void check_layers(const std::vector<std::unique_ptr<Layer>> &layers)
     for (const std::unique_ptr<Layer> &layer : layers)
         if (!layer)
             throw std::invalid_argument("a network is made of layers, got an empty one");
-    std::vector<Layer *> sized = find_sized_layers(layers);
-    if (sized.empty())
+    if (find_sized_layers(layers).empty())
         throw std::invalid_argument("a network needs at least one layer with a fixed size, such as a dense layer");
-    check_sizes_chain(sized);
+    check_sizes_chain(layers);
 }
 
 Network::Network(std::vector<std::unique_ptr<Layer>> layers) : layers(std::move(layers))
