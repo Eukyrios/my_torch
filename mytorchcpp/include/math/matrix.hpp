@@ -29,7 +29,6 @@ public:
     Matrix transpose() const;
     Matrix select_rows(const std::vector<std::size_t> &indices) const;
     Matrix apply(double (*function)(double)) const;
-    Matrix hadamard(const Matrix &other) const;
     Matrix clip(double low, double high) const;
     double sum() const;
     Matrix row_sums() const;
@@ -40,6 +39,7 @@ public:
     Matrix &operator-=(const Matrix &other);
     Matrix &operator*=(double scalar);
     Matrix &operator/=(double scalar);
+    Matrix &operator*=(const Matrix &other);
     Matrix &operator/=(const Matrix &other);
 
 private:
@@ -53,6 +53,7 @@ Matrix operator-(Matrix left, const Matrix &right);
 Matrix operator*(Matrix matrix, double scalar);
 Matrix operator*(double scalar, Matrix matrix);
 Matrix operator/(Matrix matrix, double scalar);
+Matrix operator*(Matrix left, const Matrix &right);
 Matrix operator/(Matrix left, const Matrix &right);
 
 }

@@ -53,7 +53,7 @@ Activation::Activation(const std::string &name) : name(name)
 
 Matrix Activation::backward(const Matrix &z, const Matrix &gradient) const
 {
-    return gradient.hadamard(derivative(z));
+    return gradient * derivative(z);
 }
 
 Matrix Activation::operator()(const Matrix &z) const
@@ -130,13 +130,13 @@ Matrix Softmax::forward(const Matrix &z) const
 Matrix Softmax::derivative(const Matrix &z) const
 {
     Matrix softmax = forward(z);
-    return softmax - softmax.hadamard(softmax);
+    return softmax - softmax * softmax;
 }
 
 Matrix Softmax::backward(const Matrix &z, const Matrix &gradient) const
 {
     Matrix softmax = forward(z);
-    return softmax.hadamard(gradient - gradient.hadamard(softmax).row_sums());
+    return softmax * (gradient - (gradient * softmax).row_sums());
 }
 
 template <typename Subclass>

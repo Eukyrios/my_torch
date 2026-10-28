@@ -124,7 +124,7 @@ Test(activations, softmax_derivative_is_the_diagonal_of_its_jacobian)
 
 static double weighted_output(const my_torch::Activation &activation, const my_torch::Matrix &z, const my_torch::Matrix &weights)
 {
-    return activation(z).hadamard(weights).sum();
+    return (activation(z) * weights).sum();
 }
 
 static my_torch::Matrix numerical_backward(const my_torch::Activation &activation, const my_torch::Matrix &z, const my_torch::Matrix &gradient)
@@ -149,7 +149,7 @@ Test(activations, backward_multiplies_the_gradient_by_the_derivative)
 {
     my_torch::Tanh tanh;
 
-    assert_matrix_eq(tanh.backward(BATCH_Z, BATCH_GRADIENT), BATCH_GRADIENT.hadamard(tanh.derivative(BATCH_Z)));
+    assert_matrix_eq(tanh.backward(BATCH_Z, BATCH_GRADIENT), BATCH_GRADIENT * tanh.derivative(BATCH_Z));
 }
 
 Test(activations, every_backward_matches_the_numerical_gradient)

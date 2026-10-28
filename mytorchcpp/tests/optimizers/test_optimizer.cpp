@@ -42,7 +42,7 @@ Test(sgd, step_lowers_the_loss_of_a_layer)
     layer.backward(before - target);
     my_torch::SGD(0.05).step(layer.parameters());
     my_torch::Matrix after = layer.forward(inputs);
-    cr_assert_lt(after.hadamard(after).sum(), before.hadamard(before).sum());
+    cr_assert_lt((after * after).sum(), (before * before).sum());
 }
 
 Test(sgd, has_its_name_and_default_learning_rate)

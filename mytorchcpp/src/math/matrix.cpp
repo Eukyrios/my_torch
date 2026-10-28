@@ -201,6 +201,15 @@ Matrix &Matrix::operator-=(const Matrix &other)
     return *this;
 }
 
+Matrix &Matrix::operator*=(const Matrix &other)
+{
+    check_broadcastable(*this, other);
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 0; col < _cols; col++)
+            (*this)(row, col) *= broadcast_value(other, row, col);
+    return *this;
+}
+
 Matrix &Matrix::operator/=(const Matrix &other)
 {
     check_broadcastable(*this, other);
@@ -208,16 +217,6 @@ Matrix &Matrix::operator/=(const Matrix &other)
         for (std::size_t col = 0; col < _cols; col++)
             (*this)(row, col) /= broadcast_value(other, row, col);
     return *this;
-}
-
-Matrix Matrix::hadamard(const Matrix &other) const
-{
-    check_broadcastable(*this, other);
-    Matrix result = *this;
-    for (std::size_t row = 0; row < _rows; row++)
-        for (std::size_t col = 0; col < _cols; col++)
-            result(row, col) *= broadcast_value(other, row, col);
-    return result;
 }
 
 Matrix Matrix::clip(double low, double high) const
@@ -267,6 +266,11 @@ Matrix operator*(double scalar, Matrix matrix)
 Matrix operator/(Matrix matrix, double scalar)
 {
     return matrix /= scalar;
+}
+
+Matrix operator*(Matrix left, const Matrix &right)
+{
+    return left *= right;
 }
 
 Matrix operator/(Matrix left, const Matrix &right)

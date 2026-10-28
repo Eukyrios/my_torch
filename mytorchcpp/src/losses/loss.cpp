@@ -66,7 +66,7 @@ double CrossEntropy::forward(const Matrix &predictions, const Matrix &expected) 
 {
     check_same_shape(predictions, expected);
     Matrix clipped = predictions.clip(epsilon, 1.0);
-    return -expected.hadamard(clipped.apply(std::log)).sum() / predictions.rows();
+    return -(expected * clipped.apply(std::log)).sum() / predictions.rows();
 }
 
 Matrix CrossEntropy::gradient(const Matrix &predictions, const Matrix &expected) const
