@@ -33,6 +33,7 @@ public:
     Matrix &operator-=(const Matrix &other);
     Matrix &operator*=(double scalar);
     Matrix &operator/=(double scalar);
+    Matrix &operator/=(const Matrix &other);
 
 private:
     std::size_t _rows = 0;
@@ -46,5 +47,6 @@ Matrix operator-(Matrix left, const Matrix &right);
 Matrix operator*(Matrix matrix, double scalar);
 Matrix operator*(double scalar, Matrix matrix);
 Matrix operator/(Matrix matrix, double scalar);
+Matrix operator/(Matrix left, const Matrix &right);
 
 }

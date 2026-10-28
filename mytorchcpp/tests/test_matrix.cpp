@@ -202,3 +202,15 @@ Test(matrix, repeats_a_single_column_on_every_column)
     assert_matrix_eq(matrix + column, my_torch::Matrix({{11, 12}, {23, 24}, {35, 36}}));
     assert_matrix_eq(matrix - column, my_torch::Matrix({{-9, -8}, {-17, -16}, {-25, -24}}));
 }
+
+Test(matrix, divides_element_by_element)
+{
+    assert_matrix_eq(my_torch::Matrix({{1, 9}, {4, -6}}) / my_torch::Matrix({{2, 3}, {4, 2}}), my_torch::Matrix({{0.5, 3}, {1, -3}}));
+}
+
+Test(matrix, divides_each_row_by_its_own_value)
+{
+    my_torch::Matrix matrix({{2, 4}, {9, 3}});
+
+    assert_matrix_eq(matrix / my_torch::Matrix({{2}, {3}}), my_torch::Matrix({{1, 2}, {3, 1}}));
+}
