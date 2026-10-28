@@ -80,6 +80,38 @@ Test(dense, biases_are_added_to_every_row)
     assert_matrix_eq(outputs, my_torch::Matrix({{0.1, -0.3}, {0.1, -0.3}, {0.1, -0.3}}));
 }
 
+Test(dense, forward_applies_the_activation)
+{
+    assert_matrix_eq(my_torch::Dense(WEIGHTS, BIASES, "relu").forward(my_torch::Matrix::row({1, 2})), my_torch::Matrix::row({1.1, 0.0}));
+}
+
+Test(dense, default_activation_is_linear)
+{
+    cr_assert_str_eq(my_torch::Dense(WEIGHTS, BIASES).activation_name.c_str(), "linear");
+}
+
+Test(dense, forward_keeps_its_inputs_and_z_for_backpropagation)
+{
+    my_torch::Dense layer(WEIGHTS, BIASES, "relu");
+
+    layer.forward(my_torch::Matrix::row({1, 2}));
+    assert_matrix_eq(layer.inputs, my_torch::Matrix::row({1, 2}));
+    assert_matrix_eq(layer.z, my_torch::Matrix::row({1.1, -0.3}));
+}
+
+Test(dense, softmax_layer_outputs_one_probability_row_per_sample)
+{
+    my_torch::Dense layer(my_torch::Matrix({{0.3, -0.7, 1.2}, {-0.4, 0.9, 0.1}}), {0.5, -0.2, 0.05}, "softmax");
+    my_torch::Matrix outputs = layer.forward(my_torch::Matrix({{1, 2}, {-1, 0.5}, {3, -2}, {0, 0}}));
+
+    assert_matrix_eq(outputs.row_sums(), my_torch::Matrix({{1}, {1}, {1}, {1}}));
+}
+
+Test(dense, rejects_an_unknown_activation)
+{
+    cr_assert_throw(my_torch::Dense(WEIGHTS, BIASES, "swish"), std::invalid_argument);
+}
+
 Test(dense, rejects_empty_weights)
 {
     cr_assert_throw(my_torch::Dense(my_torch::Matrix(), {}), std::invalid_argument);
