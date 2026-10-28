@@ -1,12 +1,22 @@
-# DenseLayer computes activation(inputs . weights + biases) for one sample or a batch
-# (one sample per row); column j of the weights belongs to neuron j, and its shape is the
-# shape of the weight matrix. forward keeps inputs and z; backward uses them to store the
-# weight and bias gradients and returns the gradient for the previous layer.
+# DenseLayer computes activation(inputs . weights + biases); column j of the weights belongs
+# to neuron j. create() starts from random weights (He for ReLU, Xavier otherwise); backward
+# stores the weight and bias gradients and returns the gradient for the previous layer.
 
 import numpy as np
 
-from my_torch.activations.activation import Activation, Linear
+from my_torch.activations.activation import Activation, Linear, ReLU
 from my_torch.layers.layer import Layer
+
+
+def check_sizes(n_inputs: int, n_outputs: int) -> None:
+    if n_inputs < 1 or n_outputs < 1:
+        raise ValueError(f"a dense layer needs at least 1 input and 1 output, got {n_inputs} and {n_outputs}")
+
+
+def initial_scale(n_inputs: int, n_outputs: int, activation: Activation) -> float:
+    if isinstance(activation, ReLU):
+        return float(np.sqrt(2.0 / n_inputs))
+    return float(np.sqrt(2.0 / (n_inputs + n_outputs)))
 
 
 def check_parameters(weights: np.ndarray, biases: np.ndarray) -> None:
@@ -43,9 +53,22 @@ class DenseLayer(Layer):
         self.weights_gradient = None
         self.biases_gradient = None
 
+    @classmethod
+    def create(cls, n_inputs: int, n_outputs: int, activation: Activation | None = None, rng: np.random.Generator | None = None) -> "DenseLayer":
+        check_sizes(n_inputs, n_outputs)
+        activation = activation or Linear()
+        rng = rng or np.random.default_rng()
+        scale = initial_scale(n_inputs, n_outputs, activation)
+        weights = rng.normal(0.0, scale, size=(n_inputs, n_outputs))
+        return cls(weights, np.zeros(n_outputs), activation)
+
     @property
     def shape(self) -> tuple[int, int]:
         return self.weights.shape
+
+    @property
+    def parameters(self) -> list[tuple[np.ndarray, np.ndarray | None]]:
+        return [(self.weights, self.weights_gradient), (self.biases, self.biases_gradient)]
 
     def forward(self, inputs) -> np.ndarray:
         self.inputs = np.asarray(inputs, dtype=float)

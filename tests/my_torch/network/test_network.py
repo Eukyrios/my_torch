@@ -152,3 +152,12 @@ def test_backward_passes_through_layers_without_weights():
     plain = Network([hidden_layer(), output_layer()])
     plain([1, 2])
     assert gradient == pytest.approx(plain.backward([0.3, -0.2, 0.5]))
+
+
+def test_parameters_collect_every_layer_in_order():
+    hidden, output = hidden_layer(), output_layer()
+    network = Network([hidden, PassThrough(), output])
+    values = [value for value, _ in network.parameters]
+    assert len(values) == 4
+    assert values[0] is hidden.weights and values[1] is hidden.biases
+    assert values[2] is output.weights and values[3] is output.biases
