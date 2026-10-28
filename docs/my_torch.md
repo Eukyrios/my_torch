@@ -199,7 +199,7 @@ each output depends on every input. The Jacobian of one sample is $`C \times C`$
 ```math
 \frac{\partial p_i}{\partial z_j} = p_i \left(\delta_{ij} - p_j\right)
 \qquad
-J = \operatorname{diag}(p) - p\,p^\top
+J = \mathrm{diag}(p) - p\,p^\top
 ```
 
 ($`\delta_{ij} = 1`$ when $`i = j`$, else $`0`$.) The diagonal $`p_i(1 - p_i)`$ is positive: raising your own score
