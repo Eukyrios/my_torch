@@ -5,6 +5,7 @@
 ** Tests of the dense layer
 */
 
+#include <cmath>
 #include <criterion/criterion.h>
 #include <stdexcept>
 
@@ -193,4 +194,63 @@ Test(dense_layer, backward_rejects_a_gradient_of_the_wrong_shape)
     my_torch::DenseLayer layer = layer_after_forward();
 
     cr_assert_throw(layer.backward(my_torch::Matrix(2, 2)), std::invalid_argument);
+}
+
+static double standard_deviation(const my_torch::Matrix &values)
+{
+    double mean = values.sum() / values.size();
+    double total = 0.0;
+    for (std::size_t row = 0; row < values.rows(); row++)
+        for (std::size_t col = 0; col < values.cols(); col++)
+            total += (values(row, col) - mean) * (values(row, col) - mean);
+    return std::sqrt(total / values.size());
+}
+
+Test(dense_layer, create_has_the_requested_shape_and_zero_biases)
+{
+    std::mt19937 rng(0);
+    std::unique_ptr<my_torch::DenseLayer> layer = my_torch::DenseLayer::create(4, 3, nullptr, rng);
+
+    cr_assert(layer->shape() == my_torch::Shape(4, 3));
+    assert_matrix_eq(layer->biases, my_torch::Matrix(1, 3));
+}
+
+Test(dense_layer, create_uses_he_scale_for_relu)
+{
+    std::mt19937 rng(0);
+    std::unique_ptr<my_torch::DenseLayer> layer = my_torch::DenseLayer::create(400, 300, std::make_unique<my_torch::ReLU>(), rng);
+
+    cr_assert_float_eq(standard_deviation(layer->weights), std::sqrt(2.0 / 400), 0.002);
+}
+
+Test(dense_layer, create_uses_xavier_scale_otherwise)
+{
+    std::mt19937 rng(0);
+    std::unique_ptr<my_torch::DenseLayer> layer = my_torch::DenseLayer::create(400, 300, std::make_unique<my_torch::Tanh>(), rng);
+
+    cr_assert_float_eq(standard_deviation(layer->weights), std::sqrt(2.0 / 700), 0.002);
+}
+
+Test(dense_layer, create_is_reproducible_from_the_same_seed)
+{
+    std::mt19937 first(7);
+    std::mt19937 second(7);
+
+    assert_matrix_eq(my_torch::DenseLayer::create(3, 2, nullptr, first)->weights, my_torch::DenseLayer::create(3, 2, nullptr, second)->weights);
+}
+
+Test(dense_layer, create_keeps_its_activation)
+{
+    std::mt19937 rng(0);
+    std::unique_ptr<my_torch::DenseLayer> layer = my_torch::DenseLayer::create(3, 2, std::make_unique<my_torch::Softmax>(), rng);
+
+    cr_assert(layer->activation->name == "softmax");
+}
+
+Test(dense_layer, create_rejects_empty_sizes)
+{
+    std::mt19937 rng(0);
+
+    cr_assert_throw(my_torch::DenseLayer::create(0, 3, nullptr, rng), std::invalid_argument);
+    cr_assert_throw(my_torch::DenseLayer::create(3, 0, nullptr, rng), std::invalid_argument);
 }

@@ -5,12 +5,36 @@
 ** A dense layer: one matrix product runs every neuron on every sample of the batch
 */
 
+#include <cmath>
 #include <stdexcept>
 #include <string>
 
 #include "layers/dense_layer.hpp"
 
 namespace my_torch {
+
+static void check_sizes(std::size_t n_inputs, std::size_t n_outputs)
+{
+    if (n_inputs < 1 || n_outputs < 1)
+        throw std::invalid_argument("a dense layer needs at least 1 input and 1 output, got " + std::to_string(n_inputs) + " and " + std::to_string(n_outputs));
+}
+
+static double initial_scale(std::size_t n_inputs, std::size_t n_outputs, const Activation &activation)
+{
+    if (dynamic_cast<const ReLU *>(&activation))
+        return std::sqrt(2.0 / n_inputs);
+    return std::sqrt(2.0 / (n_inputs + n_outputs));
+}
+
+static Matrix random_weights(std::size_t n_inputs, std::size_t n_outputs, double scale, std::mt19937 &rng)
+{
+    std::normal_distribution<double> normal(0.0, scale);
+    Matrix weights(n_inputs, n_outputs);
+    for (std::size_t row = 0; row < n_inputs; row++)
+        for (std::size_t col = 0; col < n_outputs; col++)
+            weights(row, col) = normal(rng);
+    return weights;
+}
 
 static void check_parameters(const Matrix &weights, const std::vector<double> &biases)
 {
@@ -37,6 +61,15 @@ static void check_backward(const Matrix &z, const Matrix &gradient)
 DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : Layer("dense"), weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
 {
     check_parameters(this->weights, biases);
+}
+
+std::unique_ptr<DenseLayer> DenseLayer::create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng)
+{
+    check_sizes(n_inputs, n_outputs);
+    if (!activation)
+        activation = std::make_unique<Linear>();
+    double scale = initial_scale(n_inputs, n_outputs, *activation);
+    return std::make_unique<DenseLayer>(random_weights(n_inputs, n_outputs, scale, rng), std::vector<double>(n_outputs, 0.0), std::move(activation));
 }
 
 std::optional<Shape> DenseLayer::shape() const

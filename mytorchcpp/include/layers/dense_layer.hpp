@@ -3,13 +3,15 @@
 ** my_torch
 ** File description:
 ** A dense layer: column j of the weights (n_inputs x n_outputs) belongs to neuron j, and a
-** batch with one sample per row gives z = inputs * weights + biases, then its activation;
-** backward uses the kept inputs and z to store the weight and bias gradients
+** batch gives z = inputs * weights + biases, then its activation; create() starts from random
+** weights (He for ReLU, Xavier otherwise) and backward stores the weight and bias gradients
 */
 
 #pragma once
 
+#include <cstddef>
 #include <memory>
+#include <random>
 #include <vector>
 
 #include "activations/activation.hpp"
@@ -21,6 +23,8 @@ namespace my_torch {
 class DenseLayer : public Layer {
 public:
     DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
+
+    static std::unique_ptr<DenseLayer> create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng);
 
     std::optional<Shape> shape() const override;
     Matrix forward(const Matrix &inputs) override;
