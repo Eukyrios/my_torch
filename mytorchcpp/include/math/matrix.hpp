@@ -26,6 +26,7 @@ public:
     double &operator()(std::size_t row, std::size_t col);
     double operator()(std::size_t row, std::size_t col) const;
     Matrix transpose() const;
+    Matrix select_rows(const std::vector<std::size_t> &indices) const;
     Matrix apply(double (*function)(double)) const;
     Matrix hadamard(const Matrix &other) const;
     Matrix clip(double low, double high) const;

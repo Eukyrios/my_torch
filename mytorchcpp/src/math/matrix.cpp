@@ -75,6 +75,18 @@ Matrix Matrix::transpose() const
     return result;
 }
 
+Matrix Matrix::select_rows(const std::vector<std::size_t> &indices) const
+{
+    Matrix result(indices.size(), _cols);
+    for (std::size_t row = 0; row < indices.size(); row++) {
+        if (indices[row] >= _rows)
+            throw std::out_of_range("row " + std::to_string(indices[row]) + " is outside a matrix of " + std::to_string(_rows) + " rows");
+        for (std::size_t col = 0; col < _cols; col++)
+            result(row, col) = (*this)(indices[row], col);
+    }
+    return result;
+}
+
 Matrix Matrix::apply(double (*function)(double)) const
 {
     Matrix result = *this;

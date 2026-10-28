@@ -243,3 +243,15 @@ Test(matrix, clip_keeps_every_value_between_two_bounds)
 {
     assert_matrix_eq(my_torch::Matrix({{-5, 0.5}, {2, 1}}).clip(0.0, 1.0), my_torch::Matrix({{0, 0.5}, {1, 1}}));
 }
+
+Test(matrix, select_rows_picks_rows_in_the_given_order)
+{
+    my_torch::Matrix matrix({{1, 2}, {3, 4}, {5, 6}});
+
+    assert_matrix_eq(matrix.select_rows({2, 0, 2}), my_torch::Matrix({{5, 6}, {1, 2}, {5, 6}}));
+}
+
+Test(matrix, select_rows_rejects_a_row_outside_the_matrix)
+{
+    cr_assert_throw(my_torch::Matrix(2, 2).select_rows({0, 2}), std::out_of_range);
+}
