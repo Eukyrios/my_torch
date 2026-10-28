@@ -1,6 +1,6 @@
 # my_torch
 
-A neural network library written from scratch (no PyTorch, TensorFlow, …) and `my_torch_analyzer`, a program that reads a chessboard in FEN notation and predicts **Checkmate**, **Check** or **Nothing**.
+A neural network library written from scratch (no PyTorch, TensorFlow, …) and `my_torch_analyzer`, a program that reads a chessboard in FEN notation and predicts its state: **Nothing**, **Check White**, **Check Black**, **Checkmate White** or **Checkmate Black**.
 
 ```
 ./my_torch_analyzer [--predict | --train [--save SAVEFILE]] LOADFILE CHESSFILE
@@ -81,7 +81,7 @@ Each task shows who owns it; ✅ is done, *(finish)* marks the day a task should
 
 ## Development
 
-Python 3.12, no neural network library.
+Python 3.12 and numpy, no neural network library. `python-chess` is only used to label the training data.
 
 ```bash
 python3 -m venv venv && source venv/bin/activate
@@ -94,14 +94,52 @@ make coverage           # tests + coverage report in reports/htmlcov
 
 ```
 my_torch/               the neural network module (create, train, save, load)
-  network/              Network: runs its layers in order
+  network/              Network: forward, backward and train
   layers/               Layer base class, DenseLayer, Neuron
   activations/          Activation base class and its subclasses (ReLU, Softmax, ...)
   losses/               Loss base class, CrossEntropy, MeanSquaredError
-analyzer/               my_torch_analyzer: CLI, predict and train modes
+  optimizers/           Optimizer base class, SGD, Momentum, learning-rate schedules
+analyzer/               my_torch_analyzer: CLI, FEN parser, board encoder (769 inputs)
+dataset/                builds labelled train/validation/test files from a Lichess PGN
 my_torch_analyzer.py    entry point, copied to ./my_torch_analyzer by make
 tests/                  one folder per package, mirroring the sources
 ```
+
+### Using the module
+
+```python
+from analyzer.encoder import encode_fen
+from my_torch.activations.activation import ReLU, Softmax
+from my_torch.layers.dense_layer import DenseLayer
+from my_torch.losses.loss import CrossEntropy
+from my_torch.network.network import Network
+from my_torch.optimizers.optimizer import Momentum
+from my_torch.optimizers.schedule import StepDecay
+
+network = Network([
+    DenseLayer.create(769, 256, ReLU()),        # random He weights
+    DenseLayer.create(256, 5, Softmax()),       # random Xavier weights
+])
+optimizer = Momentum(learning_rate=0.01, momentum=0.9, schedule=StepDecay(0.5, every=8))
+losses = network.train(inputs, labels, CrossEntropy(), optimizer, epochs=30, batch_size=32)  # mean loss per epoch
+
+probabilities = network(encode_fen("rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3"))
+```
+
+`inputs` has one row of 769 numbers per board (`encode_fen`), `labels` one one-hot row per board over the 5 classes
+(`dataset.labels.LABELS`). Saving and loading follow the `.nn` format in [#24](https://github.com/Eukyrios/my_torch/issues/24):
+`network.save(path)` and `Network.load(path)`.
+
+### Building a dataset
+
+```bash
+python -m dataset.generate lichess_db_standard_rated_2013-01.pgn --out data --per-class 20000
+```
+
+Reads games from a [Lichess database](https://database.lichess.org/) PGN and writes `data/train.txt`,
+`data/validation.txt` and `data/test.txt` (80/10/10 by default), balanced over the 5 classes, one `FEN label` per line.
+Positions from the same game never end up in two splits. Datasets aren't pushed (`data/` and `datasets/` are
+ignored by git) but are kept for the defense.
 
 ### Workflow
 
