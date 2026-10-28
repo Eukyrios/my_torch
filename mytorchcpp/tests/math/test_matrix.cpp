@@ -255,3 +255,10 @@ Test(matrix, select_rows_rejects_a_row_outside_the_matrix)
 {
     cr_assert_throw(my_torch::Matrix(2, 2).select_rows({0, 2}), std::out_of_range);
 }
+
+Test(matrix, row_argmax_gives_the_column_of_each_row_maximum)
+{
+    std::vector<std::size_t> expected = {1, 0, 2};
+
+    cr_assert(my_torch::Matrix({{1, 7, 3}, {-4, -5, -6}, {0, 0, 9}}).row_argmax() == expected);
+}

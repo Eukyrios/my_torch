@@ -132,6 +132,16 @@ Matrix Matrix::row_maxima() const
     return result;
 }
 
+std::vector<std::size_t> Matrix::row_argmax() const
+{
+    std::vector<std::size_t> indices(_rows, 0);
+    for (std::size_t row = 0; row < _rows; row++)
+        for (std::size_t col = 1; col < _cols; col++)
+            if ((*this)(row, col) > (*this)(row, indices[row]))
+                indices[row] = col;
+    return indices;
+}
+
 static bool is_row_of(const Matrix &row, const Matrix &matrix)
 {
     return row.rows() == 1 && row.cols() == matrix.cols();

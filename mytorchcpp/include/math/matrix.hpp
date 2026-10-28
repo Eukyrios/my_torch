@@ -34,6 +34,7 @@ public:
     Matrix row_sums() const;
     Matrix column_sums() const;
     Matrix row_maxima() const;
+    std::vector<std::size_t> row_argmax() const;
     Matrix &operator+=(const Matrix &other);
     Matrix &operator-=(const Matrix &other);
     Matrix &operator*=(double scalar);
