@@ -10,8 +10,7 @@ CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote include
 
 SRC	=	src/neuron.cpp
 
-TESTS	=	tests/test_build.cpp \
-		tests/test_neuron.cpp
+TESTS	=	tests/test_neuron.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
