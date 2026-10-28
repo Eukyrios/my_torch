@@ -3,7 +3,8 @@
 ** my_torch
 ** File description:
 ** linear keeps z, relu cuts negatives to 0, sigmoid squashes into (0, 1) as
-** 0.5 * (1 + tanh(z / 2)) so exp never overflows, and tanh squashes into (-1, 1)
+** 0.5 * (1 + tanh(z / 2)) so exp never overflows, tanh squashes into (-1, 1), and softmax
+** turns each row into probabilities, minus the row maximum first for the same reason
 */
 
 #include <algorithm>
@@ -49,6 +50,12 @@ Matrix tanh(const Matrix &z)
     return z.apply(tanh_value);
 }
 
+Matrix softmax(const Matrix &z)
+{
+    Matrix exps = (z - z.row_maxima()).apply(std::exp);
+    return exps / exps.row_sums();
+}
+
 const std::map<std::string, ActivationFunction> &activations()
 {
     static const std::map<std::string, ActivationFunction> all = {
@@ -56,6 +63,7 @@ const std::map<std::string, ActivationFunction> &activations()
         {"relu", relu},
         {"sigmoid", sigmoid},
         {"tanh", tanh},
+        {"softmax", softmax},
     };
     return all;
 }

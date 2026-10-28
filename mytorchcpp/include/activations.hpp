@@ -21,6 +21,7 @@ Matrix linear(const Matrix &z);
 Matrix relu(const Matrix &z);
 Matrix sigmoid(const Matrix &z);
 Matrix tanh(const Matrix &z);
+Matrix softmax(const Matrix &z);
 
 const std::map<std::string, ActivationFunction> &activations();
 ActivationFunction get_activation(const std::string &name);
