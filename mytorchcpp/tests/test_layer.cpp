@@ -40,7 +40,9 @@ Test(layer, is_used_through_the_base_class)
 
 Test(layer, keeps_its_name)
 {
-    cr_assert_str_eq(Double().name.c_str(), "double");
+    Double layer;
+
+    cr_assert_str_eq(layer.name.c_str(), "double");
 }
 
 Test(layer, has_no_size_by_default)

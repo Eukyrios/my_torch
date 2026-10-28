@@ -89,7 +89,7 @@ Test(activations, an_activation_is_called_like_its_forward)
 Test(activations, from_name_finds_every_activation_by_name)
 {
     for (const std::string &name : my_torch::Activation::names())
-        cr_assert_str_eq(my_torch::Activation::from_name(name)->name.c_str(), name.c_str());
+        cr_assert(my_torch::Activation::from_name(name)->name == name);
     cr_assert_not_null(dynamic_cast<my_torch::ReLU *>(my_torch::Activation::from_name("relu").get()));
 }
 

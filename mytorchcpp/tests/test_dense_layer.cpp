@@ -81,7 +81,9 @@ Test(dense_layer, biases_are_added_to_every_row)
 
 Test(dense_layer, is_named_dense)
 {
-    cr_assert_str_eq(my_torch::DenseLayer(WEIGHTS, BIASES).name.c_str(), "dense");
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    cr_assert_str_eq(layer.name.c_str(), "dense");
 }
 
 Test(dense_layer, is_called_like_a_function)
@@ -98,7 +100,9 @@ Test(dense_layer, forward_applies_the_activation)
 
 Test(dense_layer, default_activation_is_linear)
 {
-    cr_assert_str_eq(my_torch::DenseLayer(WEIGHTS, BIASES).activation->name.c_str(), "linear");
+    my_torch::DenseLayer layer(WEIGHTS, BIASES);
+
+    cr_assert_str_eq(layer.activation->name.c_str(), "linear");
 }
 
 Test(dense_layer, forward_keeps_its_inputs_and_z_for_backpropagation)
