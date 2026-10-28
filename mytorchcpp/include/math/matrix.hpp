@@ -25,6 +25,7 @@ public:
     std::size_t size() const;
     double &operator()(std::size_t row, std::size_t col);
     double operator()(std::size_t row, std::size_t col) const;
+    Matrix matmul(const Matrix &other) const;
     Matrix transpose() const;
     Matrix select_rows(const std::vector<std::size_t> &indices) const;
     Matrix apply(double (*function)(double)) const;
@@ -47,7 +48,6 @@ private:
     std::vector<double> _values;
 };
 
-Matrix operator*(const Matrix &left, const Matrix &right);
 Matrix operator+(Matrix left, const Matrix &right);
 Matrix operator-(Matrix left, const Matrix &right);
 Matrix operator*(Matrix matrix, double scalar);

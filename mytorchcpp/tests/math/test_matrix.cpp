@@ -65,26 +65,26 @@ Test(matrix, rejects_rows_of_different_sizes)
     cr_assert_throw(my_torch::Matrix({{1, 2}, {3}}), std::invalid_argument);
 }
 
-Test(matrix, product_matches_the_hand_computation)
+Test(matrix, matmul_matches_the_hand_computation)
 {
     my_torch::Matrix left({{1, 2}, {3, 4}, {5, 6}});
     my_torch::Matrix right({{1, 0, -1}, {2, 1, 0}});
 
-    assert_matrix_eq(left * right, my_torch::Matrix({{5, 2, -1}, {11, 4, -3}, {17, 6, -5}}));
+    assert_matrix_eq(left.matmul(right), my_torch::Matrix({{5, 2, -1}, {11, 4, -3}, {17, 6, -5}}));
 }
 
-Test(matrix, product_with_the_identity_keeps_the_matrix)
+Test(matrix, matmul_with_the_identity_keeps_the_matrix)
 {
     my_torch::Matrix matrix({{1.5, -2}, {0.25, 3}});
     my_torch::Matrix identity({{1, 0}, {0, 1}});
 
-    assert_matrix_eq(matrix * identity, matrix);
-    assert_matrix_eq(identity * matrix, matrix);
+    assert_matrix_eq(matrix.matmul(identity), matrix);
+    assert_matrix_eq(identity.matmul(matrix), matrix);
 }
 
-Test(matrix, product_rejects_sizes_that_do_not_chain)
+Test(matrix, matmul_rejects_sizes_that_do_not_chain)
 {
-    cr_assert_throw(my_torch::Matrix(2, 3) * my_torch::Matrix(2, 3), std::invalid_argument);
+    cr_assert_throw(my_torch::Matrix(2, 3).matmul(my_torch::Matrix(2, 3)), std::invalid_argument);
 }
 
 Test(matrix, transpose_swaps_rows_and_columns)

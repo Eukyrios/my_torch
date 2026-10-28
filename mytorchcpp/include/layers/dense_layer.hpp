@@ -3,7 +3,7 @@
 ** my_torch
 ** File description:
 ** A dense layer: column j of the weights (n_inputs x n_outputs) belongs to neuron j, and a
-** batch gives z = inputs * weights + biases, then its activation; create() starts from random
+** batch gives z = inputs.matmul(weights) + biases, then its activation; create() starts from random
 ** weights (He for ReLU, Xavier otherwise) and backward stores the weight and bias gradients
 */
 

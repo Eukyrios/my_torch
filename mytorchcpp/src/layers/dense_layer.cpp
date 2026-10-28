@@ -86,7 +86,7 @@ Matrix DenseLayer::forward(const Matrix &inputs)
 {
     check_input_size(inputs, weights.rows());
     this->inputs = inputs;
-    z = inputs * weights + biases;
+    z = inputs.matmul(weights) + biases;
     return (*activation)(z);
 }
 
@@ -94,9 +94,9 @@ Matrix DenseLayer::backward(const Matrix &gradient)
 {
     check_backward(z, gradient);
     Matrix z_gradient = activation->backward(z, gradient);
-    weights_gradient = inputs.transpose() * z_gradient;
+    weights_gradient = inputs.transpose().matmul(z_gradient);
     biases_gradient = z_gradient.column_sums();
-    return z_gradient * weights.transpose();
+    return z_gradient.matmul(weights.transpose());
 }
 
 }
