@@ -15,7 +15,7 @@ namespace my_torch {
 class Matrix {
 public:
     Matrix() = default;
-    Matrix(std::size_t rows, std::size_t cols, double value = 0.0);
+    explicit Matrix(std::size_t rows, std::size_t cols, double value = 0.0);
     Matrix(const std::vector<std::vector<double>> &values);
 
     static Matrix row(const std::vector<double> &values);
