@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "dense.hpp"
+#include "dense_layer.hpp"
 
 namespace my_torch {
 
@@ -26,22 +26,22 @@ static void check_input_size(const Matrix &inputs, std::size_t n_inputs)
         throw std::invalid_argument("the layer expects " + std::to_string(n_inputs) + " inputs per sample, got " + std::to_string(inputs.cols()));
 }
 
-Dense::Dense(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
+DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation) : weights(weights), biases(Matrix::row(biases)), activation(activation ? std::move(activation) : std::make_unique<Linear>())
 {
     check_parameters(this->weights, biases);
 }
 
-std::size_t Dense::n_inputs() const
+std::size_t DenseLayer::n_inputs() const
 {
     return weights.rows();
 }
 
-std::size_t Dense::n_outputs() const
+std::size_t DenseLayer::n_outputs() const
 {
     return weights.cols();
 }
 
-Matrix Dense::forward(const Matrix &inputs)
+Matrix DenseLayer::forward(const Matrix &inputs)
 {
     check_input_size(inputs, n_inputs());
     this->inputs = inputs;

@@ -18,9 +18,9 @@
 
 namespace my_torch {
 
-class Dense {
+class DenseLayer {
 public:
-    Dense(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
+    DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
 
     std::size_t n_inputs() const;
     std::size_t n_outputs() const;
