@@ -25,6 +25,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/network/test_network.cpp	\
 		tests/network/test_gradient_check.cpp	\
 		tests/network/test_training.cpp	\
+		tests/network/test_xor.cpp	\
 		tests/losses/test_loss.cpp	\
 		tests/optimizers/test_optimizer.cpp
 
