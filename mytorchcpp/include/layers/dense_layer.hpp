@@ -12,9 +12,9 @@
 #include <memory>
 #include <vector>
 
-#include "activations.hpp"
-#include "layer.hpp"
-#include "matrix.hpp"
+#include "activations/activation.hpp"
+#include "layers/layer.hpp"
+#include "math/matrix.hpp"
 
 namespace my_torch {
 

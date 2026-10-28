@@ -11,7 +11,7 @@
 #include <memory>
 #include <vector>
 
-#include "layer.hpp"
+#include "layers/layer.hpp"
 
 namespace my_torch {
 

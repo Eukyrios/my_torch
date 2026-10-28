@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "loss.hpp"
+#include "losses/loss.hpp"
 
 namespace my_torch {
 

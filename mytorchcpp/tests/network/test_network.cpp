@@ -10,8 +10,8 @@
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
-#include "dense_layer.hpp"
-#include "network.hpp"
+#include "layers/dense_layer.hpp"
+#include "network/network.hpp"
 
 using LayerList = std::vector<std::unique_ptr<my_torch::Layer>>;
 

@@ -3,3 +3,5 @@
 -Wextra
 -iquote
 include
+-iquote
+tests

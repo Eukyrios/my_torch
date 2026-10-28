@@ -8,7 +8,7 @@
 #include <criterion/criterion.h>
 
 #include "assert_matrix.hpp"
-#include "layer.hpp"
+#include "layers/layer.hpp"
 
 class Double : public my_torch::Layer {
 public:

@@ -8,7 +8,7 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
-#include "neuron.hpp"
+#include "layers/neuron.hpp"
 
 Test(neuron, forward_matches_the_hand_computation)
 {

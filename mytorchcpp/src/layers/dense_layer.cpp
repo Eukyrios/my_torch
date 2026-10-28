@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "dense_layer.hpp"
+#include "layers/dense_layer.hpp"
 
 namespace my_torch {
 

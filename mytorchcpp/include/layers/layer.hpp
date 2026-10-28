@@ -13,7 +13,7 @@
 #include <string>
 #include <utility>
 
-#include "matrix.hpp"
+#include "math/matrix.hpp"
 
 namespace my_torch {
 

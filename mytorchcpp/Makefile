@@ -8,21 +8,21 @@
 CXX	=	g++
 CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote include
 
-SRC	=	src/neuron.cpp	\
-		src/matrix.cpp	\
-		src/activations.cpp	\
-		src/layer.cpp	\
-		src/dense_layer.cpp	\
-		src/network.cpp	\
-		src/loss.cpp
+SRC	=	src/math/matrix.cpp	\
+		src/layers/neuron.cpp	\
+		src/activations/activation.cpp	\
+		src/layers/layer.cpp	\
+		src/layers/dense_layer.cpp	\
+		src/network/network.cpp	\
+		src/losses/loss.cpp
 
-TESTS	=	tests/test_neuron.cpp	\
-		tests/test_matrix.cpp	\
-		tests/test_activations.cpp	\
-		tests/test_layer.cpp	\
-		tests/test_dense_layer.cpp	\
-		tests/test_network.cpp	\
-		tests/test_loss.cpp
+TESTS	=	tests/math/test_matrix.cpp	\
+		tests/layers/test_neuron.cpp	\
+		tests/activations/test_activation.cpp	\
+		tests/layers/test_layer.cpp	\
+		tests/layers/test_dense_layer.cpp	\
+		tests/network/test_network.cpp	\
+		tests/losses/test_loss.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
@@ -35,7 +35,7 @@ $(NAME):	$(OBJ)
 	ar rc $@ $^
 
 clean:
-	$(RM) $(OBJ) *.gcno *.gcda
+	$(RM) $(OBJ) $(shell find . -name '*.gcno' -o -name '*.gcda')
 
 fclean:	clean
 	$(RM) $(NAME) $(UNIT)
@@ -43,7 +43,7 @@ fclean:	clean
 re:	fclean all
 
 $(UNIT):	$(SRC) $(TESTS)
-	$(CXX) $(CXXFLAGS) --coverage -o $@ $^ -lcriterion
+	$(CXX) $(CXXFLAGS) -iquote tests --coverage -o $@ $^ -lcriterion
 
 tests_run:	$(UNIT)
 	./$(UNIT)

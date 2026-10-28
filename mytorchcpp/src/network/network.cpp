@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "network.hpp"
+#include "network/network.hpp"
 
 namespace my_torch {
 

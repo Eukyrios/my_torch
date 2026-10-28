@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "neuron.hpp"
+#include "layers/neuron.hpp"
 
 namespace my_torch {
 

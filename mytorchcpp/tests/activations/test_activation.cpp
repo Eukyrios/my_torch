@@ -9,7 +9,7 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
-#include "activations.hpp"
+#include "activations/activation.hpp"
 #include "assert_matrix.hpp"
 
 static const my_torch::Matrix Z = my_torch::Matrix::row({-2.0, -0.5, 0.0, 0.5, 2.0});

@@ -5,7 +5,7 @@
 ** Every layer has a name, and calling a layer runs its forward pass
 */
 
-#include "layer.hpp"
+#include "layers/layer.hpp"
 
 namespace my_torch {
 

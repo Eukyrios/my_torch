@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
-#include "loss.hpp"
+#include "losses/loss.hpp"
 
 static const my_torch::Matrix PREDICTIONS({{0.7, 0.2, 0.1}, {0.1, 0.8, 0.1}});
 static const my_torch::Matrix EXPECTED({{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}});

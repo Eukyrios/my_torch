@@ -11,7 +11,7 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "activations.hpp"
+#include "activations/activation.hpp"
 
 namespace my_torch {
 

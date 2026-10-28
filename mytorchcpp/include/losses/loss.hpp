@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "matrix.hpp"
+#include "math/matrix.hpp"
 
 namespace my_torch {
 

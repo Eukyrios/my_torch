@@ -9,7 +9,7 @@
 
 #include <criterion/criterion.h>
 
-#include "matrix.hpp"
+#include "math/matrix.hpp"
 
 inline void assert_matrix_eq(const my_torch::Matrix &actual, const my_torch::Matrix &expected)
 {

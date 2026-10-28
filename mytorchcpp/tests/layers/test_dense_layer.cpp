@@ -9,8 +9,8 @@
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
-#include "dense_layer.hpp"
-#include "neuron.hpp"
+#include "layers/dense_layer.hpp"
+#include "layers/neuron.hpp"
 
 static const my_torch::Matrix WEIGHTS({{0.5, -1.0}, {0.25, 0.5}});
 static const std::vector<double> BIASES = {0.1, -0.3};

@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
-#include "matrix.hpp"
+#include "math/matrix.hpp"
 
 static double square(double value)
 {
