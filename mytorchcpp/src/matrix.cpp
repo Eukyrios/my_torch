@@ -85,6 +85,20 @@ Matrix &Matrix::operator-=(const Matrix &other)
     return *this;
 }
 
+Matrix &Matrix::operator*=(double scalar)
+{
+    for (double &value : _values)
+        value *= scalar;
+    return *this;
+}
+
+Matrix &Matrix::operator/=(double scalar)
+{
+    for (double &value : _values)
+        value /= scalar;
+    return *this;
+}
+
 static void check_product_sizes(const Matrix &left, const Matrix &right)
 {
     if (left.cols() != right.rows())
@@ -110,6 +124,21 @@ Matrix operator+(Matrix left, const Matrix &right)
 Matrix operator-(Matrix left, const Matrix &right)
 {
     return left -= right;
+}
+
+Matrix operator*(Matrix matrix, double scalar)
+{
+    return matrix *= scalar;
+}
+
+Matrix operator*(double scalar, Matrix matrix)
+{
+    return matrix *= scalar;
+}
+
+Matrix operator/(Matrix matrix, double scalar)
+{
+    return matrix /= scalar;
 }
 
 }

@@ -25,6 +25,8 @@ public:
     Matrix transpose() const;
     Matrix &operator+=(const Matrix &other);
     Matrix &operator-=(const Matrix &other);
+    Matrix &operator*=(double scalar);
+    Matrix &operator/=(double scalar);
 
 private:
     std::size_t _rows = 0;
@@ -35,5 +37,8 @@ private:
 Matrix operator*(const Matrix &left, const Matrix &right);
 Matrix operator+(Matrix left, const Matrix &right);
 Matrix operator-(Matrix left, const Matrix &right);
+Matrix operator*(Matrix matrix, double scalar);
+Matrix operator*(double scalar, Matrix matrix);
+Matrix operator/(Matrix matrix, double scalar);
 
 }

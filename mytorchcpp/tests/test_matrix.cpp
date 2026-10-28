@@ -128,3 +128,26 @@ Test(matrix, element_wise_operations_reject_different_shapes)
     cr_assert_throw(my_torch::Matrix(2, 3) + my_torch::Matrix(3, 2), std::invalid_argument);
     cr_assert_throw(my_torch::Matrix(2, 3) - my_torch::Matrix(2, 2), std::invalid_argument);
 }
+
+Test(matrix, is_scaled_by_a_number_on_either_side)
+{
+    my_torch::Matrix matrix({{1, -2}, {0.5, 4}});
+    my_torch::Matrix expected({{3, -6}, {1.5, 12}});
+
+    assert_matrix_eq(matrix * 3.0, expected);
+    assert_matrix_eq(3.0 * matrix, expected);
+}
+
+Test(matrix, is_divided_by_a_number)
+{
+    assert_matrix_eq(my_torch::Matrix({{1, -2}, {0.5, 4}}) / 2.0, my_torch::Matrix({{0.5, -1}, {0.25, 2}}));
+}
+
+Test(matrix, is_scaled_in_place)
+{
+    my_torch::Matrix matrix({{1, -2}, {0.5, 4}});
+
+    matrix *= 4.0;
+    matrix /= 2.0;
+    assert_matrix_eq(matrix, my_torch::Matrix({{2, -4}, {1, 8}}));
+}
