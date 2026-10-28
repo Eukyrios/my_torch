@@ -34,4 +34,12 @@ public:
     Matrix gradient(const Matrix &predictions, const Matrix &expected) const override;
 };
 
+class CrossEntropy : public Loss {
+public:
+    CrossEntropy();
+
+    double forward(const Matrix &predictions, const Matrix &expected) const override;
+    Matrix gradient(const Matrix &predictions, const Matrix &expected) const override;
+};
+
 }

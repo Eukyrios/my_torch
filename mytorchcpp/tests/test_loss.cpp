@@ -5,6 +5,7 @@
 ** Tests of the losses
 */
 
+#include <cmath>
 #include <criterion/criterion.h>
 #include <stdexcept>
 
@@ -85,4 +86,58 @@ Test(mean_squared_error, has_its_name)
     my_torch::MeanSquaredError loss;
 
     cr_assert_str_eq(loss.name.c_str(), "mean_squared_error");
+}
+
+Test(cross_entropy, matches_the_hand_computation)
+{
+    cr_assert_float_eq(my_torch::CrossEntropy()(PREDICTIONS, EXPECTED), -(std::log(0.7) + std::log(0.8)) / 2, 1e-12);
+}
+
+Test(cross_entropy, is_zero_for_perfect_predictions)
+{
+    cr_assert_float_eq(my_torch::CrossEntropy()(EXPECTED, EXPECTED), 0.0, 1e-12);
+}
+
+Test(cross_entropy, grows_when_the_right_class_gets_less_probability)
+{
+    my_torch::CrossEntropy loss;
+    my_torch::Matrix expected = my_torch::Matrix::row({1, 0, 0});
+
+    cr_assert_gt(loss(my_torch::Matrix::row({0.4, 0.3, 0.3}), expected), loss(my_torch::Matrix::row({0.9, 0.05, 0.05}), expected));
+}
+
+Test(cross_entropy, stays_finite_when_the_right_class_gets_zero)
+{
+    cr_assert(std::isfinite(my_torch::CrossEntropy()(my_torch::Matrix::row({0.0, 1.0, 0.0}), my_torch::Matrix::row({1, 0, 0}))));
+}
+
+Test(cross_entropy, gradient_matches_the_numerical_gradient)
+{
+    my_torch::CrossEntropy loss;
+
+    assert_close(loss.gradient(PREDICTIONS, EXPECTED), numerical_gradient(loss, PREDICTIONS, EXPECTED), 1e-4);
+}
+
+Test(cross_entropy, is_averaged_over_the_batch)
+{
+    my_torch::CrossEntropy loss;
+    my_torch::Matrix one_prediction = my_torch::Matrix::row({0.7, 0.2, 0.1});
+    my_torch::Matrix one_expected = my_torch::Matrix::row({1.0, 0.0, 0.0});
+    my_torch::Matrix two_predictions({{0.7, 0.2, 0.1}, {0.7, 0.2, 0.1}});
+    my_torch::Matrix two_expected({{1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}});
+
+    cr_assert_float_eq(loss(two_predictions, two_expected), loss(one_prediction, one_expected), 1e-12);
+}
+
+Test(cross_entropy, rejects_predictions_and_expected_of_different_shapes)
+{
+    cr_assert_throw(my_torch::CrossEntropy()(PREDICTIONS, my_torch::Matrix(2, 2)), std::invalid_argument);
+    cr_assert_throw(my_torch::CrossEntropy().gradient(PREDICTIONS, my_torch::Matrix(2, 2)), std::invalid_argument);
+}
+
+Test(cross_entropy, has_its_name)
+{
+    my_torch::CrossEntropy loss;
+
+    cr_assert_str_eq(loss.name.c_str(), "cross_entropy");
 }

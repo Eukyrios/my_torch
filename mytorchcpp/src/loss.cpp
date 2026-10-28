@@ -2,15 +2,19 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** MeanSquaredError is the mean of (prediction - expected)^2 over every value
+** MeanSquaredError is the mean of (prediction - expected)^2 over every value; CrossEntropy
+** compares softmax probabilities to one-hot outputs, clipped away from 0 so log never sees 0
 */
 
+#include <cmath>
 #include <stdexcept>
 #include <string>
 
 #include "loss.hpp"
 
 namespace my_torch {
+
+static const double EPSILON = 1e-12;
 
 static double square(double value)
 {
@@ -46,6 +50,24 @@ Matrix MeanSquaredError::gradient(const Matrix &predictions, const Matrix &expec
 {
     check_same_shape(predictions, expected);
     return (predictions - expected) * (2.0 / predictions.size());
+}
+
+CrossEntropy::CrossEntropy() : Loss("cross_entropy")
+{
+}
+
+double CrossEntropy::forward(const Matrix &predictions, const Matrix &expected) const
+{
+    check_same_shape(predictions, expected);
+    Matrix clipped = predictions.clip(EPSILON, 1.0);
+    return -expected.hadamard(clipped.apply(std::log)).sum() / predictions.rows();
+}
+
+Matrix CrossEntropy::gradient(const Matrix &predictions, const Matrix &expected) const
+{
+    check_same_shape(predictions, expected);
+    Matrix clipped = predictions.clip(EPSILON, 1.0);
+    return expected / clipped * (-1.0 / predictions.rows());
 }
 
 }
