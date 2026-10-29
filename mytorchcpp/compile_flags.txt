@@ -2,6 +2,6 @@
 -Wall
 -Wextra
 -iquote
-include
+src
 -iquote
 tests

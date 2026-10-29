@@ -6,30 +6,43 @@
 ##
 
 CXX	=	g++
-CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote include
+CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote src
 
 SRC	=	src/math/matrix.cpp	\
-		src/layers/neuron.cpp	\
-		src/activations/activation.cpp	\
-		src/layers/layer.cpp	\
-		src/layers/dense_layer.cpp	\
-		src/network/network.cpp	\
-		src/losses/loss.cpp	\
-		src/optimizers/schedule.cpp	\
-		src/optimizers/optimizer.cpp
+		src/model/neuron/neuron.cpp	\
+		src/model/activations/activation.cpp	\
+		src/model/activations/activations/linear/linear.cpp	\
+		src/model/activations/activations/relu/relu.cpp	\
+		src/model/activations/activations/sigmoid/sigmoid.cpp	\
+		src/model/activations/activations/tanh/tanh.cpp	\
+		src/model/activations/activations/softmax/softmax.cpp	\
+		src/model/layers/layer.cpp	\
+		src/model/layers/layers/dense_layer/dense_layer.cpp	\
+		src/model/network/network.cpp	\
+		src/training/losses/loss.cpp	\
+		src/training/losses/losses/mean_squared_error/mean_squared_error.cpp	\
+		src/training/losses/losses/cross_entropy/cross_entropy.cpp	\
+		src/training/schedules/schedule.cpp	\
+		src/training/schedules/schedules/constant/constant.cpp	\
+		src/training/schedules/schedules/time_decay/time_decay.cpp	\
+		src/training/schedules/schedules/exponential_decay/exponential_decay.cpp	\
+		src/training/schedules/schedules/step_decay/step_decay.cpp	\
+		src/training/optimizers/optimizer.cpp	\
+		src/training/optimizers/optimizers/sgd/sgd.cpp	\
+		src/training/optimizers/optimizers/momentum/momentum.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
-		tests/layers/test_neuron.cpp	\
-		tests/activations/test_activation.cpp	\
-		tests/layers/test_layer.cpp	\
-		tests/layers/test_dense_layer.cpp	\
-		tests/network/test_network.cpp	\
-		tests/network/test_gradient_check.cpp	\
-		tests/network/test_training.cpp	\
-		tests/network/test_xor.cpp	\
-		tests/losses/test_loss.cpp	\
-		tests/optimizers/test_schedule.cpp	\
-		tests/optimizers/test_optimizer.cpp
+		tests/model/neuron/test_neuron.cpp	\
+		tests/model/activations/test_activation.cpp	\
+		tests/model/layers/test_layer.cpp	\
+		tests/model/layers/test_dense_layer.cpp	\
+		tests/model/network/test_network.cpp	\
+		tests/model/network/test_gradient_check.cpp	\
+		tests/model/network/test_training.cpp	\
+		tests/model/network/test_xor.cpp	\
+		tests/training/losses/test_loss.cpp	\
+		tests/training/schedules/test_schedule.cpp	\
+		tests/training/optimizers/test_optimizer.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
