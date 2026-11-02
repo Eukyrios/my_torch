@@ -23,4 +23,4 @@ __init__.py
 *.a
 *.gcno
 *.gcda
-/mytorchcpp/unit_tests
+/my_torch/unit_tests
