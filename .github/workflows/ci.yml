@@ -1,6 +1,6 @@
 name: CI
 
-# Build, tests and coverage (blocking under 85%) on every push; when main is green,
+# Build, C++ and Python tests, coverage (blocking under 85%) on every push; when main is green,
 # its full history is pushed to the Epitech repo with the key in GIT_SSH_PRIVATE_KEY.
 
 on:
@@ -35,7 +35,10 @@ jobs:
           cache-dependency-path: requirements*.txt
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcriterion-dev
+          pip install -r requirements-dev.txt
 
       - name: Collect the traces here
         run: mkdir -p reports
@@ -45,7 +48,10 @@ jobs:
           make 2>&1 | tee reports/build.log
           ./my_torch_analyzer --help 2>&1 | tee -a reports/build.log
 
-      - name: Run tests
+      - name: Run C++ tests
+        run: make -C my_torch tests_run 2>&1 | tee reports/cpp_tests.log
+
+      - name: Run Python tests
         run: |
           python -m pytest \
             --junitxml=reports/junit.xml \

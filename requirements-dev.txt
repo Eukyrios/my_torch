@@ -1,7 +1,6 @@
-# Development dependencies: tests, coverage (CI), dataset labelling and plots.
+# Development dependencies: tests, coverage (CI) and dataset labelling.
 
 -r requirements.txt
 pytest>=8.0
 pytest-cov>=5.0
 python-chess
-matplotlib
