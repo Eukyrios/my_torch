@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from analyzer.prediction import COLOURS, LABELS, STATES, colour_of, is_label, predicted_labels
@@ -6,7 +5,7 @@ from analyzer.prediction import predicted_states, prediction_report, state_of
 
 
 def one_hot(label: str) -> list[float]:
-    return list(np.eye(len(LABELS))[LABELS.index(label)])
+    return [1.0 if other == label else 0.0 for other in LABELS]
 
 
 def test_labels_follow_the_dataset_order():
@@ -79,12 +78,30 @@ def test_report_of_a_network_without_colours():
     assert prediction_report([[0.1, 0.8, 0.1], [0.9, 0.0, 0.1]], basic) == "Check\nNothing"
 
 
+def test_integer_scores_and_tuples_are_accepted():
+    assert predicted_labels((0, 0, 1, 0, 0)) == ["Check Black"]
+
+
+def test_a_tie_gives_the_first_label():
+    assert predicted_labels([0.5, 0.5, 0.0, 0.0, 0.0]) == ["Nothing"]
+
+
 def test_no_board_gives_no_state():
-    assert predicted_states(np.empty((0, len(LABELS)))) == []
-    assert prediction_report(np.empty((0, len(LABELS)))) == ""
+    assert predicted_states([]) == []
+    assert prediction_report([]) == ""
 
 
-@pytest.mark.parametrize("outputs", [[0.5, 0.5], np.zeros((2, 3)), np.zeros((2, 2, 5))])
+@pytest.mark.parametrize(
+    "outputs",
+    [
+        [0.5, 0.5],
+        [[0.0] * 3, [0.0] * 3],
+        [[[0.0] * 5] * 2] * 2,
+        [0.5, [0.0] * 5],
+        [[0.0, 0.0, "1", 0.0, 0.0]],
+        [[True, False, False, False, False]],
+    ],
+)
 def test_outputs_must_have_one_score_per_label(outputs):
-    with pytest.raises(ValueError, match="expected 5 outputs per board"):
+    with pytest.raises(ValueError, match="expected 5 scores per board"):
         predicted_states(outputs)

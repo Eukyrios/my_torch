@@ -1,9 +1,8 @@
-# Turns the network outputs into game states. The network gives one score per label (one row
-# per board) and the highest score is the prediction. A label is a state, "Checkmate", "Check"
-# or "Nothing", followed for checks and checkmates by the colour giving it, "White" or "Black":
-# the full output is the label itself, the state alone drops the colour.
-
-import numpy as np
+# Turns the network outputs into game states. The network gives one score per label, as one
+# row of numbers for one board or a list of rows for several, and the highest score is the
+# prediction. A label is a state, "Checkmate", "Check" or "Nothing", followed for checks and
+# checkmates by the colour giving it, "White" or "Black": the full output is the label
+# itself, the state alone drops the colour. Plain Python: the analyzer has no dependency.
 
 # same order as the dataset files (dataset.labels), which the network learns from
 LABELS = ("Nothing", "Check White", "Check Black", "Checkmate White", "Checkmate Black")
@@ -27,20 +26,33 @@ def check_label(label: str) -> None:
         )
 
 
-def check_outputs(outputs: np.ndarray, labels: tuple[str, ...]) -> None:
-    if outputs.ndim not in (1, 2) or outputs.shape[-1] != len(labels):
-        raise ValueError(
-            f"expected {len(labels)} outputs per board, one per label, as (n_labels,) or (boards, n_labels), "
-            f"got shape {outputs.shape}"
-        )
+def is_score(value) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def as_rows(outputs) -> list:
+    outputs = list(outputs)
+    single_board = len(outputs) > 0 and all(is_score(value) for value in outputs)
+    return [outputs] if single_board else outputs
+
+
+def check_row(row, labels: tuple[str, ...]) -> None:
+    if not isinstance(row, (list, tuple)) or len(row) != len(labels) or not all(is_score(value) for value in row):
+        raise ValueError(f"expected {len(labels)} scores per board, one per label, got {row!r}")
+
+
+def best_index(row) -> int:
+    # the first one on a tie
+    return max(range(len(row)), key=row.__getitem__)
 
 
 def predicted_labels(outputs, labels: tuple[str, ...] = LABELS) -> list[str]:
     for label in labels:
         check_label(label)
-    outputs = np.asarray(outputs, dtype=float)
-    check_outputs(outputs, labels)
-    return [labels[index] for index in np.atleast_2d(outputs).argmax(axis=1)]
+    rows = as_rows(outputs)
+    for row in rows:
+        check_row(row, labels)
+    return [labels[best_index(row)] for row in rows]
 
 
 def state_of(label: str) -> str:
