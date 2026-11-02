@@ -1,11 +1,8 @@
 # Command line of my_torch_analyzer: argument parsing in two passes (read, then validate),
-# --help and the exit codes. --train trains on XOR for now (analyzer/train.py);
-# --predict is not written yet.
+# --help and the exit codes. --train and --predict wait for the C++ network to be wired in.
 
 import sys
 from dataclasses import dataclass, field
-
-from analyzer.train import train_xor, xor_report
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 84
@@ -113,15 +110,7 @@ def print_error(message: str) -> None:
     print(f"my_torch_analyzer: {message}", file=sys.stderr)
 
 
-def run_train() -> int:
-    network, losses = train_xor()
-    print(xor_report(network, losses))
-    return EXIT_SUCCESS
-
-
 def run(args: Arguments) -> int:
-    if args.mode == "train":
-        return run_train()
     print_error(f"--{args.mode} is not implemented yet")
     return EXIT_ERROR
 
