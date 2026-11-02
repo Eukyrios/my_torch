@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from analyzer.prediction import LABELS, STATES, predicted_labels, predicted_states, state_of
+from analyzer.prediction import COLOURS, LABELS, STATES, colour_of, is_label, predicted_labels
+from analyzer.prediction import predicted_states, prediction_report, state_of
 
 
 def one_hot(label: str) -> list[float]:
@@ -20,9 +21,27 @@ def test_every_label_maps_to_its_state():
     assert set(states) == set(STATES)
 
 
-def test_unknown_label_is_rejected():
-    with pytest.raises(ValueError, match="unknown label 'Stalemate'"):
-        state_of("Stalemate")
+def test_every_label_maps_to_its_colour():
+    colours = [colour_of(label) for label in LABELS]
+    assert colours == [None, "White", "Black", "White", "Black"]
+    assert set(colours) - {None} == set(COLOURS)
+
+
+@pytest.mark.parametrize("label", ["Nothing", "Check", "Checkmate", "Check White", "Checkmate Black"])
+def test_valid_labels(label):
+    assert is_label(label)
+
+
+@pytest.mark.parametrize(
+    "label",
+    ["Stalemate", "", "check White", "Check Green", "Nothing White", "Check  White", "Check White Black", "Check White "],
+)
+def test_invalid_labels(label):
+    assert not is_label(label)
+    with pytest.raises(ValueError, match="unknown label"):
+        state_of(label)
+    with pytest.raises(ValueError, match="unknown label"):
+        colour_of(label)
 
 
 def test_the_highest_output_wins():
@@ -45,8 +64,24 @@ def test_a_network_with_its_own_labels():
     assert predicted_states([0.1, 0.8, 0.1], basic) == ["Check"]
 
 
+def test_a_network_with_an_invalid_label_is_rejected():
+    with pytest.raises(ValueError, match="unknown label 'Check Green'"):
+        predicted_labels([0.5, 0.5], ("Nothing", "Check Green"))
+
+
+def test_report_gives_the_full_label_with_its_colour():
+    outputs = [one_hot(label) for label in ("Checkmate Black", "Nothing", "Nothing", "Check White", "Nothing")]
+    assert prediction_report(outputs) == "Checkmate Black\nNothing\nNothing\nCheck White\nNothing"
+
+
+def test_report_of_a_network_without_colours():
+    basic = ("Nothing", "Check", "Checkmate")
+    assert prediction_report([[0.1, 0.8, 0.1], [0.9, 0.0, 0.1]], basic) == "Check\nNothing"
+
+
 def test_no_board_gives_no_state():
     assert predicted_states(np.empty((0, len(LABELS)))) == []
+    assert prediction_report(np.empty((0, len(LABELS)))) == ""
 
 
 @pytest.mark.parametrize("outputs", [[0.5, 0.5], np.zeros((2, 3)), np.zeros((2, 2, 5))])
