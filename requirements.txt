@@ -1,4 +1,2 @@
-# Runtime dependencies. Neural network libraries (pytorch, tensorflow, ...) are NOT allowed.
-# numpy does the matrix math: still to confirm with the staff and to check on the dump.
-
-numpy>=1.26
+# Runtime dependencies: none. The neural network is the C++ library in my_torch/; libraries
+# handling neural networks (pytorch, tensorflow, ...) are NOT allowed.
