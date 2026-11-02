@@ -54,8 +54,9 @@ def test_usage_error_goes_to_stderr_and_exits_84(capsys):
     assert err.startswith("my_torch_analyzer: ")
 
 
-def test_valid_line_exits_84_until_modes_exist(capsys):
-    assert main(["--predict", "net.nn", "boards.txt"]) == EXIT_ERROR
+@pytest.mark.parametrize("mode", ["--predict", "--train"])
+def test_valid_line_exits_84_until_modes_exist(mode, capsys):
+    assert main([mode, "net.nn", "boards.txt"]) == EXIT_ERROR
     assert "not implemented" in capsys.readouterr().err
 
 

@@ -4,7 +4,7 @@ pythonpath = ["."]
 addopts = "-ra --import-mode=importlib"
 
 [tool.coverage.run]
-source = ["my_torch", "analyzer"]
+source = ["analyzer"]
 branch = true
 
 [tool.coverage.report]

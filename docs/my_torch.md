@@ -1,8 +1,9 @@
 # my_torch: how the network works
 
-The maths behind `my_torch`, written from scratch with numpy: the equations each class implements, the
+The maths behind `my_torch`, written from scratch in C++ with its own `Matrix` class: the equations each class implements, the
 shape of every matrix, the derivatives used to learn, and what training gives on XOR.
-Every figure is drawn from the `my_torch` code itself by [`scripts/plot_docs.py`](../scripts/plot_docs.py).
+The figures and the XOR results were produced by the first, Python version of the module, which implemented the same
+equations; the C++ library replaced it and is checked by the same tests.
 
 1. [Notation and shapes](#1-notation-and-shapes)
 2. [Architecture](#2-architecture)
@@ -143,7 +144,7 @@ of $`W`$ turns the whole layer, for a whole batch, into one matrix product:
 A = f(Z)
 ```
 
-$`b`$ is added to every row (numpy broadcasting). A single sample of shape $`(n_{in})`$ gives $`(n_{out})`$.
+$`b`$ is added to every row (broadcasting, as in numpy). A single sample is a batch of one row, $`(1, n_{in})`$.
 
 **A network** chains its layers, each reading the outputs of the previous one:
 
@@ -310,10 +311,10 @@ The tests compare, to a relative tolerance of $`10^{-4}`$ or better:
 
 | What | Where |
 |---|---|
-| each loss gradient | `tests/my_torch/losses/test_loss.py` |
-| each activation's derivative and backward, softmax's full Jacobian | `tests/my_torch/activations/test_activation.py` |
-| each dense layer's weight, bias and input gradients, for all 5 activations | `tests/my_torch/layers/test_dense_layer.py` |
-| **every weight, bias and input gradient of a whole 3-layer network**, with tanh/relu + softmax + cross-entropy and sigmoid + MSE | `tests/my_torch/network/test_gradient_check.py` |
+| each loss gradient | `my_torch/tests/training/losses/test_loss.cpp` |
+| each activation's derivative and backward, softmax's full Jacobian | `my_torch/tests/model/activations/test_activation.cpp` |
+| a dense layer's weight, bias and input gradients against a hand computation | `my_torch/tests/model/layers/test_dense_layer.cpp` |
+| **every weight, bias and input gradient of a whole 3-layer network**, with tanh/relu + softmax + cross-entropy and sigmoid + MSE | `my_torch/tests/model/network/test_gradient_check.cpp` |
 
 ## 9. Weight initialization
 
@@ -422,27 +423,21 @@ backpropagation and the optimizer all working together.
 | (1, 0) | 1 | 0.995 |
 | (1, 1) | 0 | 0.007 |
 
-It is learned from 5 different random starts (`tests/my_torch/network/test_xor.py`).
-
-To redraw every figure:
-
-```bash
-python -m scripts.plot_docs
-```
+It is learned from 5 different random starts (`my_torch/tests/model/network/test_xor.cpp`).
 
 ## 14. Code map
 
 | Concept | Equation | Code |
 |---|---|---|
-| Dense layer forward | $`Z = XW + b,\ A = f(Z)`$ | `my_torch/layers/dense_layer.py` · `DenseLayer.forward` |
-| Network forward | $`A^{(l)} = f^{(l)}(A^{(l-1)}W^{(l)} + b^{(l)})`$ | `my_torch/network/network.py` · `Network.forward` |
-| Activations, derivatives | §4 table | `my_torch/activations/activation.py` · `forward`, `derivative`, `backward` |
-| Softmax backward | $`p \odot (g - \sum g_k p_k)`$ | `my_torch/activations/activation.py` · `Softmax.backward` |
-| Losses and gradients | §6 | `my_torch/losses/loss.py` · `CrossEntropy`, `MeanSquaredError` |
-| Layer backward | $`X^\top G_Z,\ \sum G_Z,\ G_Z W^\top`$ | `my_torch/layers/dense_layer.py` · `DenseLayer.backward` |
-| Network backward | layers in reverse | `my_torch/network/network.py` · `Network.backward` |
-| Initialization | He, Xavier | `my_torch/layers/dense_layer.py` · `DenseLayer.create` |
-| SGD, momentum | §10 | `my_torch/optimizers/optimizer.py` · `SGD`, `Momentum` |
-| Schedules | §11 table | `my_torch/optimizers/schedule.py` |
-| Training loop | §12 | `my_torch/network/network.py` · `Network.train` |
-| Gradient check | central difference | `tests/my_torch/network/test_gradient_check.py` |
+| Dense layer forward | $`Z = XW + b,\ A = f(Z)`$ | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::forward` |
+| Network forward | $`A^{(l)} = f^{(l)}(A^{(l-1)}W^{(l)} + b^{(l)})`$ | `my_torch/src/model/network/` · `Network::forward` |
+| Activations, derivatives | §4 table | `my_torch/src/model/activations/` · `forward`, `derivative`, `backward` |
+| Softmax backward | $`p \odot (g - \sum g_k p_k)`$ | `my_torch/src/model/activations/activations/softmax/` · `Softmax::backward` |
+| Losses and gradients | §6 | `my_torch/src/training/losses/` · `CrossEntropy`, `MeanSquaredError` |
+| Layer backward | $`X^\top G_Z,\ \sum G_Z,\ G_Z W^\top`$ | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::backward` |
+| Network backward | layers in reverse | `my_torch/src/model/network/` · `Network::backward` |
+| Initialization | He, Xavier | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::create` |
+| SGD, momentum | §10 | `my_torch/src/training/optimizers/` · `SGD`, `Momentum` |
+| Schedules | §11 table | `my_torch/src/training/schedules/` |
+| Training loop | §12 | `my_torch/src/model/network/` · `Network::train` |
+| Gradient check | central difference | `my_torch/tests/model/network/test_gradient_check.cpp` |
