@@ -117,12 +117,12 @@ Matrix Network::backward(const Matrix &gradient)
     return result;
 }
 
-std::vector<double> Network::train(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t epochs, std::size_t batch_size, std::mt19937 &rng)
+std::vector<double> Network::train(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t epochs, std::size_t batch_size, std::mt19937 &rng, std::size_t first_epoch)
 {
     check_training_data(inputs, labels);
     check_training_settings(epochs, batch_size);
     std::vector<double> losses;
-    for (std::size_t epoch = 0; epoch < epochs; epoch++)
+    for (std::size_t epoch = first_epoch; epoch < first_epoch + epochs; epoch++)
         losses.push_back(train_epoch(inputs, labels, loss, optimizer, batch_size, rng, epoch));
     return losses;
 }
