@@ -12,6 +12,7 @@ reports/
 venv/
 .venv/
 .env
+env/
 /my_torch_analyzer
 datasets/
 data/
