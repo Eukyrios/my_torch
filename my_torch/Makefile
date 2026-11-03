@@ -32,7 +32,8 @@ SRC	=	src/math/matrix.cpp	\
 		src/training/optimizers/optimizers/momentum/momentum.cpp	\
 		src/training/hyperparameters/search_space.cpp	\
 		src/training/hyperparameters/particle_swarm.cpp	\
-		src/training/hyperparameters/validation_loss.cpp
+		src/training/hyperparameters/validation_loss.cpp	\
+		src/training/hyperparameters/search_log.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/neuron/test_neuron.cpp	\
@@ -48,7 +49,8 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/training/optimizers/test_optimizer.cpp	\
 		tests/training/hyperparameters/test_search_space.cpp	\
 		tests/training/hyperparameters/test_particle_swarm.cpp	\
-		tests/training/hyperparameters/test_validation_loss.cpp
+		tests/training/hyperparameters/test_validation_loss.cpp	\
+		tests/training/hyperparameters/test_search_log.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
