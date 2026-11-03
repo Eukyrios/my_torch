@@ -2,7 +2,7 @@
 ## EPITECH PROJECT, 2026
 ## my_torch
 ## File description:
-## Builds the C++ network as a static library and runs its Criterion tests
+## Builds the C++ network as a static library, runs its Criterion tests and builds the benchmarks
 ##
 
 CXX	=	g++
@@ -58,6 +58,7 @@ OBJ	=	$(SRC:.cpp=.o)
 
 NAME	=	libmytorch.a
 UNIT	=	unit_tests
+BENCHMARK	=	hyperparameter_benchmark
 
 all:	$(NAME)
 
@@ -68,7 +69,7 @@ clean:
 	$(RM) $(OBJ) $(shell find . -name '*.gcno' -o -name '*.gcda')
 
 fclean:	clean
-	$(RM) $(NAME) $(UNIT)
+	$(RM) $(NAME) $(UNIT) $(BENCHMARK)
 
 re:	fclean all
 
@@ -78,4 +79,9 @@ $(UNIT):	$(SRC) $(TESTS)
 tests_run:	$(UNIT)
 	./$(UNIT)
 
-.PHONY:	all clean fclean re tests_run
+$(BENCHMARK):	$(SRC) benchmarks/hyperparameter_search.cpp
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
+
+benchmark:	$(BENCHMARK)
+
+.PHONY:	all clean fclean re tests_run benchmark
