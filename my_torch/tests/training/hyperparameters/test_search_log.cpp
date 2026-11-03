@@ -44,7 +44,7 @@ Test(search_log, lists_every_evaluation_with_its_hyperparameters_in_name_order)
 {
     std::string text = my_torch::evaluations_csv(small_result());
 
-    cr_assert(text == "iteration,particle,learning_rate,momentum,score\n0,0,0.01,0.90000000000000002,0.5\n0,1,0.10000000000000001,0.5,0.25\n1,0,0.050000000000000003,0.69999999999999996,0.125\n", "%s", text.c_str());
+    cr_assert(text == "iteration,candidate,learning_rate,momentum,score\n0,0,0.01,0.90000000000000002,0.5\n0,1,0.10000000000000001,0.5,0.25\n1,0,0.050000000000000003,0.69999999999999996,0.125\n", "%s", text.c_str());
 }
 
 Test(search_log, gives_the_best_score_after_each_iteration)

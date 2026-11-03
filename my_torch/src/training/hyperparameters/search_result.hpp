@@ -20,7 +20,7 @@ using Objective = std::function<double(const Hyperparameters &)>;
 
 struct Evaluation {
     std::size_t iteration;
-    std::size_t particle;
+    std::size_t candidate;
     Hyperparameters hyperparameters;
     double score;
 };

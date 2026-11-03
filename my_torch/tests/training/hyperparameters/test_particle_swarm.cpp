@@ -77,7 +77,7 @@ Test(particle_swarm, evaluates_every_particle_at_every_iteration)
     cr_assert_eq(result.best_per_iteration.size(), 7u);
     cr_assert_eq(result.evaluations.front().iteration, 0u);
     cr_assert_eq(result.evaluations.back().iteration, 6u);
-    cr_assert_eq(result.evaluations.back().particle, 3u);
+    cr_assert_eq(result.evaluations.back().candidate, 3u);
 }
 
 Test(particle_swarm, the_best_score_never_gets_worse)

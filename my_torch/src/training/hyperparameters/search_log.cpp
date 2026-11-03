@@ -23,7 +23,7 @@ static std::string number_text(double value)
 
 static std::string header_line(const Hyperparameters &names)
 {
-    std::string line = "iteration,particle";
+    std::string line = "iteration,candidate";
     for (const auto &[name, value] : names)
         line += "," + name;
     return line + ",score\n";
@@ -31,7 +31,7 @@ static std::string header_line(const Hyperparameters &names)
 
 static std::string evaluation_line(const Evaluation &evaluation)
 {
-    std::string line = std::to_string(evaluation.iteration) + "," + std::to_string(evaluation.particle);
+    std::string line = std::to_string(evaluation.iteration) + "," + std::to_string(evaluation.candidate);
     for (const auto &[name, value] : evaluation.hyperparameters)
         line += "," + number_text(value);
     return line + "," + number_text(evaluation.score) + "\n";
@@ -47,7 +47,7 @@ static void write_text(const std::string &path, const std::string &text)
 std::string evaluations_csv(const SearchResult &result)
 {
     if (result.evaluations.empty())
-        return "iteration,particle,score\n";
+        return "iteration,candidate,score\n";
     std::string text = header_line(result.evaluations.front().hyperparameters);
     for (const Evaluation &evaluation : result.evaluations)
         text += evaluation_line(evaluation);
