@@ -29,7 +29,8 @@ SRC	=	src/math/matrix.cpp	\
 		src/training/schedules/schedules/step_decay/step_decay.cpp	\
 		src/training/optimizers/optimizer.cpp	\
 		src/training/optimizers/optimizers/sgd/sgd.cpp	\
-		src/training/optimizers/optimizers/momentum/momentum.cpp
+		src/training/optimizers/optimizers/momentum/momentum.cpp	\
+		src/training/hyperparameters/search_space.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/neuron/test_neuron.cpp	\
@@ -42,7 +43,8 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/network/test_xor.cpp	\
 		tests/training/losses/test_loss.cpp	\
 		tests/training/schedules/test_schedule.cpp	\
-		tests/training/optimizers/test_optimizer.cpp
+		tests/training/optimizers/test_optimizer.cpp	\
+		tests/training/hyperparameters/test_search_space.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
