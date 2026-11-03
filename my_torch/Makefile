@@ -30,6 +30,11 @@ SRC	=	src/math/matrix.cpp	\
 		src/training/optimizers/optimizer.cpp	\
 		src/training/optimizers/optimizers/sgd/sgd.cpp	\
 		src/training/optimizers/optimizers/momentum/momentum.cpp	\
+		src/training/training.cpp	\
+		src/io/json/json.cpp	\
+		src/io/npy/npy.cpp	\
+		src/io/zip/zip.cpp	\
+		src/io/network_file/network_file.cpp	\
 		src/training/hyperparameters/search_space/search_space.cpp	\
 		src/training/hyperparameters/algorithms/particle_swarm/particle_swarm.cpp	\
 		src/training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.cpp	\
@@ -48,6 +53,11 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/training/losses/test_loss.cpp	\
 		tests/training/schedules/test_schedule.cpp	\
 		tests/training/optimizers/test_optimizer.cpp	\
+		tests/training/test_training_runs.cpp	\
+		tests/io/json/test_json.cpp	\
+		tests/io/npy/test_npy.cpp	\
+		tests/io/zip/test_zip.cpp	\
+		tests/io/network_file/test_network_file.cpp	\
 		tests/training/hyperparameters/test_search_space.cpp	\
 		tests/training/hyperparameters/test_particle_swarm.cpp	\
 		tests/training/hyperparameters/test_genetic_algorithm.cpp	\

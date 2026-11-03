@@ -78,10 +78,26 @@ column broadcasts over the other matrix.
 `inputs` has one row of 769 numbers per board (the layout of `analyzer.encoder.encode_fen`), `labels` one one-hot
 row per board over the 5 classes (`dataset.labels.LABELS`). Saving and loading are described below.
 
-### Saving and loading networks (planned)
+### Saving and loading networks
 
-Not written yet. This is the format we plan to use for `.nn` files, so a network can be loaded for `--predict`
-and training can be **stopped and resumed** exactly where it left off.
+`.nn` files keep everything about a network, so it can be loaded for `--predict` and its training can be
+**stopped and resumed** exactly where it left off (`src/io/network_file/`, built on `src/io/json`, `src/io/npy` and
+`src/io/zip`, with no outside library):
+
+```cpp
+#include "io/network_file/network_file.hpp"
+#include "training/training.hpp"
+
+my_torch::Training training(std::make_unique<my_torch::CrossEntropy>(), std::move(optimizer), 32, std::mt19937(0));
+training.run(network, inputs, labels, 10);                                  // epochs 0 to 9
+my_torch::save_network("my_torch_network_full.nn", network, my_torch::Json::Object {{"dataset", "data/train.txt"}}, &training);
+
+my_torch::SavedNetwork saved = my_torch::load_network("my_torch_network_full.nn");   // throws NetworkFileError
+saved.network(inputs);                                                      // same predictions, bit for bit
+saved.training->run(saved.network, inputs, labels, 10);                     // epochs 10 to 19, as if never stopped
+```
+
+Without a `Training`, only the network and the metadata are saved (`saved.training` is then empty).
 
 **Container: one uncompressed zip** (the same layout as numpy's `.npz`, so `np.load(path)` can open it for
 plots and checks):
@@ -114,10 +130,10 @@ my_torch_network_basic.nn
     "batch_size": 32,
     "loss": {"name": "cross_entropy", "epsilon": 1e-12},
     "optimizer": {
-      "name": "momentum", "learning_rate": 0.01, "momentum": 0.9,
+      "name": "momentum", "learning_rate": 0.01, "current_learning_rate": 0.005, "momentum": 0.9,
       "schedule": {"name": "step_decay", "factor": 0.5, "every": 8}
     },
-    "random_state": "state of the random generator, so shuffling continues where it stopped"
+    "random_state": "2443250962 1093594115 ... (the std::mt19937 shuffling the batches)"
   }
 }
 ```

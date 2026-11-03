@@ -3,7 +3,8 @@
 ** my_torch
 ** File description:
 ** A network runs its layers in order on a batch, network(inputs), and backward runs them in
-** reverse; train shuffles the data each epoch into mini-batches and returns each epoch's loss
+** reverse; train shuffles the data each epoch into mini-batches and returns each epoch's loss,
+** counting epochs from first_epoch so a resumed training keeps its learning-rate schedule
 */
 
 #pragma once
@@ -30,7 +31,7 @@ public:
     Matrix forward(const Matrix &inputs);
     Matrix operator()(const Matrix &inputs);
     Matrix backward(const Matrix &gradient);
-    std::vector<double> train(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t epochs, std::size_t batch_size, std::mt19937 &rng);
+    std::vector<double> train(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t epochs, std::size_t batch_size, std::mt19937 &rng, std::size_t first_epoch = 0);
     double train_epoch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer, std::size_t batch_size, std::mt19937 &rng, std::size_t epoch = 0);
     double train_batch(const Matrix &inputs, const Matrix &labels, const Loss &loss, Optimizer &optimizer);
 
