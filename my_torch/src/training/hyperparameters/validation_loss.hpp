@@ -30,6 +30,7 @@ public:
     static Hyperparameters defaults();
 
     Network build(const Hyperparameters &hyperparameters, std::mt19937 &rng) const;
+    Network train(const Hyperparameters &hyperparameters) const;
     double operator()(const Hyperparameters &hyperparameters) const;
 
     TrainingData data;

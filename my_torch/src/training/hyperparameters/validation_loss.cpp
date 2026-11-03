@@ -78,15 +78,20 @@ Network ValidationLoss::build(const Hyperparameters &hyperparameters, std::mt199
     return Network(std::move(layers));
 }
 
-double ValidationLoss::operator()(const Hyperparameters &hyperparameters) const
+Network ValidationLoss::train(const Hyperparameters &hyperparameters) const
 {
     Hyperparameters values = with_defaults(hyperparameters);
     std::mt19937 rng(seed);
     Network network = build(values, rng);
     Momentum optimizer(values.at("learning_rate"), values.at("momentum"), std::make_unique<ExponentialDecay>(values.at("decay")));
-    CrossEntropy loss;
-    network.train(data.train_inputs, data.train_labels, loss, optimizer, epochs, whole(values, "batch_size"), rng);
-    return loss(network(data.validation_inputs), data.validation_labels);
+    network.train(data.train_inputs, data.train_labels, CrossEntropy(), optimizer, epochs, whole(values, "batch_size"), rng);
+    return network;
+}
+
+double ValidationLoss::operator()(const Hyperparameters &hyperparameters) const
+{
+    Network network = train(hyperparameters);
+    return CrossEntropy()(network(data.validation_inputs), data.validation_labels);
 }
 
 }

@@ -11,6 +11,7 @@
 
 #include "training/hyperparameters/particle_swarm.hpp"
 #include "training/hyperparameters/validation_loss.hpp"
+#include "training/losses/losses/cross_entropy/cross_entropy.hpp"
 
 static void add_sample(my_torch::Matrix &inputs, my_torch::Matrix &labels, std::size_t row, double x, double y)
 {
@@ -68,6 +69,16 @@ Test(validation_loss, builds_the_requested_layers)
     cr_assert_eq(network.layers.size(), 4u);
     cr_assert(network.layers[1]->shape() == my_torch::Shape(12, 12));
     cr_assert(network.shape() == my_torch::Shape(2, 2));
+}
+
+Test(validation_loss, the_score_is_the_validation_loss_of_the_trained_network)
+{
+    my_torch::ValidationLoss score(DATA, 10);
+    my_torch::Hyperparameters configuration = {{"learning_rate", 0.05}, {"hidden_size", 8}};
+    my_torch::Network network = score.train(configuration);
+    my_torch::Matrix predictions = network(DATA.validation_inputs);
+
+    cr_assert(score(configuration) == my_torch::CrossEntropy()(predictions, DATA.validation_labels));
 }
 
 Test(validation_loss, missing_hyperparameters_take_their_default)
