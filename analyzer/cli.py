@@ -1,8 +1,14 @@
 # Command line of my_torch_analyzer: argument parsing in two passes (read, then validate),
-# --help and the exit codes. --train and --predict wait for the C++ network to be wired in.
+# --help, the two modes and the exit codes. --predict and --train read the chess file here and
+# leave the network to my_torch_engine, the C++ side.
 
 import sys
 from dataclasses import dataclass, field
+
+from analyzer.chess_file import ChessFileError, check_expected_outputs, read_chess_file
+from analyzer.engine import EngineError, network_labels, predict_outputs, train
+from analyzer.prediction import predicted_labels
+from analyzer.report import build_report, expected_as, format_report
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 84
@@ -110,9 +116,42 @@ def print_error(message: str) -> None:
     print(f"my_torch_analyzer: {message}", file=sys.stderr)
 
 
+def run_predict(args: Arguments) -> None:
+    # stdout carries the predictions only, one per board; the accuracy report goes to stderr
+    boards = read_chess_file(args.chess_file)
+    labels = network_labels(args.load_file)
+    predicted = predicted_labels(predict_outputs(args.load_file, boards, labels), labels)
+    if predicted:
+        print("\n".join(predicted))
+    checked = [(board.expected, label) for board, label in zip(boards, predicted) if board.expected is not None]
+    if checked:
+        expected, guesses = zip(*checked)
+        print(format_report(build_report(list(expected), list(guesses), labels)), file=sys.stderr)
+
+
+def run_train(args: Arguments) -> None:
+    boards = read_chess_file(args.chess_file)
+    check_expected_outputs(boards, args.chess_file)
+    labels = network_labels(args.load_file)
+    classes = []
+    for board in boards:
+        try:
+            classes.append(labels.index(expected_as(board.expected, labels)))
+        except ValueError as error:
+            raise ChessFileError(f"{args.chess_file} line {board.line}: {error}")
+    train(args.load_file, args.save_file or args.load_file, boards, classes, labels)
+
+
 def run(args: Arguments) -> int:
-    print_error(f"--{args.mode} is not implemented yet")
-    return EXIT_ERROR
+    try:
+        if args.mode == "predict":
+            run_predict(args)
+        else:
+            run_train(args)
+    except (ChessFileError, EngineError, ValueError) as error:
+        print_error(str(error))
+        return EXIT_ERROR
+    return EXIT_SUCCESS
 
 
 def main(argv: list[str] | None = None) -> int:

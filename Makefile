@@ -28,7 +28,7 @@ fclean:	clean
 
 re:	fclean all
 
-tests_run:
+tests_run:	module
 	$(MAKE) -C $(MODULE) tests_run
 	python3 -m pytest
 
