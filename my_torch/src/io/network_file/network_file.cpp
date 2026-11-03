@@ -3,8 +3,11 @@
 ** my_torch
 ** File description:
 ** A .nn file is an uncompressed zip holding header.json (format, version, layers, metadata and
-** the training) and one .npy per array: layer_<i>_weights, layer_<i>_biases, and optimizer_<i>
-** for the optimizer's memory of parameter i (Momentum's velocities). Saving writes a temporary
+** the training) and one .npy per array: layer_<i>_weights and layer_<i>_biases of each dense
+** layer i (a dropout layer has no array, only its rate and random state in the header), and
+** optimizer_<i> for the optimizer's memory of parameter i (Momentum's velocities). Settings added
+** after the first networks (dropout, weight decay, early stopping) take their default value when
+** a file does not have them, so older files still load. Saving writes a temporary
 ** file then renames it, so a failed save never breaks the network already there; loading checks
 ** every part before building anything
 */
@@ -20,6 +23,7 @@
 #include "io/zip/zip.hpp"
 #include "model/activations/activation.hpp"
 #include "model/layers/layers/dense_layer/dense_layer.hpp"
+#include "model/layers/layers/dropout/dropout.hpp"
 #include "training/losses/losses/cross_entropy/cross_entropy.hpp"
 #include "training/losses/losses/mean_squared_error/mean_squared_error.hpp"
 #include "training/optimizers/optimizers/momentum/momentum.hpp"
@@ -37,27 +41,33 @@ static std::string weights_name(std::size_t layer) { return "layer_" + std::to_s
 static std::string biases_name(std::size_t layer) { return "layer_" + std::to_string(layer) + "_biases.npy"; }
 static std::string optimizer_name(std::size_t parameter) { return "optimizer_" + std::to_string(parameter) + ".npy"; }
 
-static const DenseLayer &as_dense(const Layer &layer, std::size_t position)
+static std::string random_state(const std::mt19937 &rng)
 {
-    const DenseLayer *dense = dynamic_cast<const DenseLayer *>(&layer);
-    if (!dense)
-        throw NetworkFileError("cannot save layer " + std::to_string(position) + " of type '" + layer.name + "', only dense layers can be saved");
-    return *dense;
+    std::ostringstream state;
+    state << rng;
+    return state.str();
 }
 
 /* Saving: everything is described in the header */
 
+static Json describe_layer(const Layer &layer, std::size_t position)
+{
+    if (const DenseLayer *dense = dynamic_cast<const DenseLayer *>(&layer))
+        return Json::Object {
+            {"type", dense->name},
+            {"activation", dense->activation->name},
+            {"shape", Json::Array {dense->weights.rows(), dense->weights.cols()}},
+        };
+    if (const Dropout *dropout = dynamic_cast<const Dropout *>(&layer))
+        return Json::Object {{"type", dropout->name}, {"rate", dropout->rate}, {"random_state", random_state(dropout->rng)}};
+    throw NetworkFileError("cannot save layer " + std::to_string(position) + " of type '" + layer.name + "', only dense and dropout layers can be saved");
+}
+
 static Json describe_layers(const Network &network)
 {
     Json::Array layers;
-    for (std::size_t position = 0; position < network.layers.size(); position++) {
-        const DenseLayer &dense = as_dense(*network.layers[position], position);
-        layers.push_back(Json::Object {
-            {"type", dense.name},
-            {"activation", dense.activation->name},
-            {"shape", Json::Array {dense.weights.rows(), dense.weights.cols()}},
-        });
-    }
+    for (std::size_t position = 0; position < network.layers.size(); position++)
+        layers.push_back(describe_layer(*network.layers[position], position));
     return layers;
 }
 
@@ -92,22 +102,26 @@ static Json describe_optimizer(const Optimizer &optimizer)
     };
     if (const Momentum *momentum = dynamic_cast<const Momentum *>(&optimizer))
         description.set("momentum", momentum->momentum);
+    description.set("weight_decay", optimizer.weight_decay);
     description.set("schedule", describe_schedule(*optimizer.schedule));
     return description;
 }
 
 static Json describe_training(const Training &training)
 {
-    std::ostringstream random_state;
-    random_state << training.rng;
     Json::Array losses(training.losses.begin(), training.losses.end());
+    Json::Array validation_losses(training.validation_losses.begin(), training.validation_losses.end());
     return Json::Object {
         {"epoch", training.epoch},
         {"losses", losses},
+        {"validation_losses", validation_losses},
         {"batch_size", training.batch_size},
+        {"validation_split", training.validation_split},
+        {"patience", training.patience},
+        {"max_epochs", training.max_epochs},
         {"loss", describe_loss(*training.loss)},
         {"optimizer", describe_optimizer(*training.optimizer)},
-        {"random_state", random_state.str()},
+        {"random_state", random_state(training.rng)},
     };
 }
 
@@ -154,11 +168,11 @@ void save_network(const std::string &path, Network &network, const Json &metadat
     if (training)
         header.set("training", describe_training(*training));
     ZipEntries entries = {{HEADER, header.dump() + "\n"}};
-    for (std::size_t position = 0; position < network.layers.size(); position++) {
-        const DenseLayer &dense = as_dense(*network.layers[position], position);
-        entries.emplace_back(weights_name(position), to_npy(dense.weights));
-        entries.emplace_back(biases_name(position), to_npy(dense.biases, true));
-    }
+    for (std::size_t position = 0; position < network.layers.size(); position++)
+        if (const DenseLayer *dense = dynamic_cast<const DenseLayer *>(network.layers[position].get())) {
+            entries.emplace_back(weights_name(position), to_npy(dense->weights));
+            entries.emplace_back(biases_name(position), to_npy(dense->biases, true));
+        }
     if (training)
         add_optimizer_memory(entries, network, *training->optimizer);
     write_file(path, to_zip(entries));
@@ -214,6 +228,21 @@ static std::string text(const Json &object, const std::string &key, const std::s
 static double number_or(const Json &object, const std::string &key, const std::string &where, double fallback)
 {
     return object.find(key) ? number(object, key, where) : fallback;
+}
+
+static std::size_t count_or(const Json &object, const std::string &key, const std::string &where, std::size_t fallback)
+{
+    return object.find(key) ? count(object, key, where) : fallback;
+}
+
+static std::mt19937 build_random_state(const std::string &state, const std::string &where)
+{
+    std::istringstream text(state);
+    std::mt19937 rng;
+    text >> rng;
+    if (text.fail() || !(text >> std::ws).eof())
+        throw Invalid(where + ".random_state is not the state of a std::mt19937");
+    return rng;
 }
 
 static std::string read_file(const std::string &path)
@@ -273,12 +302,20 @@ static std::vector<double> row_values(const Matrix &row)
     return values;
 }
 
+static std::unique_ptr<Layer> build_dropout(const Json &description, const std::string &where)
+{
+    std::mt19937 rng = description.find("random_state") ? build_random_state(text(description, "random_state", where), where) : std::mt19937();
+    return std::make_unique<Dropout>(number(description, "rate", where), rng);
+}
+
 static std::unique_ptr<Layer> build_layer(const Json &description, std::size_t position, const Arrays &arrays)
 {
     std::string where = "layers[" + std::to_string(position) + "]";
     const std::string type = text(description, "type", where);
+    if (type == "dropout")
+        return build_dropout(description, where);
     if (type != "dense")
-        throw Invalid(where + ": unknown layer type '" + type + "', expected dense");
+        throw Invalid(where + ": unknown layer type '" + type + "', expected dense or dropout");
     const Json shape = member(description, "shape", where);
     if (!shape.is_array() || shape.as_array().size() != 2)
         throw Invalid(where + ".shape must be [n_inputs, n_outputs]");
@@ -344,17 +381,8 @@ static std::unique_ptr<Optimizer> build_optimizer(const Json &description)
     else
         throw Invalid(where + ": unknown optimizer '" + name + "', expected sgd or momentum");
     optimizer->learning_rate = number_or(description, "current_learning_rate", where, learning_rate);
+    optimizer->weight_decay = number_or(description, "weight_decay", where, 0.0);
     return optimizer;
-}
-
-static std::mt19937 build_random_state(const std::string &state)
-{
-    std::istringstream text(state);
-    std::mt19937 rng;
-    text >> rng;
-    if (text.fail() || !(text >> std::ws).eof())
-        throw Invalid("training.random_state is not the state of a std::mt19937");
-    return rng;
 }
 
 static void restore_optimizer_memory(Optimizer &optimizer, Network &network, const Arrays &arrays)
@@ -369,14 +397,14 @@ static void restore_optimizer_memory(Optimizer &optimizer, Network &network, con
     }
 }
 
-static std::vector<double> build_losses(const Json &losses)
+static std::vector<double> build_losses(const Json &losses, const std::string &where)
 {
     std::vector<double> values;
     if (!losses.is_array())
-        throw Invalid("training.losses must be a list of numbers");
+        throw Invalid(where + " must be a list of numbers");
     for (const Json &loss : losses.as_array()) {
         if (!loss.is_number())
-            throw Invalid("training.losses must be a list of numbers");
+            throw Invalid(where + " must be a list of numbers");
         values.push_back(loss.as_number());
     }
     return values;
@@ -386,13 +414,19 @@ static Training build_training(const Json &description, Network &network, const 
 {
     const std::string where = "training";
     std::size_t epoch = count(description, "epoch", where);
-    std::vector<double> losses = build_losses(member(description, "losses", where));
+    std::vector<double> losses = build_losses(member(description, "losses", where), where + ".losses");
+    const Json *validation_losses = description.find("validation_losses");
     std::size_t batch_size = count(description, "batch_size", where);
     std::unique_ptr<Loss> loss = build_loss(member(description, "loss", where));
     std::unique_ptr<Optimizer> optimizer = build_optimizer(member(description, "optimizer", where));
-    Training training(std::move(loss), std::move(optimizer), batch_size, build_random_state(text(description, "random_state", where)));
+    Training training(std::move(loss), std::move(optimizer), batch_size, build_random_state(text(description, "random_state", where), where));
     training.epoch = epoch;
     training.losses = losses;
+    if (validation_losses)
+        training.validation_losses = build_losses(*validation_losses, where + ".validation_losses");
+    training.validation_split = number_or(description, "validation_split", where, training.validation_split);
+    training.patience = count_or(description, "patience", where, training.patience);
+    training.max_epochs = count_or(description, "max_epochs", where, training.max_epochs);
     restore_optimizer_memory(*training.optimizer, network, arrays);
     return training;
 }
