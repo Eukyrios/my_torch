@@ -12,8 +12,8 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#include "training/hyperparameters/particle_swarm.hpp"
-#include "training/hyperparameters/search_log.hpp"
+#include "training/hyperparameters/algorithms/particle_swarm/particle_swarm.hpp"
+#include "training/hyperparameters/search_log/search_log.hpp"
 
 static my_torch::SearchResult small_result()
 {

@@ -12,7 +12,7 @@
 #include "model/activations/activations/relu/relu.hpp"
 #include "model/activations/activations/softmax/softmax.hpp"
 #include "model/layers/layers/dense_layer/dense_layer.hpp"
-#include "training/hyperparameters/validation_loss.hpp"
+#include "training/hyperparameters/validation_loss/validation_loss.hpp"
 #include "training/losses/losses/cross_entropy/cross_entropy.hpp"
 #include "training/optimizers/optimizers/momentum/momentum.hpp"
 #include "training/schedules/schedules/exponential_decay/exponential_decay.hpp"

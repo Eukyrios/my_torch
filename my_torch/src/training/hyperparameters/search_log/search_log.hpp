@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "training/hyperparameters/search_result.hpp"
+#include "training/hyperparameters/search_result/search_result.hpp"
 
 namespace my_torch {
 

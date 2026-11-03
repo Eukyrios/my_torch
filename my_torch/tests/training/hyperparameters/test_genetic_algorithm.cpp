@@ -10,7 +10,7 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
-#include "training/hyperparameters/genetic_algorithm.hpp"
+#include "training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.hpp"
 
 static const my_torch::SearchSpace PLANE({{"x", -5.0, 5.0}, {"y", -5.0, 5.0}});
 

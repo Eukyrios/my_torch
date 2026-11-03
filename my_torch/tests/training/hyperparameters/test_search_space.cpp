@@ -9,7 +9,7 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
-#include "training/hyperparameters/search_space.hpp"
+#include "training/hyperparameters/search_space/search_space.hpp"
 
 static my_torch::SearchSpace space()
 {

@@ -14,10 +14,10 @@
 #include <stdexcept>
 #include <string>
 
-#include "training/hyperparameters/genetic_algorithm.hpp"
-#include "training/hyperparameters/particle_swarm.hpp"
-#include "training/hyperparameters/search_log.hpp"
-#include "training/hyperparameters/validation_loss.hpp"
+#include "training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.hpp"
+#include "training/hyperparameters/algorithms/particle_swarm/particle_swarm.hpp"
+#include "training/hyperparameters/search_log/search_log.hpp"
+#include "training/hyperparameters/validation_loss/validation_loss.hpp"
 #include "training/losses/losses/cross_entropy/cross_entropy.hpp"
 
 static const int EXIT_ERROR = 84;

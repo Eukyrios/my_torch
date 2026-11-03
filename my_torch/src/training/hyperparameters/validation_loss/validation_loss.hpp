@@ -12,7 +12,7 @@
 
 #include "math/matrix.hpp"
 #include "model/network/network.hpp"
-#include "training/hyperparameters/search_space.hpp"
+#include "training/hyperparameters/search_space/search_space.hpp"
 
 namespace my_torch {
 

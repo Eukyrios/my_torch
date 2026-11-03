@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "training/hyperparameters/particle_swarm.hpp"
+#include "training/hyperparameters/algorithms/particle_swarm/particle_swarm.hpp"
 
 namespace my_torch {
 

@@ -9,8 +9,8 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
-#include "training/hyperparameters/particle_swarm.hpp"
-#include "training/hyperparameters/validation_loss.hpp"
+#include "training/hyperparameters/algorithms/particle_swarm/particle_swarm.hpp"
+#include "training/hyperparameters/validation_loss/validation_loss.hpp"
 #include "training/losses/losses/cross_entropy/cross_entropy.hpp"
 
 static void add_sample(my_torch::Matrix &inputs, my_torch::Matrix &labels, std::size_t row, double x, double y)

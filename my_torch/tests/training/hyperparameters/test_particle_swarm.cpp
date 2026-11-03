@@ -10,7 +10,7 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
-#include "training/hyperparameters/particle_swarm.hpp"
+#include "training/hyperparameters/algorithms/particle_swarm/particle_swarm.hpp"
 
 static const my_torch::SearchSpace PLANE({{"x", -5.0, 5.0}, {"y", -5.0, 5.0}});
 

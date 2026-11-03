@@ -11,7 +11,7 @@
 #include <set>
 #include <stdexcept>
 
-#include "training/hyperparameters/search_space.hpp"
+#include "training/hyperparameters/search_space/search_space.hpp"
 
 namespace my_torch {
 

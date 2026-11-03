@@ -11,8 +11,8 @@
 #include <cstddef>
 #include <random>
 
-#include "training/hyperparameters/search_result.hpp"
-#include "training/hyperparameters/search_space.hpp"
+#include "training/hyperparameters/search_result/search_result.hpp"
+#include "training/hyperparameters/search_space/search_space.hpp"
 
 namespace my_torch {
 

@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "training/hyperparameters/genetic_algorithm.hpp"
+#include "training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.hpp"
 
 namespace my_torch {
 

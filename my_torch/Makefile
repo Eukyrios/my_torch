@@ -30,11 +30,11 @@ SRC	=	src/math/matrix.cpp	\
 		src/training/optimizers/optimizer.cpp	\
 		src/training/optimizers/optimizers/sgd/sgd.cpp	\
 		src/training/optimizers/optimizers/momentum/momentum.cpp	\
-		src/training/hyperparameters/search_space.cpp	\
-		src/training/hyperparameters/particle_swarm.cpp	\
-		src/training/hyperparameters/genetic_algorithm.cpp	\
-		src/training/hyperparameters/validation_loss.cpp	\
-		src/training/hyperparameters/search_log.cpp
+		src/training/hyperparameters/search_space/search_space.cpp	\
+		src/training/hyperparameters/algorithms/particle_swarm/particle_swarm.cpp	\
+		src/training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.cpp	\
+		src/training/hyperparameters/validation_loss/validation_loss.cpp	\
+		src/training/hyperparameters/search_log/search_log.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/neuron/test_neuron.cpp	\

@@ -10,7 +10,7 @@
 #include <fstream>
 #include <stdexcept>
 
-#include "training/hyperparameters/search_log.hpp"
+#include "training/hyperparameters/search_log/search_log.hpp"
 
 namespace my_torch {
 
