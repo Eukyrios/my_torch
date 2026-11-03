@@ -12,6 +12,8 @@ A neural network library written from scratch (no PyTorch, TensorFlow, …) and 
 
 The plan (board, team split, roadmap and daily schedule) is in [`docs/project.md`](docs/project.md).
 The maths behind the module is in [`docs/my_torch.md`](docs/my_torch.md).
+The hyperparameter search (particle swarm vs genetic algorithm) and its benchmark are in
+[`docs/hyperparameter_search.md`](docs/hyperparameter_search.md).
 
 ## Development
 
