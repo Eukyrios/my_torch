@@ -18,6 +18,7 @@ SRC	=	src/math/matrix.cpp	\
 		src/model/activations/activations/softmax/softmax.cpp	\
 		src/model/layers/layer.cpp	\
 		src/model/layers/layers/dense_layer/dense_layer.cpp	\
+		src/model/layers/layers/dropout/dropout.cpp	\
 		src/model/network/network.cpp	\
 		src/training/losses/loss.cpp	\
 		src/training/losses/losses/mean_squared_error/mean_squared_error.cpp	\
@@ -46,6 +47,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/activations/test_activation.cpp	\
 		tests/model/layers/test_layer.cpp	\
 		tests/model/layers/test_dense_layer.cpp	\
+		tests/model/layers/test_dropout.cpp	\
 		tests/model/network/test_network.cpp	\
 		tests/model/network/test_gradient_check.cpp	\
 		tests/model/network/test_training.cpp	\
@@ -54,6 +56,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/training/schedules/test_schedule.cpp	\
 		tests/training/optimizers/test_optimizer.cpp	\
 		tests/training/test_training_runs.cpp	\
+		tests/training/test_early_stopping.cpp	\
 		tests/io/json/test_json.cpp	\
 		tests/io/npy/test_npy.cpp	\
 		tests/io/zip/test_zip.cpp	\
