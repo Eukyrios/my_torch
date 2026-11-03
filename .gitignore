@@ -25,3 +25,4 @@ __init__.py
 *.gcno
 *.gcda
 /my_torch/unit_tests
+/my_torch/hyperparameter_benchmark

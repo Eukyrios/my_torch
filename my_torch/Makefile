@@ -2,7 +2,7 @@
 ## EPITECH PROJECT, 2026
 ## my_torch
 ## File description:
-## Builds the C++ network as a static library and runs its Criterion tests
+## Builds the C++ network as a static library, runs its Criterion tests and builds the benchmarks
 ##
 
 CXX	=	g++
@@ -34,7 +34,12 @@ SRC	=	src/math/matrix.cpp	\
 		src/io/json/json.cpp	\
 		src/io/npy/npy.cpp	\
 		src/io/zip/zip.cpp	\
-		src/io/network_file/network_file.cpp
+		src/io/network_file/network_file.cpp	\
+		src/training/hyperparameters/search_space/search_space.cpp	\
+		src/training/hyperparameters/algorithms/particle_swarm/particle_swarm.cpp	\
+		src/training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.cpp	\
+		src/training/hyperparameters/validation_loss/validation_loss.cpp	\
+		src/training/hyperparameters/search_log/search_log.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/neuron/test_neuron.cpp	\
@@ -52,12 +57,18 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/io/json/test_json.cpp	\
 		tests/io/npy/test_npy.cpp	\
 		tests/io/zip/test_zip.cpp	\
-		tests/io/network_file/test_network_file.cpp
+		tests/io/network_file/test_network_file.cpp	\
+		tests/training/hyperparameters/test_search_space.cpp	\
+		tests/training/hyperparameters/test_particle_swarm.cpp	\
+		tests/training/hyperparameters/test_genetic_algorithm.cpp	\
+		tests/training/hyperparameters/test_validation_loss.cpp	\
+		tests/training/hyperparameters/test_search_log.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
 
 NAME	=	libmytorch.a
 UNIT	=	unit_tests
+BENCHMARK	=	hyperparameter_benchmark
 
 all:	$(NAME)
 
@@ -68,7 +79,7 @@ clean:
 	$(RM) $(OBJ) $(shell find . -name '*.gcno' -o -name '*.gcda')
 
 fclean:	clean
-	$(RM) $(NAME) $(UNIT)
+	$(RM) $(NAME) $(UNIT) $(BENCHMARK)
 
 re:	fclean all
 
@@ -78,4 +89,9 @@ $(UNIT):	$(SRC) $(TESTS)
 tests_run:	$(UNIT)
 	./$(UNIT)
 
-.PHONY:	all clean fclean re tests_run
+$(BENCHMARK):	$(SRC) benchmarks/hyperparameter_search.cpp
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
+
+benchmark:	$(BENCHMARK)
+
+.PHONY:	all clean fclean re tests_run benchmark
