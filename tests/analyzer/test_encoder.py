@@ -1,6 +1,6 @@
 import pytest
 
-from analyzer.encoder import INPUT_SIZE,  encode_fen, encode_position
+from analyzer.encoder import INPUT_SIZE, active_inputs, encode_fen, encode_position
 from analyzer.encoder import NUM_SQUARES, PLANE, SIDE_TO_MOVE_INDEX
 from analyzer.fen import STARTING_FEN, FenError, square_index, parse_fen
 
@@ -58,3 +58,16 @@ def test_encoding_ignores_clocks_and_castling():
 def test_invalid_fen_raises():
     with pytest.raises(FenError):
         encode_fen("not a fen")
+
+@pytest.mark.parametrize("fen", [STARTING_FEN, "8/8/8/8/8/8/8/k1K5 b - - 0 1", "rnbqkbnr/pppp2pp/8/4pp1Q/3P4/4P3/PPP2PPP/RNB1KBNR b KQkq - 1 3"])
+def test_active_inputs_are_the_inputs_set_to_1(fen):
+    position = parse_fen(fen)
+    active = active_inputs(position)
+    assert active == sorted(active)
+    assert active == [index for index, value in enumerate(encode_position(position)) if value]
+
+
+def test_active_inputs_of_the_starting_position():
+    active = active_inputs(parse_fen(STARTING_FEN))
+    assert len(active) == 33
+    assert active[-1] == SIDE_TO_MOVE_INDEX

@@ -20,12 +20,18 @@ INPUT_SIZE = SIDE_TO_MOVE_INDEX + 1  # 769
 PLANE = {piece: index for index, piece in enumerate(PIECES)}
 
 
+def active_inputs(position: Position) -> list[int]:
+    """Indices of the inputs that are 1.0, in increasing order; every other input is 0.0."""
+    active = sorted(PLANE[piece] * NUM_SQUARES + square for square, piece in enumerate(position.board) if piece != EMPTY)
+    if position.white_to_move:
+        active.append(SIDE_TO_MOVE_INDEX)
+    return active
+
+
 def encode_position(position: Position) -> list[float]:
     vector = [0.0] * INPUT_SIZE
-    for square, piece in enumerate(position.board):
-        if piece != EMPTY:
-            vector[PLANE[piece] * NUM_SQUARES + square] = 1.0
-    vector[SIDE_TO_MOVE_INDEX] = 1.0 if position.white_to_move else 0.0
+    for index in active_inputs(position):
+        vector[index] = 1.0
     return vector
 
 
