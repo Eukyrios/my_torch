@@ -19,6 +19,12 @@ static void check_learning_rate(double learning_rate)
         throw std::invalid_argument("the learning rate must be positive, got " + std::to_string(learning_rate));
 }
 
+static void check_weight_decay(double weight_decay)
+{
+    if (!(weight_decay >= 0.0))
+        throw std::invalid_argument("the weight decay must be at least 0, got " + std::to_string(weight_decay));
+}
+
 static void check_gradient(const Matrix &gradient)
 {
     if (gradient.size() == 0)
@@ -39,9 +45,13 @@ void Optimizer::start_epoch(std::size_t epoch)
 
 void Optimizer::step(const std::vector<Parameter> &parameters)
 {
+    check_weight_decay(weight_decay);
     for (const Parameter &parameter : parameters) {
         check_gradient(*parameter.gradient);
-        update(*parameter.value, *parameter.gradient);
+        if (weight_decay > 0.0 && parameter.decays)
+            update(*parameter.value, *parameter.gradient + *parameter.value * weight_decay);
+        else
+            update(*parameter.value, *parameter.gradient);
     }
 }
 
