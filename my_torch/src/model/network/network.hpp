@@ -4,7 +4,8 @@
 ** File description:
 ** A network runs its layers in order on a batch, network(inputs), and backward runs them in
 ** reverse; train shuffles the data each epoch into mini-batches and returns each epoch's loss,
-** counting epochs from first_epoch so a resumed training keeps its learning-rate schedule
+** counting epochs from first_epoch so a resumed training keeps its learning-rate schedule;
+** its layers are in training mode only while train runs
 */
 
 #pragma once
