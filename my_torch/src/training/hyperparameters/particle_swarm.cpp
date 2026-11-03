@@ -53,7 +53,7 @@ static std::vector<double> random_velocity(std::size_t size, double max_velocity
     return velocity;
 }
 
-static void evaluate(Swarm &swarm, std::size_t index, std::size_t iteration, const SearchSpace &space, const Objective &objective, SwarmResult &result)
+static void evaluate(Swarm &swarm, std::size_t index, std::size_t iteration, const SearchSpace &space, const Objective &objective, SearchResult &result)
 {
     Particle &particle = swarm.particles[index];
     Hyperparameters hyperparameters = space.decode(particle.position);
@@ -92,9 +92,9 @@ ParticleSwarm::ParticleSwarm(const SearchSpace &space, const SwarmSettings &sett
     check_settings(settings);
 }
 
-SwarmResult ParticleSwarm::minimize(const Objective &objective, std::mt19937 &rng) const
+SearchResult ParticleSwarm::minimize(const Objective &objective, std::mt19937 &rng) const
 {
-    SwarmResult result;
+    SearchResult result;
     Swarm swarm;
     for (std::size_t index = 0; index < settings.particles; index++) {
         swarm.particles.push_back({space.random_position(rng), random_velocity(space.size(), settings.max_velocity, rng), {}, 0.0});

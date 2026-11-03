@@ -9,15 +9,12 @@
 #pragma once
 
 #include <cstddef>
-#include <functional>
 #include <random>
-#include <vector>
 
+#include "training/hyperparameters/search_result.hpp"
 #include "training/hyperparameters/search_space.hpp"
 
 namespace my_torch {
-
-using Objective = std::function<double(const Hyperparameters &)>;
 
 struct SwarmSettings {
     std::size_t particles = 10;
@@ -28,25 +25,11 @@ struct SwarmSettings {
     double max_velocity = 0.2;
 };
 
-struct Evaluation {
-    std::size_t iteration;
-    std::size_t particle;
-    Hyperparameters hyperparameters;
-    double score;
-};
-
-struct SwarmResult {
-    Hyperparameters best;
-    double best_score;
-    std::vector<Evaluation> evaluations;
-    std::vector<double> best_per_iteration;
-};
-
 class ParticleSwarm {
 public:
     explicit ParticleSwarm(const SearchSpace &space, const SwarmSettings &settings = SwarmSettings());
 
-    SwarmResult minimize(const Objective &objective, std::mt19937 &rng) const;
+    SearchResult minimize(const Objective &objective, std::mt19937 &rng) const;
 
     SearchSpace space;
     SwarmSettings settings;

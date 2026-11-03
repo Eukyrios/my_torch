@@ -44,7 +44,7 @@ static void write_text(const std::string &path, const std::string &text)
         throw std::runtime_error("cannot write '" + path + "'");
 }
 
-std::string evaluations_csv(const SwarmResult &result)
+std::string evaluations_csv(const SearchResult &result)
 {
     if (result.evaluations.empty())
         return "iteration,particle,score\n";
@@ -54,7 +54,7 @@ std::string evaluations_csv(const SwarmResult &result)
     return text;
 }
 
-std::string convergence_csv(const SwarmResult &result)
+std::string convergence_csv(const SearchResult &result)
 {
     std::string text = "iteration,best_score\n";
     for (std::size_t iteration = 0; iteration < result.best_per_iteration.size(); iteration++)
@@ -62,7 +62,7 @@ std::string convergence_csv(const SwarmResult &result)
     return text;
 }
 
-void write_search_logs(const SwarmResult &result, const std::string &evaluations_path, const std::string &convergence_path)
+void write_search_logs(const SearchResult &result, const std::string &evaluations_path, const std::string &convergence_path)
 {
     write_text(evaluations_path, evaluations_csv(result));
     write_text(convergence_path, convergence_csv(result));

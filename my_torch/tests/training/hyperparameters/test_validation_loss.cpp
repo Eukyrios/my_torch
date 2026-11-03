@@ -105,7 +105,7 @@ Test(validation_loss, a_particle_swarm_improves_on_its_starting_configurations)
     my_torch::SwarmSettings settings;
     settings.particles = 4;
     settings.iterations = 4;
-    my_torch::SwarmResult result = my_torch::ParticleSwarm(space, settings).minimize(my_torch::ValidationLoss(DATA, 20), rng);
+    my_torch::SearchResult result = my_torch::ParticleSwarm(space, settings).minimize(my_torch::ValidationLoss(DATA, 20), rng);
 
     cr_assert(std::isfinite(result.best_score));
     cr_assert_lt(result.best_per_iteration.back(), 0.5);

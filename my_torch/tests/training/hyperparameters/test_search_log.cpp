@@ -12,11 +12,12 @@
 #include <stdexcept>
 #include <unistd.h>
 
+#include "training/hyperparameters/particle_swarm.hpp"
 #include "training/hyperparameters/search_log.hpp"
 
-static my_torch::SwarmResult small_result()
+static my_torch::SearchResult small_result()
 {
-    my_torch::SwarmResult result;
+    my_torch::SearchResult result;
     result.evaluations.push_back({0, 0, {{"momentum", 0.9}, {"learning_rate", 0.01}}, 0.5});
     result.evaluations.push_back({0, 1, {{"momentum", 0.5}, {"learning_rate", 0.1}}, 0.25});
     result.evaluations.push_back({1, 0, {{"momentum", 0.7}, {"learning_rate", 0.05}}, 0.125});
@@ -55,7 +56,7 @@ Test(search_log, gives_the_best_score_after_each_iteration)
 
 Test(search_log, logged_scores_read_back_as_the_same_double)
 {
-    my_torch::SwarmResult result = small_result();
+    my_torch::SearchResult result = small_result();
     result.best_per_iteration = {1.0 / 3.0};
     std::string text = my_torch::convergence_csv(result);
 
@@ -68,7 +69,7 @@ Test(search_log, has_one_line_per_evaluation_of_a_real_search)
     my_torch::SwarmSettings settings;
     settings.particles = 3;
     settings.iterations = 2;
-    my_torch::SwarmResult result = my_torch::ParticleSwarm(my_torch::SearchSpace({{"x", -1, 1}}), settings).minimize(sphere, rng);
+    my_torch::SearchResult result = my_torch::ParticleSwarm(my_torch::SearchSpace({{"x", -1, 1}}), settings).minimize(sphere, rng);
     std::string text = my_torch::evaluations_csv(result);
 
     cr_assert_eq(std::count(text.begin(), text.end(), '\n'), 1 + 3 * 3);
