@@ -20,6 +20,7 @@ TEXT_SECONDARY = "#52514e"
 MUTED = "#898781"
 GRID = "#e1e0d9"
 LOSS_CAP = 2.0
+CONVERGENCE_RANGE = (0.64, 0.9)
 
 
 def style():
@@ -60,16 +61,24 @@ def median_curve(curves):
     return [statistics.median(curve[i] for curve in curves) for i in range(length)]
 
 
+def end_label_offsets(medians):
+    finals = sorted((curve[-1], method) for method, curve in medians.items())
+    return {method: -9 + 18 * rank for rank, (_, method) in enumerate(finals)}
+
+
 def plot_convergence(runs, path):
     figure, axes = plt.subplots(figsize=(8, 4.5))
+    medians = {method: median_curve([run["curve"] for run in runs[method]]) for method in METHODS}
+    offsets = end_label_offsets(medians)
     for method, label in METHODS.items():
         for run in runs[method]:
             axes.plot(range(1, len(run["curve"]) + 1), run["curve"], color=COLORS[method], linewidth=1, alpha=0.3)
-        median = median_curve([run["curve"] for run in runs[method]])
+        median = medians[method]
         axes.plot(range(1, len(median) + 1), median, color=COLORS[method], linewidth=2.2, label=f"{label} (median of {len(runs[method])} seeds)")
-        axes.annotate(f"{median[-1]:.3f}", (len(median), median[-1]), xytext=(6, 0), textcoords="offset points", va="center", color=TEXT_SECONDARY)
+        axes.annotate(f"{median[-1]:.3f}", (len(median), median[-1]), xytext=(8, offsets[method]), textcoords="offset points", va="center", color=TEXT_SECONDARY)
+    axes.set_ylim(*CONVERGENCE_RANGE)
     axes.set_title("Best validation loss found so far")
-    axes.set_xlabel("networks trained (evaluations)")
+    axes.set_xlabel(f"networks trained (evaluations); the first ones, above {CONVERGENCE_RANGE[1]}, are cut")
     axes.set_ylabel("validation cross-entropy (lower is better)")
     axes.legend(loc="upper right")
     figure.tight_layout()
@@ -86,7 +95,7 @@ def plot_final(summary, path):
         for axes, values in ((loss_axes, losses), (accuracy_axes, accuracies)):
             axes.scatter([position] * len(values), values, s=64, color=COLORS[method], edgecolor=SURFACE, linewidth=2, zorder=3, label=label)
             axes.hlines(statistics.mean(values), position - 0.25, position + 0.25, color=TEXT_SECONDARY, linewidth=2, zorder=2)
-    for axes, title in ((loss_axes, "Best validation loss per seed"), (accuracy_axes, "Test accuracy of the best configuration (%)")):
+    for axes, title in ((loss_axes, "Best validation loss per seed"), (accuracy_axes, "Test accuracy of the best (%)")):
         axes.set_xticks(range(len(METHODS)), list(METHODS.values()))
         axes.set_xlim(-0.6, len(METHODS) - 0.4)
         axes.set_title(title)
@@ -108,7 +117,7 @@ def plot_explored(runs, path):
     axes.set_title("Every configuration tried: learning rate against validation loss")
     axes.set_xlabel("learning rate (log scale)")
     axes.set_ylabel(f"validation cross-entropy (capped at {LOSS_CAP})")
-    axes.legend(loc="upper left")
+    axes.legend(loc="lower center", bbox_to_anchor=(0.5, 1.06), ncol=len(METHODS))
     figure.tight_layout()
     figure.savefig(path, dpi=150)
     plt.close(figure)
