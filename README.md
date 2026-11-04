@@ -34,10 +34,12 @@ make coverage           # Python tests + coverage report in reports/htmlcov
 ```
 my_torch/               the neural network module, a C++ library (libmytorch.a)
   src/math/             Matrix: products, transpose, broadcasting, reductions (numpy's role)
-  src/model/            Neuron, activations (ReLU, Softmax, ...), layers (DenseLayer), Network
-  src/training/         losses, optimizers (SGD, Momentum) and learning-rate schedules
+  src/model/            Neuron, activations (ReLU, Softmax, ...), layers (DenseLayer, Dropout), Network
+  src/training/         losses, optimizers (SGD, Momentum), learning-rate schedules, Training (early stopping)
+  src/io/               .nn files (json, npy, zip) and boards encoded as input indices
+  src/engine/           my_torch_engine, the program the analyzer runs to predict and train
   tests/                Criterion tests, one folder per source folder
-analyzer/               my_torch_analyzer: CLI, FEN parser, board encoder (769 inputs)
+analyzer/               my_torch_analyzer: CLI, FEN parser, board encoder (769 inputs), chess file, report
 dataset/                builds labelled train/validation/test files from a Lichess PGN
 my_torch_analyzer.py    entry point, copied to ./my_torch_analyzer by make
 tests/                  Python tests (analyzer, dataset)
@@ -155,6 +157,39 @@ known. Any problem raises one error type (`NetworkFileError`); the analyzer prin
 **84**.
 
 **Versioning**: `version` goes up on any incompatible change, and loading refuses versions it doesn't know.
+
+### How the analyzer uses the network
+
+The analyzer (Python) reads the chess file, checks every FEN and label, and turns each board into the indices of its
+inputs that are 1. It hands them to `my_torch/my_torch_engine` (C++, built by `make`), which owns the network:
+
+```
+./my_torch_analyzer --predict LOADFILE CHESSFILE
+    analyzer ── "769 5" + one line of input indices per board ──▶ my_torch_engine predict LOADFILE
+    analyzer ◀── one line of 5 outputs per board ─────────────── (a chunk of 1024 boards at a time)
+    stdout: one label per board, in order; stderr: accuracy report when expected outputs are given
+
+./my_torch_analyzer --train [--save SAVEFILE] LOADFILE CHESSFILE
+    analyzer ── "769 5" + class and input indices per board ──▶ my_torch_engine train LOADFILE SAVEFILE
+    stdout: one line per epoch; the network is saved with its whole training
+```
+
+Every training setting lives in the `.nn` file, so `--train` needs no option and a second `--train` carries on where
+the first stopped. A network saved without a training starts from the configuration the hyperparameter search
+retained: Momentum, learning rate 0.018, momentum 0.53, decay 0.86 per epoch, batches of 9, cross-entropy.
+
+### Fighting overfitting
+
+| Guard | Where | Setting in the `.nn` (default) |
+|---|---|---|
+| **Validation split**: boards kept aside, never trained on, drawn with a fixed seed so they stay the same | `Training::fit` | `training.validation_split` (0.1) |
+| **Early stopping**: stop once the validation loss has not improved for a few epochs, **keep the best weights** | `Training::fit` | `training.patience` (5), `training.max_epochs` (50) |
+| **L2 regularisation**: adds `weight_decay * w` to the gradient of every weight (not the biases) | `Optimizer::step` | `training.optimizer.weight_decay` (0) |
+| **Dropout**: zeroes inputs at random while training, scales the others by `1 / (1 - rate)` | `Dropout` layer | `{"type": "dropout", "rate": 0.2}` in `layers` |
+
+Because the best weights are kept, a `--train` run never leaves a network worse on its validation boards than it
+found it. On the 8,000 boards of `data/train.txt`, the training loss keeps falling while the validation loss
+turns back up after epoch 9: training stops at epoch 14 and keeps the weights of epoch 9.
 
 ### Building a dataset
 
