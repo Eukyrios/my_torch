@@ -21,6 +21,7 @@
 #include "model/activations/activations/softmax/softmax.hpp"
 #include "model/activations/activations/tanh/tanh.hpp"
 #include "model/layers/layers/dense_layer/dense_layer.hpp"
+#include "model/layers/layers/dropout/dropout.hpp"
 #include "training/losses/losses/cross_entropy/cross_entropy.hpp"
 #include "training/losses/losses/mean_squared_error/mean_squared_error.hpp"
 #include "training/optimizers/optimizers/momentum/momentum.hpp"
@@ -375,4 +376,97 @@ Test(network_file, a_momentum_training_needs_its_velocities)
     entries.pop_back();
     write_bytes(path, my_torch::to_zip(entries));
     assert_refused(path, "optimizer_5.npy is missing");
+}
+
+/* Overfitting guards */
+
+static my_torch::Network network_with_dropout()
+{
+    std::mt19937 rng(1);
+    std::vector<std::unique_ptr<my_torch::Layer>> layers;
+    layers.push_back(my_torch::DenseLayer::create(3, 5, std::make_unique<my_torch::ReLU>(), rng));
+    layers.push_back(std::make_unique<my_torch::Dropout>(0.3, std::mt19937(9)));
+    layers.push_back(my_torch::DenseLayer::create(5, 2, std::make_unique<my_torch::Softmax>(), rng));
+    return my_torch::Network(std::move(layers));
+}
+
+Test(network_file, keeps_dropout_layers_with_their_rate_and_random_state)
+{
+    std::string path = temporary_path("dropout.nn");
+    my_torch::Network network = network_with_dropout();
+    my_torch::Training training = momentum_training();
+
+    training.run(network, INPUTS, LABELS, 2);
+    my_torch::save_network(path, network, Json::Object(), &training);
+    my_torch::SavedNetwork loaded = my_torch::load_network(path);
+    my_torch::Dropout &dropout = dynamic_cast<my_torch::Dropout &>(*loaded.network.layers[1]);
+    cr_assert_eq(dropout.rate, 0.3);
+    cr_assert(dropout.rng == dynamic_cast<my_torch::Dropout &>(*network.layers[1]).rng);
+    assert_same_bits(dense(loaded.network, 2).weights, dense(network, 2).weights);
+    assert_same_bits(loaded.network(INPUTS), network(INPUTS));
+    my_torch::ZipEntries entries = my_torch::from_zip(read_bytes(path));
+    cr_assert_str_eq(entries[3].first.c_str(), "layer_2_weights.npy");
+}
+
+Test(network_file, a_resumed_training_with_dropout_gives_the_same_network)
+{
+    std::string path = temporary_path("resume_dropout.nn");
+    my_torch::Network in_one_go = network_with_dropout();
+    my_torch::Network first_half = network_with_dropout();
+    my_torch::Training one_go = momentum_training();
+    my_torch::Training first = momentum_training();
+
+    one_go.run(in_one_go, INPUTS, LABELS, 8);
+    first.run(first_half, INPUTS, LABELS, 4);
+    my_torch::save_network(path, first_half, Json::Object(), &first);
+    my_torch::SavedNetwork resumed = my_torch::load_network(path);
+    resumed.training->run(resumed.network, INPUTS, LABELS, 4);
+    assert_same_bits(dense(resumed.network, 0).weights, dense(in_one_go, 0).weights);
+    assert_same_bits(dense(resumed.network, 2).weights, dense(in_one_go, 2).weights);
+}
+
+Test(network_file, keeps_the_weight_decay_and_the_early_stopping_settings)
+{
+    std::string path = temporary_path("guards.nn");
+    my_torch::Network network = small_network();
+    my_torch::Training training = momentum_training();
+
+    training.optimizer->weight_decay = 1e-4;
+    training.validation_split = 0.2;
+    training.patience = 7;
+    training.max_epochs = 3;
+    training.fit(network, INPUTS, LABELS);
+    my_torch::save_network(path, network, Json::Object(), &training);
+    my_torch::SavedNetwork loaded = my_torch::load_network(path);
+    my_torch::Training &read = *loaded.training;
+    cr_assert_eq(read.optimizer->weight_decay, 1e-4);
+    cr_assert_eq(read.validation_split, 0.2);
+    cr_assert_eq(read.patience, 7);
+    cr_assert_eq(read.max_epochs, 3);
+    cr_assert(read.validation_losses == training.validation_losses);
+    cr_assert_eq(read.validation_losses.size(), 3);
+}
+
+Test(network_file, an_older_file_without_the_new_settings_takes_the_defaults)
+{
+    std::string header = "{\"format\": \"my_torch\", \"version\": 1, " + ONE_LAYER + ", \"training\": {\"epoch\": 0, \"losses\": [], \"batch_size\": 4, "
+        "\"loss\": {\"name\": \"cross_entropy\"}, \"optimizer\": {\"name\": \"sgd\", \"learning_rate\": 0.1, \"schedule\": {\"name\": \"constant\"}}, "
+        "\"random_state\": \"" + [] { std::ostringstream state; state << std::mt19937(); return state.str(); }() + "\"}}";
+    my_torch::SavedNetwork loaded = my_torch::load_network(handmade(header, one_layer_arrays()));
+
+    cr_assert_eq(loaded.training->optimizer->weight_decay, 0.0);
+    cr_assert_eq(loaded.training->validation_split, 0.1);
+    cr_assert_eq(loaded.training->patience, 5);
+    cr_assert_eq(loaded.training->max_epochs, 50);
+    cr_assert(loaded.training->validation_losses.empty());
+}
+
+Test(network_file, refuses_a_bad_dropout_layer)
+{
+    std::string start = "{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [2, 1]}, ";
+
+    assert_refused(handmade(start + "{\"type\": \"dropout\", \"rate\": 1.5}]}", one_layer_arrays()), "dropout rate must be in [0, 1)");
+    assert_refused(handmade(start + "{\"type\": \"dropout\"}]}", one_layer_arrays()), "layers[1].rate is missing");
+    assert_refused(handmade(start + "{\"type\": \"dropout\", \"rate\": 0.1, \"random_state\": \"x\"}]}", one_layer_arrays()), "layers[1].random_state");
+    cr_assert_eq(dynamic_cast<my_torch::Dropout &>(*my_torch::load_network(handmade(start + "{\"type\": \"dropout\", \"rate\": 0.1}]}", one_layer_arrays())).network.layers[1]).rate, 0.1);
 }

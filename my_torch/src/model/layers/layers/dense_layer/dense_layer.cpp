@@ -83,7 +83,7 @@ std::optional<Shape> DenseLayer::shape() const
 
 std::vector<Parameter> DenseLayer::parameters()
 {
-    return {{&weights, &weights_gradient}, {&biases, &biases_gradient}};
+    return {{&weights, &weights_gradient}, {&biases, &biases_gradient, false}};
 }
 
 Matrix DenseLayer::forward(const Matrix &inputs)

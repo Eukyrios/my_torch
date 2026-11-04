@@ -63,6 +63,31 @@ static void check_training_settings(std::size_t epochs, std::size_t batch_size)
         throw std::invalid_argument("epochs and batch size must be at least 1, got " + std::to_string(epochs) + " and " + std::to_string(batch_size));
 }
 
+namespace {
+
+// puts the layers in training mode for as long as it lives, even if training throws
+class TrainingMode {
+public:
+    explicit TrainingMode(const std::vector<std::unique_ptr<Layer>> &layers)
+    :
+        _layers(layers)
+    {
+        for (const std::unique_ptr<Layer> &layer : _layers)
+            layer->training = true;
+    }
+
+    ~TrainingMode()
+    {
+        for (const std::unique_ptr<Layer> &layer : _layers)
+            layer->training = false;
+    }
+
+private:
+    const std::vector<std::unique_ptr<Layer>> &_layers;
+};
+
+}
+
 std::vector<std::vector<std::size_t>> shuffled_batches(std::size_t n_samples, std::size_t batch_size, std::mt19937 &rng)
 {
     std::vector<std::size_t> order(n_samples);
@@ -121,6 +146,7 @@ std::vector<double> Network::train(const Matrix &inputs, const Matrix &labels, c
 {
     check_training_data(inputs, labels);
     check_training_settings(epochs, batch_size);
+    TrainingMode training_mode(layers);
     std::vector<double> losses;
     for (std::size_t epoch = first_epoch; epoch < first_epoch + epochs; epoch++)
         losses.push_back(train_epoch(inputs, labels, loss, optimizer, batch_size, rng, epoch));
