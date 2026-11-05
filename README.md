@@ -26,7 +26,7 @@ sudo apt install libcriterion-dev       # C++ tests
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements-dev.txt
 
-make                    # builds my_torch/libmytorch.a and ./my_torch_analyzer
+make                    # builds my_torch/libmytorch.a, ./my_torch_analyzer and ./my_torch_generator
 make tests_run          # C++ tests, then Python tests
 make coverage           # Python tests + coverage report in reports/htmlcov
 ```
@@ -38,9 +38,11 @@ my_torch/               the neural network module, a C++ library (libmytorch.a)
   src/training/         losses, optimizers (SGD, Momentum), learning-rate schedules, Training (early stopping)
   src/io/               .nn files (json, npy, zip) and boards encoded as input indices
   src/engine/           my_torch_engine, the program the analyzer runs to predict and train
+  src/generator/        my_torch_generator: blank networks from a config file, in code or as .nn files
   tests/                Criterion tests, one folder per source folder
 analyzer/               my_torch_analyzer: CLI, FEN parser, board encoder (769 inputs), chess file, report
 dataset/                builds labelled train/validation/test files from a Lichess PGN
+configs/                example config files for my_torch_generator
 my_torch_analyzer.py    entry point, copied to ./my_torch_analyzer by make
 tests/                  Python tests (analyzer, dataset)
 ```
@@ -157,6 +159,59 @@ known. Any problem raises one error type (`NetworkFileError`); the analyzer prin
 **84**.
 
 **Versioning**: `version` goes up on any incompatible change, and loading refuses versions it doesn't know.
+
+### Generating networks
+
+`my_torch_generator` writes blank networks, ready for `--train`, from configuration files:
+
+```
+./my_torch_generator config_file_1 nb_1 [config_file_2 nb_2...]
+./my_torch_generator configs/basic_network.conf 3     # basic_network_1.nn, basic_network_2.nn, basic_network_3.nn
+```
+
+The files are written in the current folder and named after the config. Every config is checked before any file is
+written, and any problem is printed on stderr with exit **84**. A config is JSON, read like the header of a `.nn`
+file without its weights ([`configs/basic_network.conf`](configs/basic_network.conf) is the configuration the
+hyperparameter search retained, [`configs/regularized_network.conf`](configs/regularized_network.conf) adds
+dropout and L2):
+
+```json
+{
+  "inputs": 769,
+  "seed": 0,
+  "layers": [
+    {"type": "dense", "outputs": 47, "activation": "relu", "initialization": "he"},
+    {"type": "dropout", "rate": 0.2},
+    {"type": "dense", "outputs": 5, "activation": "softmax", "initialization": "xavier"}
+  ],
+  "training": {
+    "batch_size": 9,
+    "loss": {"name": "cross_entropy"},
+    "optimizer": {"name": "momentum", "learning_rate": 0.018, "momentum": 0.53, "weight_decay": 0,
+                  "schedule": {"name": "exponential_decay", "factor": 0.86}},
+    "validation_split": 0.1, "patience": 5, "max_epochs": 50
+  },
+  "metadata": {"description": "free JSON, copied into every generated file"}
+}
+```
+
+| Key | Meaning |
+|---|---|
+| `inputs` | number of inputs of the first layer (769 for a chessboard) |
+| `seed` | network *i* of the file draws its weights from seed `seed + i - 1` (0 by default): each network starts differently, and all can be regenerated |
+| `layers` | in order; `dense` with `outputs`, `activation` (`linear` by default) and `initialization`, or `dropout` with `rate` |
+| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh, sigmoid, softmax), `lecun` (√(1 / inputs), for tanh, sigmoid) or `auto` (default: He before ReLU, Xavier otherwise) |
+| `training` | any of the `training` settings of a `.nn` file; each one left out keeps the engine's default, and a missing `schedule` means a constant rate |
+| `metadata` | optional; the generator adds `seed` and `config` |
+
+The same networks can be built in code, without files:
+
+```cpp
+#include "generator/generator.hpp"
+
+my_torch::GeneratedNetwork generated = my_torch::generate_network(my_torch::read_config("configs/basic_network.conf"), 42);
+generated.training.fit(generated.network, inputs, labels);         // or save_network(path, generated.network, generated.metadata, &generated.training)
+```
 
 ### How the analyzer uses the network
 
