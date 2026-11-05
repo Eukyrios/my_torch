@@ -39,6 +39,7 @@ SRC	=	src/math/matrix.cpp	\
 		src/io/network_file/network_file.cpp	\
 		src/io/boards/boards.cpp	\
 		src/engine/engine.cpp	\
+		src/generator/generator.cpp	\
 		src/training/hyperparameters/search_space/search_space.cpp	\
 		src/training/hyperparameters/algorithms/particle_swarm/particle_swarm.cpp	\
 		src/training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.cpp	\
@@ -67,6 +68,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/io/network_file/test_network_file.cpp	\
 		tests/io/boards/test_boards.cpp	\
 		tests/engine/test_engine.cpp	\
+		tests/generator/test_generator.cpp	\
 		tests/training/hyperparameters/test_search_space.cpp	\
 		tests/training/hyperparameters/test_particle_swarm.cpp	\
 		tests/training/hyperparameters/test_genetic_algorithm.cpp	\
