@@ -14,6 +14,7 @@ venv/
 .env
 env/
 /my_torch_analyzer
+/my_torch_generator
 datasets/
 data/
 .vscode/
@@ -27,3 +28,4 @@ __init__.py
 /my_torch/unit_tests
 /my_torch/hyperparameter_benchmark
 /my_torch/my_torch_engine
+/my_torch/my_torch_generator
