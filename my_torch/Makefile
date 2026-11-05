@@ -10,6 +10,7 @@ CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote src
 
 SRC	=	src/math/matrix.cpp	\
 		src/model/neuron/neuron.cpp	\
+		src/model/initialization/initialization.cpp	\
 		src/model/activations/activation.cpp	\
 		src/model/activations/activations/linear/linear.cpp	\
 		src/model/activations/activations/relu/relu.cpp	\
@@ -46,6 +47,7 @@ SRC	=	src/math/matrix.cpp	\
 
 TESTS	=	tests/math/test_matrix.cpp	\
 		tests/model/neuron/test_neuron.cpp	\
+		tests/model/initialization/test_initialization.cpp	\
 		tests/model/activations/test_activation.cpp	\
 		tests/model/layers/test_layer.cpp	\
 		tests/model/layers/test_dense_layer.cpp	\

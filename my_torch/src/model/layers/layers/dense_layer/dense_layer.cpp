@@ -10,7 +10,6 @@
 #include <string>
 
 #include "model/activations/activations/linear/linear.hpp"
-#include "model/activations/activations/relu/relu.hpp"
 #include "model/layers/layers/dense_layer/dense_layer.hpp"
 
 namespace my_torch {
@@ -19,13 +18,6 @@ static void check_sizes(std::size_t n_inputs, std::size_t n_outputs)
 {
     if (n_inputs < 1 || n_outputs < 1)
         throw std::invalid_argument("a dense layer needs at least 1 input and 1 output, got " + std::to_string(n_inputs) + " and " + std::to_string(n_outputs));
-}
-
-static double initial_scale(std::size_t n_inputs, std::size_t n_outputs, const Activation &activation)
-{
-    if (dynamic_cast<const ReLU *>(&activation))
-        return std::sqrt(2.0 / n_inputs);
-    return std::sqrt(2.0 / (n_inputs + n_outputs));
 }
 
 static Matrix random_weights(std::size_t n_inputs, std::size_t n_outputs, double scale, std::mt19937 &rng)
@@ -67,12 +59,12 @@ DenseLayer::DenseLayer(const Matrix &weights, const std::vector<double> &biases,
     check_parameters(this->weights, biases);
 }
 
-std::unique_ptr<DenseLayer> DenseLayer::create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng)
+std::unique_ptr<DenseLayer> DenseLayer::create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng, Initialization initialization)
 {
     check_sizes(n_inputs, n_outputs);
     if (!activation)
         activation = std::make_unique<Linear>();
-    double scale = initial_scale(n_inputs, n_outputs, *activation);
+    double scale = initial_scale(initialization, n_inputs, n_outputs, *activation);
     return std::make_unique<DenseLayer>(random_weights(n_inputs, n_outputs, scale, rng), std::vector<double>(n_outputs, 0.0), std::move(activation));
 }
 

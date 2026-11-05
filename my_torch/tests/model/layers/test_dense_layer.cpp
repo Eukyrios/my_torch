@@ -234,6 +234,14 @@ Test(dense_layer, create_uses_xavier_scale_otherwise)
     cr_assert_float_eq(standard_deviation(layer->weights), std::sqrt(2.0 / 700), 0.002);
 }
 
+Test(dense_layer, create_uses_the_initialization_it_is_given)
+{
+    std::mt19937 rng(0);
+    std::unique_ptr<my_torch::DenseLayer> layer = my_torch::DenseLayer::create(400, 300, std::make_unique<my_torch::ReLU>(), rng, my_torch::Initialization::LeCun);
+
+    cr_assert_float_eq(standard_deviation(layer->weights), std::sqrt(1.0 / 400), 0.002);
+}
+
 Test(dense_layer, create_is_reproducible_from_the_same_seed)
 {
     std::mt19937 first(7);
