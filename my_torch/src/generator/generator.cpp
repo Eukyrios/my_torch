@@ -3,7 +3,8 @@
 ** my_torch
 ** File description:
 ** A config's layers are dense (outputs, activation, initialization) or dropout (rate); its training
-** reuses the .nn reader of losses and optimizers, and every setting it leaves out keeps the engine's
+** reuses the .nn reader of losses and optimizers, and every setting it leaves out keeps the engine's;
+** the generator checks every config before writing any file
 */
 
 #include <cmath>
@@ -20,6 +21,16 @@
 #include "model/layers/layers/dropout/dropout.hpp"
 
 namespace my_torch {
+
+static const int EXIT_SUCCESS_CODE = 0;
+static const int EXIT_ERROR_CODE = 84;
+
+static const char *USAGE = "USAGE\n"
+    "    ./my_torch_generator config_file_1 nb_1 [config_file_2 nb_2...]\n"
+    "\n"
+    "DESCRIPTION\n"
+    "    config_file_i    Configuration file containing description of a neural network we want to generate.\n"
+    "    nb_i             Number of neural networks to generate based on the configuration file.\n";
 
 static const Json &member(const Json &object, const std::string &key, const std::string &where)
 {
@@ -202,6 +213,48 @@ std::vector<std::string> generate_files(const std::string &config_path, std::siz
         paths.push_back(path);
     }
     return paths;
+}
+
+static std::size_t network_count(const std::string &text)
+{
+    std::size_t used = 0;
+    unsigned long long count = 0;
+    try {
+        count = std::stoull(text, &used);
+    } catch (const std::exception &) {
+        used = 0;
+    }
+    if (used != text.size() || text.empty() || text[0] == '-' || count < 1)
+        throw ConfigError("the number of networks must be a whole number of at least 1, got '" + text + "'");
+    return static_cast<std::size_t>(count);
+}
+
+static void check_arguments(const std::vector<std::string> &arguments)
+{
+    if (arguments.empty() || arguments.size() % 2 != 0)
+        throw ConfigError(std::string("expected pairs of config file and number of networks\n") + USAGE);
+    for (std::size_t index = 0; index < arguments.size(); index += 2) {
+        network_count(arguments[index + 1]);
+        Json config = read_config(arguments[index]);
+        generate_network(config, config_seed(config));
+    }
+}
+
+int run_generator(const std::vector<std::string> &arguments, std::ostream &out, std::ostream &err)
+{
+    if (arguments.size() == 1 && (arguments[0] == "--help" || arguments[0] == "-h")) {
+        out << USAGE;
+        return EXIT_SUCCESS_CODE;
+    }
+    try {
+        check_arguments(arguments);
+        for (std::size_t index = 0; index < arguments.size(); index += 2)
+            generate_files(arguments[index], network_count(arguments[index + 1]));
+    } catch (const std::exception &error) {
+        err << "my_torch_generator: " << error.what() << std::endl;
+        return EXIT_ERROR_CODE;
+    }
+    return EXIT_SUCCESS_CODE;
 }
 
 }

@@ -9,6 +9,7 @@
 #include <criterion/criterion.h>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <unistd.h>
 
 #include "engine/engine.hpp"
@@ -183,5 +184,59 @@ Test(generator, read_config_rejects_missing_or_invalid_files)
 
     cr_assert_throw(my_torch::read_config(folder + "/missing.conf"), my_torch::ConfigError);
     cr_assert_throw(my_torch::read_config(write_config(folder, "broken.conf", "{\"inputs\": ")), my_torch::ConfigError);
+    std::filesystem::remove_all(folder);
+}
+
+static int run(const std::vector<std::string> &arguments, std::string &out, std::string &err)
+{
+    std::ostringstream out_stream;
+    std::ostringstream err_stream;
+    int status = my_torch::run_generator(arguments, out_stream, err_stream);
+    out = out_stream.str();
+    err = err_stream.str();
+    return status;
+}
+
+Test(generator, help_prints_the_usage_and_exits_0)
+{
+    std::string out;
+    std::string err;
+
+    cr_assert_eq(run({"--help"}, out, err), 0);
+    cr_assert(out.rfind("USAGE\n    ./my_torch_generator config_file_1 nb_1", 0) == 0);
+    cr_assert(err.empty());
+}
+
+Test(generator, writes_nb_networks_per_config_in_the_current_folder)
+{
+    std::string folder = temporary_folder();
+    std::string basic = write_config(folder, "basic_network.conf", CONFIG);
+    std::string other = write_config(folder, "other.conf", CONFIG);
+    std::filesystem::path previous = std::filesystem::current_path();
+    std::string out;
+    std::string err;
+
+    std::filesystem::current_path(folder);
+    int status = run({basic, "3", other, "1"}, out, err);
+    std::filesystem::current_path(previous);
+    cr_assert_eq(status, 0, "%s", err.c_str());
+    for (const char *name : {"basic_network_1.nn", "basic_network_2.nn", "basic_network_3.nn", "other_1.nn"})
+        cr_assert(std::filesystem::exists(folder + "/" + name), "%s", name);
+    cr_assert_not(std::filesystem::exists(folder + "/other_2.nn"));
+    std::filesystem::remove_all(folder);
+}
+
+Test(generator, bad_arguments_print_an_error_and_exit_84_without_writing_anything)
+{
+    std::string folder = temporary_folder();
+    std::string basic = write_config(folder, "basic_network.conf", CONFIG);
+    std::string out;
+    std::string err;
+
+    for (const std::vector<std::string> &arguments : std::vector<std::vector<std::string>>{{}, {basic}, {basic, "0"}, {basic, "two"}, {basic, "-1"}, {basic, "2", folder + "/missing.conf", "1"}}) {
+        cr_assert_eq(run(arguments, out, err), 84);
+        cr_assert(err.rfind("my_torch_generator: ", 0) == 0, "%s", err.c_str());
+    }
+    cr_assert_not(std::filesystem::exists("basic_network_1.nn"));
     std::filesystem::remove_all(folder);
 }
