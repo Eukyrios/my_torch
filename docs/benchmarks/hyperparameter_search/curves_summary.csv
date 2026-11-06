@@ -1,0 +1,5 @@
+pair,found_by,search_validation_error,best_epoch,validation_accuracy,test_accuracy,test_macro_f1,hyperparameters
+relu_cross_entropy,ga_seed2,0.269333,9,0.6960,0.6933,0.6916,batch_size=14 decay=0.868422 hidden_layers=1 hidden_size=134 learning_rate=0.080058 momentum=0.679031
+relu_mean_squared_error,ga_seed1,0.292000,11,0.6947,0.7080,0.7042,batch_size=30 decay=0.924297 hidden_layers=2 hidden_size=59 learning_rate=0.0278559 momentum=0.959532
+tanh_cross_entropy,pso_seed4,0.285333,6,0.7080,0.6867,0.6818,batch_size=23 decay=0.801199 hidden_layers=1 hidden_size=256 learning_rate=0.3 momentum=0.516772
+tanh_mean_squared_error,pso_seed0,0.300000,8,0.7080,0.6787,0.6792,batch_size=19 decay=0.984524 hidden_layers=2 hidden_size=68 learning_rate=0.085394 momentum=0.52579
