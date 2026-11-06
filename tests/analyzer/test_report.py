@@ -56,7 +56,9 @@ def test_expected_labels_must_match_the_network():
     assert expected_as("Check", BASIC) == "Check"
     with pytest.raises(ValueError, match="expected output 'Check' is not one the network predicts"):
         expected_as("Check", LABELS)
-    with pytest.raises(ValueError, match="unknown label 'Stalemate'"):
+    with pytest.raises(ValueError, match="unknown label 'Draw'"):
+        build_report(["Draw"], ["Nothing"])
+    with pytest.raises(ValueError, match="expected output 'Stalemate' is not one the network predicts"):
         build_report(["Stalemate"], ["Nothing"])
 
 

@@ -61,7 +61,9 @@ def test_labels_come_from_the_metadata_or_default_to_the_5_classes(tmp_path):
     weights = [[0.0] * 3]
     assert network_labels(write_network(tmp_path / "basic.nn", weights, [0.0] * 3, {"labels": basic})) == tuple(basic)
     assert network_labels(write_network(tmp_path / "plain.nn", weights, [0.0] * 3)) == LABELS
-    assert network_labels(write_network(tmp_path / "bad.nn", weights, [0.0] * 3, {"labels": ["Stalemate"]})) == LABELS
+    assert network_labels(write_network(tmp_path / "bad.nn", weights, [0.0] * 3, {"labels": ["Draw"]})) == LABELS
+    with_stalemate = list(LABELS) + ["Stalemate"]
+    assert network_labels(write_network(tmp_path / "stalemate.nn", weights, [0.0] * 3, {"labels": with_stalemate})) == tuple(with_stalemate)
     assert network_labels(write_network(tmp_path / "empty.nn", weights, [0.0] * 3, {"labels": []})) == LABELS
     assert network_labels(str(tmp_path / "missing.nn")) == LABELS
     (tmp_path / "text.nn").write_text("not a zip")

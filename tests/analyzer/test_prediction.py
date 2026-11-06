@@ -17,7 +17,7 @@ def test_labels_follow_the_dataset_order():
 def test_every_label_maps_to_its_state():
     states = [state_of(label) for label in LABELS]
     assert states == ["Nothing", "Check", "Check", "Checkmate", "Checkmate"]
-    assert set(states) == set(STATES)
+    assert set(states) | {"Stalemate"} == set(STATES)
 
 
 def test_every_label_maps_to_its_colour():
@@ -26,14 +26,14 @@ def test_every_label_maps_to_its_colour():
     assert set(colours) - {None} == set(COLOURS)
 
 
-@pytest.mark.parametrize("label", ["Nothing", "Check", "Checkmate", "Check White", "Checkmate Black"])
+@pytest.mark.parametrize("label", ["Nothing", "Check", "Checkmate", "Check White", "Checkmate Black", "Stalemate"])
 def test_valid_labels(label):
     assert is_label(label)
 
 
 @pytest.mark.parametrize(
     "label",
-    ["Stalemate", "", "check White", "Check Green", "Nothing White", "Check  White", "Check White Black", "Check White "],
+    ["Draw", "Stalemate White", "", "check White", "Check Green", "Nothing White", "Check  White", "Check White Black", "Check White "],
 )
 def test_invalid_labels(label):
     assert not is_label(label)
@@ -105,3 +105,13 @@ def test_no_board_gives_no_state():
 def test_outputs_must_have_one_score_per_label(outputs):
     with pytest.raises(ValueError, match="expected 5 scores per board"):
         predicted_states(outputs)
+
+
+def test_stalemate_has_no_colour():
+    assert state_of("Stalemate") == "Stalemate"
+    assert colour_of("Stalemate") is None
+
+
+def test_the_bonus_network_predicts_stalemate():
+    with_stalemate = LABELS + ("Stalemate",)
+    assert prediction_report([[0.1, 0.0, 0.0, 0.0, 0.0, 0.9], [0.9, 0.0, 0.0, 0.0, 0.0, 0.1]], with_stalemate) == "Stalemate\nNothing"
