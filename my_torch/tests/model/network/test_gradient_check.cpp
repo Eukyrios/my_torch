@@ -134,9 +134,9 @@ Test(gradient_check, relu_softmax_cross_entropy_parameters)
     check_parameter_gradients("relu", "softmax", my_torch::CrossEntropy());
 }
 
-Test(gradient_check, sigmoid_sigmoid_mean_squared_error_parameters)
+Test(gradient_check, relu_softmax_mean_squared_error_parameters)
 {
-    check_parameter_gradients("sigmoid", "sigmoid", my_torch::MeanSquaredError());
+    check_parameter_gradients("relu", "softmax", my_torch::MeanSquaredError());
 }
 
 Test(gradient_check, tanh_softmax_cross_entropy_inputs)
@@ -149,7 +149,7 @@ Test(gradient_check, relu_softmax_cross_entropy_inputs)
     check_input_gradient("relu", "softmax", my_torch::CrossEntropy());
 }
 
-Test(gradient_check, sigmoid_sigmoid_mean_squared_error_inputs)
+Test(gradient_check, relu_softmax_mean_squared_error_inputs)
 {
-    check_input_gradient("sigmoid", "sigmoid", my_torch::MeanSquaredError());
+    check_input_gradient("relu", "softmax", my_torch::MeanSquaredError());
 }

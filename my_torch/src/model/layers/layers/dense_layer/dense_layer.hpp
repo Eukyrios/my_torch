@@ -23,7 +23,7 @@ namespace my_torch {
 
 class DenseLayer : public Layer {
 public:
-    DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
+    DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation);
 
     static std::unique_ptr<DenseLayer> create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng, Initialization initialization = Initialization::Auto);
 

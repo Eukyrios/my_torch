@@ -58,6 +58,14 @@ static std::size_t whole(const Json &object, const std::string &key, const std::
     return static_cast<std::size_t>(value);
 }
 
+static std::string text(const Json &object, const std::string &key, const std::string &where)
+{
+    const Json &value = member(object, key, where);
+    if (!value.is_string())
+        throw ConfigError(where + "." + key + " must be a string");
+    return value.as_string();
+}
+
 static std::string text_or(const Json &object, const std::string &key, const std::string &where, const std::string &fallback)
 {
     const Json *value = object.find(key);
@@ -71,7 +79,7 @@ static std::string text_or(const Json &object, const std::string &key, const std
 static std::unique_ptr<Layer> dense_layer(const Json &description, std::size_t &width, std::mt19937 &rng, const std::string &where)
 {
     std::size_t outputs = whole(description, "outputs", where);
-    std::unique_ptr<Activation> activation = Activation::from_name(text_or(description, "activation", where, "linear"));
+    std::unique_ptr<Activation> activation = Activation::from_name(text(description, "activation", where));
     Initialization initialization = initialization_from_name(text_or(description, "initialization", where, "auto"));
     std::unique_ptr<Layer> layer = DenseLayer::create(width, outputs, std::move(activation), rng, initialization);
     width = outputs;

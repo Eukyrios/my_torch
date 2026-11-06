@@ -3,7 +3,7 @@
 ** my_torch
 ** File description:
 ** He: sqrt(2 / n_inputs), suited to ReLU; Xavier: sqrt(2 / (n_inputs + n_outputs)), suited to
-** tanh, sigmoid and softmax; LeCun: sqrt(1 / n_inputs), suited to tanh and sigmoid
+** tanh and softmax; LeCun: sqrt(1 / n_inputs), suited to tanh
 */
 
 #include <cmath>

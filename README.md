@@ -199,8 +199,8 @@ dropout and L2):
 |---|---|
 | `inputs` | number of inputs of the first layer (769 for a chessboard) |
 | `seed` | network *i* of the file draws its weights from seed `seed + i - 1` (0 by default): each network starts differently, and all can be regenerated |
-| `layers` | in order; `dense` with `outputs`, `activation` (`linear` by default) and `initialization`, or `dropout` with `rate` |
-| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh, sigmoid, softmax), `lecun` (√(1 / inputs), for tanh, sigmoid) or `auto` (default: He before ReLU, Xavier otherwise) |
+| `layers` | in order; `dense` with `outputs`, `activation` (`relu`, `tanh` or `softmax`, required) and `initialization`, or `dropout` with `rate` |
+| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh and softmax), `lecun` (√(1 / inputs), for tanh) or `auto` (default: He before ReLU, Xavier otherwise) |
 | `training` | any of the `training` settings of a `.nn` file; each one left out keeps the engine's default, and a missing `schedule` means a constant rate |
 | `metadata` | optional; the generator adds `seed` and `config` |
 

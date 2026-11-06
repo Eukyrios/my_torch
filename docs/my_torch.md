@@ -111,9 +111,7 @@ classDiagram
     Network o-- Layer
     Layer <|-- DenseLayer
     DenseLayer --> Activation
-    Activation <|-- Linear
     Activation <|-- ReLU
-    Activation <|-- Sigmoid
     Activation <|-- Tanh
     Activation <|-- Softmax
     Loss <|-- CrossEntropy
@@ -168,22 +166,26 @@ moves when $`z`$ moves.
 
 | Activation | $`f(z)`$ | $`f'(z)`$ | Range | Used for |
 |---|---|---|---|---|
-| `Linear` | $`z`$ | $`1`$ | $`\mathbb{R}`$ | regression outputs, tests |
 | `ReLU` | $`\max(0, z)`$ | $`1`$ if $`z > 0`$, else $`0`$ | $`[0, +\infty)`$ | hidden layers |
-| `Sigmoid` | $`\sigma(z) = \dfrac{1}{1 + e^{-z}}`$ | $`\sigma(z)\,(1 - \sigma(z))`$ | $`(0, 1)`$ | one yes/no probability |
 | `Tanh` | $`\tanh(z)`$ | $`1 - \tanh^2(z)`$ | $`(-1, 1)`$ | hidden layers, centred on 0 |
 | `Softmax` | $`p_i = \dfrac{e^{z_i}}{\sum_j e^{z_j}}`$ | a matrix per sample, see [§5](#5-softmax) | $`(0, 1)`$, sums to 1 | the output layer, one class among $`C`$ |
 
+The library keeps only the three activations that serve this problem: **ReLU** and **tanh** for the hidden layers
+(the hyperparameter search compares them) and **softmax** for the output, which picks one class among 5. *Linear*
+(no non-linearity, so no use between layers) and *sigmoid* (one yes/no probability, the wrong output for 5 exclusive
+classes, and a weaker hidden activation than tanh) were removed, and a dense layer now always names its activation.
+
 ![Activation functions and their derivatives](images/activations.png)
+
+*The figure was drawn before linear and sigmoid were removed; only ReLU, tanh and softmax remain.*
 
 What the slopes show:
 
 - **ReLU** passes the gradient through unchanged where $`z > 0`$ and blocks it where $`z \le 0`$. It never
   shrinks, which is why it trains deep networks well. At exactly $`z = 0`$ the code uses $`f'(0) = 0`$.
-- **Sigmoid** has a slope of at most $`0.25`$, and **tanh** at most $`1`$, both close to $`0`$ for large $`|z|`$.
-  Through many layers these small slopes multiply and the gradient fades: the *vanishing gradient* problem.
-- **Overflow:** $`e^{-z}`$ overflows for $`z \approx -1000`$. `Sigmoid` uses the identical form
-  $`\sigma(z) = \tfrac{1}{2}\left(1 + \tanh\tfrac{z}{2}\right)`$, which never overflows.
+- **Tanh** has a slope of at most $`1`$, close to $`0`$ for large $`|z|`$ (sigmoid, removed, was worse: at most
+  $`0.25`$). Through many layers these small slopes multiply and the gradient fades: the *vanishing gradient*
+  problem.
 
 ## 5. Softmax
 
@@ -314,7 +316,7 @@ The tests compare, to a relative tolerance of $`10^{-4}`$ or better:
 | each loss gradient | `my_torch/tests/training/losses/test_loss.cpp` |
 | each activation's derivative and backward, softmax's full Jacobian | `my_torch/tests/model/activations/test_activation.cpp` |
 | a dense layer's weight, bias and input gradients against a hand computation | `my_torch/tests/model/layers/test_dense_layer.cpp` |
-| **every weight, bias and input gradient of a whole 3-layer network**, with tanh/relu + softmax + cross-entropy and sigmoid + MSE | `my_torch/tests/model/network/test_gradient_check.cpp` |
+| **every weight, bias and input gradient of a whole 3-layer network**, with tanh/relu + softmax + cross-entropy and relu + softmax + MSE | `my_torch/tests/model/network/test_gradient_check.cpp` |
 
 ## 9. Weight initialization
 

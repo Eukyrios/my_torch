@@ -12,9 +12,7 @@ SRC	=	src/math/matrix.cpp	\
 		src/model/neuron/neuron.cpp	\
 		src/model/initialization/initialization.cpp	\
 		src/model/activations/activation.cpp	\
-		src/model/activations/activations/linear/linear.cpp	\
 		src/model/activations/activations/relu/relu.cpp	\
-		src/model/activations/activations/sigmoid/sigmoid.cpp	\
 		src/model/activations/activations/tanh/tanh.cpp	\
 		src/model/activations/activations/softmax/softmax.cpp	\
 		src/model/layers/layer.cpp	\
