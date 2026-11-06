@@ -143,7 +143,7 @@ def plot_pairs(runs, path):
         axes.hlines(max(values), position - 0.3, position + 0.3, color=TEXT, linewidth=2)
         axes.annotate(f"best {max(values):.1f} %\nn = {len(values)}", (position, max(values)), xytext=(0, 8), textcoords="offset points", ha="center", color=TEXT_SECONDARY)
     axes.set_xticks(range(len(pairs)), [pair_label(activation, loss) for activation, loss in pairs])
-    axes.set_ylim(bottom=20)
+    axes.set_ylim(20, 82)
     axes.set_title("Every configuration tried, by hidden activation and loss")
     axes.set_ylabel("validation accuracy (%), 20 % = guessing")
     save(figure, path)
