@@ -52,12 +52,16 @@ one probability per class:
 ```mermaid
 flowchart LR
     FEN["FEN text"] -->|encode_fen| X["X<br/>(B, 769)"]
-    X --> L1["DenseLayer 769 → 256<br/>ReLU"]
-    L1 -->|"(B, 256)"| L2["DenseLayer 256 → 64<br/>ReLU"]
-    L2 -->|"(B, 64)"| L3["DenseLayer 64 → 5<br/>Softmax"]
+    X --> L1["DenseLayer 769 → 47<br/>ReLU"]
+    L1 -->|"(B, 47)"| L2["DenseLayer 47 → 47<br/>ReLU"]
+    L2 -->|"(B, 47)"| L3["DenseLayer 47 → 5<br/>Softmax"]
     L3 --> P["P<br/>(B, 5)"]
     P --> C["Nothing · Check White · Check Black<br/>Checkmate White · Checkmate Black"]
 ```
+
+The sizes (2 hidden layers of 47 ReLU neurons) and the training settings come from the hyperparameter search, which
+also compared tanh with ReLU and mean squared error with cross-entropy: see
+[`hyperparameter_search.md`](hyperparameter_search.md).
 
 The module is built from small classes, each with a base class that fixes what every subclass must provide:
 
@@ -327,13 +331,18 @@ nor shrink from layer to layer:
 | Activation | Method | Weights drawn from |
 |---|---|---|
 | `ReLU` | He | $`\mathcal{N}\!\left(0,\ \sigma^2\right),\ \sigma = \sqrt{2 / n_{in}}`$ |
-| anything else | Xavier (Glorot) | $`\mathcal{N}\!\left(0,\ \sigma^2\right),\ \sigma = \sqrt{2 / (n_{in} + n_{out})}`$ |
+| `tanh`, `softmax` | Xavier (Glorot) | $`\mathcal{N}\!\left(0,\ \sigma^2\right),\ \sigma = \sqrt{2 / (n_{in} + n_{out})}`$ |
+| `tanh`, on request | LeCun | $`\mathcal{N}\!\left(0,\ \sigma^2\right),\ \sigma = \sqrt{1 / n_{in}}`$ |
+
+`Initialization::Auto` (the default) picks He before ReLU and Xavier otherwise; a config file can choose `he`,
+`xavier` or `lecun` per layer (`my_torch/src/model/initialization/`).
 
 ReLU zeroes about half its inputs, so He doubles the variance to compensate. Biases start at $`0`$.
 
-```python
-DenseLayer.create(769, 256, ReLU())      # He: σ = √(2/769) ≈ 0.051
-DenseLayer.create(256, 5, Softmax())     # Xavier: σ = √(2/261) ≈ 0.088
+```cpp
+DenseLayer::create(769, 47, std::make_unique<ReLU>(), rng);       // He: σ = √(2/769) ≈ 0.051
+DenseLayer::create(47, 47, std::make_unique<ReLU>(), rng);        // He: σ = √(2/47) ≈ 0.206
+DenseLayer::create(47, 5, std::make_unique<Softmax>(), rng);      // Xavier: σ = √(2/52) ≈ 0.196
 ```
 
 ## 10. Optimizers
