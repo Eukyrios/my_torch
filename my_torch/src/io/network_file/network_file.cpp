@@ -341,7 +341,7 @@ static Network build_network(const Json &header, const Arrays &arrays)
     return Network(std::move(layers));
 }
 
-static std::unique_ptr<Loss> build_loss(const Json &description)
+std::unique_ptr<Loss> build_loss(const Json &description)
 {
     const std::string where = "training.loss";
     const std::string name = text(description, "name", where);
@@ -367,7 +367,7 @@ static std::unique_ptr<Schedule> build_schedule(const Json &description)
     throw Invalid(where + ": unknown schedule '" + name + "', expected constant, time_decay, exponential_decay or step_decay");
 }
 
-static std::unique_ptr<Optimizer> build_optimizer(const Json &description)
+std::unique_ptr<Optimizer> build_optimizer(const Json &description)
 {
     const std::string where = "training.optimizer";
     const std::string name = text(description, "name", where);

@@ -33,6 +33,8 @@ struct SavedNetwork {
     std::optional<Training> training;
 };
 
+std::unique_ptr<Loss> build_loss(const Json &description);
+std::unique_ptr<Optimizer> build_optimizer(const Json &description);
 void save_network(const std::string &path, Network &network, const Json &metadata = Json(Json::Object()), const Training *training = nullptr);
 SavedNetwork load_network(const std::string &path);
 

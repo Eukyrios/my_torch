@@ -470,3 +470,17 @@ Test(network_file, refuses_a_bad_dropout_layer)
     assert_refused(handmade(start + "{\"type\": \"dropout\", \"rate\": 0.1, \"random_state\": \"x\"}]}", one_layer_arrays()), "layers[1].random_state");
     cr_assert_eq(dynamic_cast<my_torch::Dropout &>(*my_torch::load_network(handmade(start + "{\"type\": \"dropout\", \"rate\": 0.1}]}", one_layer_arrays())).network.layers[1]).rate, 0.1);
 }
+
+Test(network_file, the_loss_and_optimizer_readers_can_be_used_on_their_own)
+{
+    my_torch::Json loss = my_torch::Json::parse("{\"name\": \"cross_entropy\", \"epsilon\": 0.001}");
+    my_torch::Json optimizer = my_torch::Json::parse("{\"name\": \"momentum\", \"learning_rate\": 0.02, \"momentum\": 0.5, \"weight_decay\": 0.001, \"schedule\": {\"name\": \"step_decay\", \"factor\": 0.5, \"every\": 4}}");
+    std::unique_ptr<my_torch::Optimizer> built = my_torch::build_optimizer(optimizer);
+
+    cr_assert(my_torch::build_loss(loss)->name == "cross_entropy");
+    cr_assert(built->name == "momentum");
+    cr_assert_float_eq(built->initial_learning_rate, 0.02, 1e-15);
+    cr_assert_float_eq(built->weight_decay, 0.001, 1e-15);
+    cr_assert(built->schedule->name == "step_decay");
+    cr_assert_throw(my_torch::build_loss(my_torch::Json::parse("{\"name\": \"hinge\"}")), std::runtime_error);
+}

@@ -4,7 +4,7 @@
 ** File description:
 ** A dense layer: column j of the weights (n_inputs x n_outputs) belongs to neuron j, and a
 ** batch gives z = inputs.matmul(weights) + biases, then its activation; create() starts from random
-** weights (He for ReLU, Xavier otherwise) and backward stores the weight and bias gradients
+** weights (He, Xavier or LeCun, by default He for ReLU) and backward stores the weight and bias gradients
 */
 
 #pragma once
@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "model/activations/activation.hpp"
+#include "model/initialization/initialization.hpp"
 #include "model/layers/layer.hpp"
 #include "math/matrix.hpp"
 
@@ -24,7 +25,7 @@ class DenseLayer : public Layer {
 public:
     DenseLayer(const Matrix &weights, const std::vector<double> &biases, std::unique_ptr<Activation> activation = nullptr);
 
-    static std::unique_ptr<DenseLayer> create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng);
+    static std::unique_ptr<DenseLayer> create(std::size_t n_inputs, std::size_t n_outputs, std::unique_ptr<Activation> activation, std::mt19937 &rng, Initialization initialization = Initialization::Auto);
 
     std::optional<Shape> shape() const override;
     std::vector<Parameter> parameters() override;
