@@ -3,7 +3,8 @@
 ** my_torch
 ** File description:
 ** A coordinate u in [0, 1] becomes low + u * (high - low), or the same between log(low) and
-** log(high) on a log scale, so a learning rate is searched as evenly in 1e-4..1e-3 as in 0.01..0.1
+** log(high) on a log scale, so a learning rate is searched as evenly in 1e-4..1e-3 as in 0.01..0.1;
+** a choice between n options splits [0, 1] into n equal slices and decodes to the option's index
 */
 
 #include <algorithm>
@@ -19,6 +20,8 @@ static void check_dimension(const Dimension &dimension)
 {
     if (dimension.name.empty())
         throw std::invalid_argument("a hyperparameter needs a name");
+    if (!dimension.choices.empty() && dimension.choices.size() < 2)
+        throw std::invalid_argument("hyperparameter '" + dimension.name + "' needs at least 2 choices");
     if (!(dimension.low < dimension.high))
         throw std::invalid_argument("hyperparameter '" + dimension.name + "' needs low < high");
     if (dimension.log_scale && dimension.low <= 0.0)
@@ -43,13 +46,26 @@ static void check_position(const std::vector<double> &position, std::size_t size
         throw std::invalid_argument("a position needs one coordinate per hyperparameter (" + std::to_string(size) + "), got " + std::to_string(position.size()));
 }
 
+static double decode_choice(const Dimension &dimension, double unit)
+{
+    double count = static_cast<double>(dimension.choices.size());
+    return std::min(std::floor(unit * count), count - 1.0);
+}
+
 static double decode_coordinate(const Dimension &dimension, double coordinate)
 {
     double unit = std::clamp(coordinate, 0.0, 1.0);
+    if (!dimension.choices.empty())
+        return decode_choice(dimension, unit);
     double value = dimension.log_scale ? std::exp(std::log(dimension.low) + unit * (std::log(dimension.high) - std::log(dimension.low))) : dimension.low + unit * (dimension.high - dimension.low);
     if (dimension.integer)
         value = std::round(value);
     return std::clamp(value, dimension.low, dimension.high);
+}
+
+Dimension categorical(const std::string &name, const std::vector<std::string> &choices)
+{
+    return Dimension{name, 0.0, choices.empty() ? 1.0 : static_cast<double>(choices.size() - 1), false, true, choices};
 }
 
 SearchSpace::SearchSpace(const std::vector<Dimension> &dimensions)

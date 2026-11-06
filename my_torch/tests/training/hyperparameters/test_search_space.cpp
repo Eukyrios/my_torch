@@ -86,3 +86,20 @@ Test(search_space, rejects_invalid_dimensions)
     cr_assert_throw(my_torch::SearchSpace({{"rate", 0, 1, true}}), std::invalid_argument);
     cr_assert_throw(my_torch::SearchSpace({{"rate", 0, 1}, {"rate", 0, 2}}), std::invalid_argument);
 }
+
+Test(search_space, a_choice_splits_the_coordinate_into_equal_slices)
+{
+    my_torch::SearchSpace choices({my_torch::categorical("activation", {"relu", "tanh"}), my_torch::categorical("loss", {"a", "b", "c"})});
+
+    cr_assert_float_eq(choices.decode({0.0, 0.0}).at("activation"), 0.0, 1e-15);
+    cr_assert_float_eq(choices.decode({0.49, 0.34}).at("activation"), 0.0, 1e-15);
+    cr_assert_float_eq(choices.decode({0.5, 0.34}).at("activation"), 1.0, 1e-15);
+    cr_assert_float_eq(choices.decode({1.0, 0.34}).at("loss"), 1.0, 1e-15);
+    cr_assert_float_eq(choices.decode({1.0, 1.0}).at("loss"), 2.0, 1e-15);
+    cr_assert_float_eq(choices.decode({1.0, 0.0}).at("loss"), 0.0, 1e-15);
+}
+
+Test(search_space, a_choice_needs_at_least_two_options)
+{
+    cr_assert_throw(my_torch::SearchSpace({my_torch::categorical("loss", {"only"})}), std::invalid_argument);
+}
