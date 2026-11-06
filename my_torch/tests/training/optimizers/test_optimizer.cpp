@@ -9,6 +9,7 @@
 #include <stdexcept>
 
 #include "assert_matrix.hpp"
+#include "model/activations/activations/relu/relu.hpp"
 #include "model/layers/layers/dense_layer/dense_layer.hpp"
 #include "training/schedules/schedules/exponential_decay/exponential_decay.hpp"
 #include "training/optimizers/optimizers/momentum/momentum.hpp"
@@ -38,7 +39,7 @@ Test(sgd, step_updates_every_parameter_in_place)
 
 Test(sgd, step_lowers_the_loss_of_a_layer)
 {
-    my_torch::DenseLayer layer(my_torch::Matrix({{0.5, -1.0}, {0.25, 0.5}}), {0.1, -0.3});
+    my_torch::DenseLayer layer(my_torch::Matrix({{0.5, -1.0}, {0.25, 0.5}}), {0.1, -0.3}, std::make_unique<my_torch::ReLU>());
     my_torch::Matrix inputs = my_torch::Matrix::row({1, 2});
     my_torch::Matrix target = my_torch::Matrix::row({0, 0});
     my_torch::Matrix before = layer.forward(inputs);
@@ -65,7 +66,7 @@ Test(sgd, rejects_a_learning_rate_that_is_not_positive)
 
 Test(sgd, step_needs_a_backward_first)
 {
-    my_torch::DenseLayer layer(my_torch::Matrix::row({0.5}), {0.1});
+    my_torch::DenseLayer layer(my_torch::Matrix::row({0.5}), {0.1}, std::make_unique<my_torch::ReLU>());
 
     cr_assert_throw(my_torch::SGD().step(layer.parameters()), std::runtime_error);
 }

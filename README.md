@@ -12,8 +12,22 @@ A neural network library written from scratch (no PyTorch, TensorFlow, …) and 
 
 The plan (board, team split, roadmap and daily schedule) is in [`docs/project.md`](docs/project.md).
 The maths behind the module is in [`docs/my_torch.md`](docs/my_torch.md).
-The hyperparameter search (particle swarm vs genetic algorithm) and its benchmark are in
-[`docs/hyperparameter_search.md`](docs/hyperparameter_search.md).
+The hyperparameter search (particle swarm vs genetic algorithm, activations and losses included), its benchmark,
+learning curves and the choices it led to are in [`docs/hyperparameter_search.md`](docs/hyperparameter_search.md).
+
+### Design choices
+
+| Choice | What we use | Why |
+|---|---|---|
+| Input | 769 numbers: one per piece type and square (12 × 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
+| Architecture | 769 → **47 ReLU → 47 ReLU** → 5 softmax | the hyperparameter search keeps landing on 1 or 2 hidden layers of 50 to 250 neurons; this one is small, fast and as accurate as the larger ones ([search](docs/hyperparameter_search.md#1-the-chosen-configuration)) |
+| Hidden activation | **ReLU** | tied with tanh on accuracy, best top configurations, cheapest to compute ([results](docs/hyperparameter_search.md#activations-and-losses)) |
+| Output activation | **softmax** | one probability per class over 5 exclusive classes |
+| Loss | **cross-entropy** | MSE fails 4 to 6 times as often in the search; with softmax its gradient is simply `p - y` |
+| Initialization | He before ReLU, Xavier before softmax | keeps the signal's variance steady through the layers ([maths](docs/my_torch.md#9-weight-initialization)) |
+| Optimizer | Momentum, learning rate 0.018, momentum 0.53, × 0.86 per epoch | chosen by the particle swarm search, which generalised better than the genetic algorithm |
+| Batch size | 9 | chosen by the search, with the rest of the training settings |
+| Overfitting | validation split, **early stopping** keeping the best weights; dropout and L2 available | the learning curves peak after 6 to 11 epochs, then the validation loss rises ([curves](docs/hyperparameter_search.md#learning-curves)) |
 
 ## Development
 
@@ -66,8 +80,9 @@ The maths behind each class (equations, derivatives, shapes, gradient checks and
 
 std::mt19937 rng(0);
 std::vector<std::unique_ptr<my_torch::Layer>> layers;
-layers.push_back(my_torch::DenseLayer::create(769, 256, std::make_unique<my_torch::ReLU>(), rng));     // random He weights
-layers.push_back(my_torch::DenseLayer::create(256, 5, std::make_unique<my_torch::Softmax>(), rng));    // random Xavier weights
+layers.push_back(my_torch::DenseLayer::create(769, 47, std::make_unique<my_torch::ReLU>(), rng));      // random He weights
+layers.push_back(my_torch::DenseLayer::create(47, 47, std::make_unique<my_torch::ReLU>(), rng));
+layers.push_back(my_torch::DenseLayer::create(47, 5, std::make_unique<my_torch::Softmax>(), rng));     // random Xavier weights
 my_torch::Network network(std::move(layers));
 
 my_torch::Momentum optimizer(0.01, 0.9, std::make_unique<my_torch::StepDecay>(0.5, 8));
@@ -124,8 +139,9 @@ my_torch_network_basic.nn
   "format": "my_torch",
   "version": 1,
   "layers": [
-    {"type": "dense", "activation": "relu", "shape": [769, 256]},
-    {"type": "dense", "activation": "softmax", "shape": [256, 5]}
+    {"type": "dense", "activation": "relu", "shape": [769, 47]},
+    {"type": "dense", "activation": "relu", "shape": [47, 47]},
+    {"type": "dense", "activation": "softmax", "shape": [47, 5]}
   ],
   "metadata": {"dataset": "data/train.txt", "notes": "free JSON, never needed to run the network"},
   "training": {
@@ -199,8 +215,8 @@ dropout and L2):
 |---|---|
 | `inputs` | number of inputs of the first layer (769 for a chessboard) |
 | `seed` | network *i* of the file draws its weights from seed `seed + i - 1` (0 by default): each network starts differently, and all can be regenerated |
-| `layers` | in order; `dense` with `outputs`, `activation` (`linear` by default) and `initialization`, or `dropout` with `rate` |
-| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh, sigmoid, softmax), `lecun` (√(1 / inputs), for tanh, sigmoid) or `auto` (default: He before ReLU, Xavier otherwise) |
+| `layers` | in order; `dense` with `outputs`, `activation` (`relu`, `tanh` or `softmax`, required) and `initialization`, or `dropout` with `rate` |
+| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh and softmax), `lecun` (√(1 / inputs), for tanh) or `auto` (default: He before ReLU, Xavier otherwise) |
 | `training` | any of the `training` settings of a `.nn` file; each one left out keeps the engine's default, and a missing `schedule` means a constant rate |
 | `metadata` | optional; the generator adds `seed` and `config` |
 

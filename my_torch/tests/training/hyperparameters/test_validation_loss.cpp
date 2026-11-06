@@ -9,6 +9,7 @@
 #include <criterion/criterion.h>
 #include <stdexcept>
 
+#include "model/layers/layers/dense_layer/dense_layer.hpp"
 #include "training/hyperparameters/algorithms/particle_swarm/particle_swarm.hpp"
 #include "training/hyperparameters/validation_loss/validation_loss.hpp"
 #include "training/losses/losses/cross_entropy/cross_entropy.hpp"
@@ -121,4 +122,61 @@ Test(validation_loss, a_particle_swarm_improves_on_its_starting_configurations)
     cr_assert(std::isfinite(result.best_score));
     cr_assert_lt(result.best_per_iteration.back(), 0.5);
     cr_assert_leq(result.best_per_iteration.back(), result.best_per_iteration.front());
+}
+
+Test(validation_loss, the_hidden_activation_and_the_loss_are_chosen_by_index)
+{
+    std::mt19937 rng(0);
+    my_torch::ValidationLoss score(DATA, 1);
+    my_torch::Hyperparameters tanh_mse = {{"activation", 1}, {"loss", 1}, {"hidden_layers", 2}};
+    my_torch::Network network = score.build(tanh_mse, rng);
+
+    cr_assert(my_torch::ValidationLoss::activation_name(tanh_mse) == "tanh");
+    cr_assert(my_torch::ValidationLoss::loss_name(tanh_mse) == "mean_squared_error");
+    cr_assert(dynamic_cast<my_torch::DenseLayer &>(*network.layers[0]).activation->name == "tanh");
+    cr_assert(dynamic_cast<my_torch::DenseLayer &>(*network.layers[2]).activation->name == "softmax");
+    cr_assert(score.loss(tanh_mse)->name == "mean_squared_error");
+}
+
+Test(validation_loss, defaults_to_relu_and_cross_entropy)
+{
+    cr_assert(my_torch::ValidationLoss::activation_name({}) == "relu");
+    cr_assert(my_torch::ValidationLoss::loss_name({}) == "cross_entropy");
+}
+
+Test(validation_loss, rejects_a_choice_outside_its_options)
+{
+    my_torch::ValidationLoss score(DATA, 1);
+
+    cr_assert_throw(score({{"activation", 2}}), std::invalid_argument);
+    cr_assert_throw(score({{"loss", -1}}), std::invalid_argument);
+}
+
+Test(validation_loss, the_error_is_one_minus_the_validation_accuracy)
+{
+    my_torch::ValidationLoss score(DATA, 10);
+    my_torch::Hyperparameters configuration = {{"learning_rate", 0.05}, {"hidden_size", 8}};
+    my_torch::Network network = score.train(configuration);
+    double expected = 1.0 - my_torch::accuracy(network(DATA.validation_inputs), DATA.validation_labels);
+
+    cr_assert(score.error(configuration) == expected);
+    cr_assert(my_torch::ValidationError(score)(configuration) == expected);
+}
+
+Test(validation_loss, accuracy_counts_the_rows_whose_highest_output_is_the_expected_class)
+{
+    my_torch::Matrix predictions({{0.9, 0.1}, {0.3, 0.7}, {0.6, 0.4}, {0.2, 0.8}});
+    my_torch::Matrix labels({{1, 0}, {0, 1}, {0, 1}, {0, 1}});
+
+    cr_assert_float_eq(my_torch::accuracy(predictions, labels), 0.75, 1e-15);
+}
+
+Test(validation_loss, every_activation_and_loss_pair_can_learn)
+{
+    for (double activation : {0.0, 1.0})
+        for (double loss : {0.0, 1.0}) {
+            my_torch::ValidationLoss score(DATA, 60);
+            double error = score.error({{"learning_rate", 0.05}, {"hidden_size", 16}, {"batch_size", 8}, {"activation", activation}, {"loss", loss}});
+            cr_assert_lt(error, 0.5, "activation %g loss %g: error %g", activation, loss, error);
+        }
 }

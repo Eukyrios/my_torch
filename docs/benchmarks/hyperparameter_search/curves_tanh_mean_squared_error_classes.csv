@@ -1,0 +1,6 @@
+class,precision,recall,f1
+Nothing,0.785714,0.586667,0.671756
+Check White,0.602564,0.626667,0.614379
+Check Black,0.611429,0.713333,0.658462
+Checkmate White,0.670807,0.72,0.694534
+Checkmate Black,0.767123,0.746667,0.756757

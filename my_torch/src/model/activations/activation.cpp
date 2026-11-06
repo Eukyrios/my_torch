@@ -9,9 +9,7 @@
 #include <stdexcept>
 
 #include "model/activations/activation.hpp"
-#include "model/activations/activations/linear/linear.hpp"
 #include "model/activations/activations/relu/relu.hpp"
-#include "model/activations/activations/sigmoid/sigmoid.hpp"
 #include "model/activations/activations/softmax/softmax.hpp"
 #include "model/activations/activations/tanh/tanh.hpp"
 
@@ -40,7 +38,7 @@ static std::unique_ptr<Activation> make()
 
 const std::vector<ActivationMaker> &Activation::subclasses()
 {
-    static const std::vector<ActivationMaker> all = {make<Linear>, make<ReLU>, make<Sigmoid>, make<Tanh>, make<Softmax>};
+    static const std::vector<ActivationMaker> all = {make<ReLU>, make<Tanh>, make<Softmax>};
     return all;
 }
 

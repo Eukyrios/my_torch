@@ -10,41 +10,16 @@
 #include <stdexcept>
 
 #include "model/activations/activation.hpp"
-#include "model/activations/activations/linear/linear.hpp"
 #include "model/activations/activations/relu/relu.hpp"
-#include "model/activations/activations/sigmoid/sigmoid.hpp"
 #include "model/activations/activations/softmax/softmax.hpp"
 #include "model/activations/activations/tanh/tanh.hpp"
 #include "assert_matrix.hpp"
 
 static const my_torch::Matrix Z = my_torch::Matrix::row({-2.0, -0.5, 0.0, 0.5, 2.0});
 
-Test(activations, linear_returns_z_unchanged)
-{
-    assert_matrix_eq(my_torch::Linear()(Z), Z);
-}
-
 Test(activations, relu_cuts_negative_values_to_zero)
 {
     assert_matrix_eq(my_torch::ReLU()(Z), my_torch::Matrix::row({0.0, 0.0, 0.0, 0.5, 2.0}));
-}
-
-Test(activations, sigmoid_matches_its_definition)
-{
-    my_torch::Matrix outputs = my_torch::Sigmoid()(Z);
-
-    for (std::size_t col = 0; col < Z.cols(); col++)
-        cr_assert_float_eq(outputs(0, col), 1.0 / (1.0 + std::exp(-Z(0, col))), 1e-9);
-}
-
-Test(activations, sigmoid_is_one_half_at_zero)
-{
-    cr_assert_float_eq(my_torch::Sigmoid()(my_torch::Matrix::row({0.0}))(0, 0), 0.5, 1e-12);
-}
-
-Test(activations, sigmoid_does_not_overflow_on_large_values)
-{
-    assert_matrix_eq(my_torch::Sigmoid()(my_torch::Matrix::row({-1000.0, 1000.0})), my_torch::Matrix::row({0.0, 1.0}));
 }
 
 Test(activations, tanh_stays_between_minus_one_and_one)
@@ -97,19 +72,9 @@ static void assert_close(const my_torch::Matrix &actual, const my_torch::Matrix 
             cr_assert_float_eq(actual(row, col), expected(row, col), tolerance);
 }
 
-Test(activations, linear_derivative_is_one)
-{
-    assert_matrix_eq(my_torch::Linear().derivative(Z), my_torch::Matrix(1, 5, 1.0));
-}
-
 Test(activations, relu_derivative_is_one_for_positive_values_only)
 {
     assert_matrix_eq(my_torch::ReLU().derivative(Z), my_torch::Matrix::row({0, 0, 0, 1, 1}));
-}
-
-Test(activations, sigmoid_derivative_matches_the_numerical_derivative)
-{
-    assert_close(my_torch::Sigmoid().derivative(Z), numerical_derivative(my_torch::Sigmoid(), Z), 1e-6);
 }
 
 Test(activations, tanh_derivative_matches_the_numerical_derivative)
@@ -186,12 +151,12 @@ Test(activations, from_name_finds_every_activation_by_name)
 
 Test(activations, subclasses_make_one_of_each_activation)
 {
-    cr_assert_eq(my_torch::Activation::subclasses().size(), 5u);
+    cr_assert_eq(my_torch::Activation::subclasses().size(), 3u);
 }
 
 Test(activations, names_list_every_activation)
 {
-    std::vector<std::string> expected = {"linear", "relu", "sigmoid", "tanh", "softmax"};
+    std::vector<std::string> expected = {"relu", "tanh", "softmax"};
 
     cr_assert(my_torch::Activation::names() == expected);
 }

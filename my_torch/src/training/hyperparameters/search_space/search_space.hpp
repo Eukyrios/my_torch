@@ -2,8 +2,8 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** The hyperparameters to search: each dimension has bounds, a linear or log scale and can be
-** whole; positions live in the unit cube [0, 1]^n and decode turns one into real values
+** The hyperparameters to search: each dimension has bounds, a linear or log scale and can be whole,
+** or is a choice between named options; positions live in [0, 1]^n and decode turns one into values
 */
 
 #pragma once
@@ -24,7 +24,10 @@ struct Dimension {
     double high;
     bool log_scale = false;
     bool integer = false;
+    std::vector<std::string> choices = {};
 };
+
+Dimension categorical(const std::string &name, const std::vector<std::string> &choices);
 
 class SearchSpace {
 public:

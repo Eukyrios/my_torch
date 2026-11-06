@@ -106,7 +106,7 @@ static std::string handmade(const std::string &header, const my_torch::ZipEntrie
     return path;
 }
 
-static const std::string ONE_LAYER = "\"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [2, 1]}]";
+static const std::string ONE_LAYER = "\"layers\": [{\"type\": \"dense\", \"activation\": \"relu\", \"shape\": [2, 1]}]";
 
 static my_torch::ZipEntries one_layer_arrays()
 {
@@ -313,7 +313,7 @@ Test(network_file, loads_a_handmade_network)
 
 Test(network_file, refuses_unknown_layers_and_activations)
 {
-    std::string layers = "\"layers\": [{\"type\": \"conv\", \"activation\": \"linear\", \"shape\": [2, 1]}]";
+    std::string layers = "\"layers\": [{\"type\": \"conv\", \"activation\": \"relu\", \"shape\": [2, 1]}]";
     std::string activation = "\"layers\": [{\"type\": \"dense\", \"activation\": \"gelu\", \"shape\": [2, 1]}]";
 
     assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, " + layers + "}", one_layer_arrays()), "unknown layer type 'conv'");
@@ -335,15 +335,15 @@ Test(network_file, refuses_arrays_that_do_not_match_the_header)
 
 Test(network_file, refuses_layers_that_do_not_chain_or_bad_shapes)
 {
-    std::string two_layers = "\"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [2, 1]}, {\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [3, 1]}]";
+    std::string two_layers = "\"layers\": [{\"type\": \"dense\", \"activation\": \"relu\", \"shape\": [2, 1]}, {\"type\": \"dense\", \"activation\": \"relu\", \"shape\": [3, 1]}]";
     my_torch::ZipEntries arrays = one_layer_arrays();
 
     arrays.emplace_back("layer_1_weights.npy", my_torch::to_npy(Matrix(3, 1)));
     arrays.emplace_back("layer_1_biases.npy", my_torch::to_npy(Matrix::row({0}), true));
     assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, " + two_layers + "}", arrays), "layer 1 expects 3 inputs but receives 1");
-    assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [2.5, 1]}]}"), "must be a whole number");
-    assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [0, 1]}]}"), "at least 1x1");
-    assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": 2}]}"), "[n_inputs, n_outputs]");
+    assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"relu\", \"shape\": [2.5, 1]}]}"), "must be a whole number");
+    assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"relu\", \"shape\": [0, 1]}]}"), "at least 1x1");
+    assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"relu\", \"shape\": 2}]}"), "[n_inputs, n_outputs]");
     assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"shape\": [2, 1]}]}"), "layers[0].activation is missing");
     assert_refused(handmade("{\"format\": \"my_torch\", \"version\": 1, \"layers\": [3]}"), "layers[0] must be an object");
 }
@@ -463,7 +463,7 @@ Test(network_file, an_older_file_without_the_new_settings_takes_the_defaults)
 
 Test(network_file, refuses_a_bad_dropout_layer)
 {
-    std::string start = "{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"linear\", \"shape\": [2, 1]}, ";
+    std::string start = "{\"format\": \"my_torch\", \"version\": 1, \"layers\": [{\"type\": \"dense\", \"activation\": \"relu\", \"shape\": [2, 1]}, ";
 
     assert_refused(handmade(start + "{\"type\": \"dropout\", \"rate\": 1.5}]}", one_layer_arrays()), "dropout rate must be in [0, 1)");
     assert_refused(handmade(start + "{\"type\": \"dropout\"}]}", one_layer_arrays()), "layers[1].rate is missing");

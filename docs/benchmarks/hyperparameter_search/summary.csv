@@ -1,11 +1,11 @@
-method,seed,evaluations,best_validation_loss,test_loss,test_accuracy,seconds,hyperparameters
-ga,0,78,0.670730,0.712861,0.6773,1347.5,batch_size=64 decay=0.878596 hidden_layers=2 hidden_size=167 learning_rate=0.0632282 momentum=0.628693
-ga,1,78,0.662216,0.683914,0.6973,1041.5,batch_size=87 decay=0.898786 hidden_layers=1 hidden_size=128 learning_rate=0.183925 momentum=0.671533
-ga,2,78,0.669070,0.748226,0.6600,946.9,batch_size=23 decay=0.929478 hidden_layers=3 hidden_size=87 learning_rate=0.0299268 momentum=0.19482
-ga,3,78,0.667467,0.708865,0.6787,1571.9,batch_size=17 decay=0.975658 hidden_layers=2 hidden_size=191 learning_rate=0.00580127 momentum=0.829374
-ga,4,78,0.669285,0.703011,0.6893,1556.6,batch_size=10 decay=0.841841 hidden_layers=1 hidden_size=189 learning_rate=0.0707338 momentum=0.275201
-pso,0,80,0.677695,0.712444,0.6707,1365.1,batch_size=42 decay=0.889228 hidden_layers=2 hidden_size=141 learning_rate=0.0277681 momentum=0.65899
-pso,1,80,0.672536,0.710997,0.6880,686.2,batch_size=23 decay=0.811095 hidden_layers=2 hidden_size=54 learning_rate=0.00438603 momentum=0.949846
-pso,2,80,0.662668,0.708966,0.6747,1246.7,batch_size=26 decay=0.863962 hidden_layers=2 hidden_size=113 learning_rate=0.0194246 momentum=0.729747
-pso,3,80,0.651705,0.709027,0.7027,936.1,batch_size=9 decay=0.862153 hidden_layers=2 hidden_size=47 learning_rate=0.0181697 momentum=0.526541
-pso,4,80,0.672160,0.710306,0.6773,507.3,batch_size=118 decay=0.821764 hidden_layers=2 hidden_size=46 learning_rate=0.230718 momentum=0.292063
+method,seed,evaluations,best_validation_error,test_accuracy,test_loss,seconds,activation,loss,hyperparameters
+ga,0,78,0.273333,0.6787,0.730308,1935.9,relu,cross_entropy,batch_size=9 decay=0.950087 hidden_layers=2 hidden_size=183 learning_rate=0.00338218 momentum=0.873357
+ga,1,78,0.292000,0.6640,0.746710,987.1,relu,mean_squared_error,batch_size=30 decay=0.924297 hidden_layers=2 hidden_size=59 learning_rate=0.0278559 momentum=0.959532
+ga,2,78,0.269333,0.7053,0.722439,1751.8,relu,cross_entropy,batch_size=14 decay=0.868422 hidden_layers=1 hidden_size=134 learning_rate=0.080058 momentum=0.679031
+ga,3,78,0.280000,0.6867,0.875732,1999.2,relu,cross_entropy,batch_size=15 decay=0.881968 hidden_layers=2 hidden_size=202 learning_rate=0.0436185 momentum=0.718497
+ga,4,78,0.290667,0.6627,0.740168,935.3,relu,cross_entropy,batch_size=12 decay=0.898993 hidden_layers=2 hidden_size=71 learning_rate=0.0202148 momentum=0.146321
+pso,0,80,0.300000,0.6773,0.749635,1486.1,tanh,mean_squared_error,batch_size=19 decay=0.984524 hidden_layers=2 hidden_size=68 learning_rate=0.085394 momentum=0.52579
+pso,1,80,0.290667,0.7120,0.718598,1124.9,tanh,cross_entropy,batch_size=22 decay=0.876618 hidden_layers=2 hidden_size=89 learning_rate=0.0640524 momentum=0.633616
+pso,2,80,0.292000,0.6840,0.717011,1961.2,relu,cross_entropy,batch_size=20 decay=0.902553 hidden_layers=2 hidden_size=113 learning_rate=0.0321511 momentum=0.224925
+pso,3,80,0.286667,0.6880,0.719093,2272.9,tanh,cross_entropy,batch_size=8 decay=0.8 hidden_layers=2 hidden_size=256 learning_rate=0.169055 momentum=0.195584
+pso,4,80,0.285333,0.7040,0.730307,1951.7,tanh,cross_entropy,batch_size=23 decay=0.801199 hidden_layers=1 hidden_size=256 learning_rate=0.3 momentum=0.516772
