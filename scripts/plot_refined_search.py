@@ -152,7 +152,7 @@ def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     results = Path(argv[0] if argv else "docs/benchmarks/refined_search")
     final_check = Path(argv[1] if len(argv) > 1 else results / "final_check")
-    images = Path(argv[2] if len(argv) > 2 else "docs/images")
+    images = Path(argv[2] if len(argv) > 2 else "docs/images/refined_search")
     images.mkdir(parents=True, exist_ok=True)
     style()
     runs = searches(results)

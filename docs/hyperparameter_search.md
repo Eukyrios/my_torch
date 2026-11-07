@@ -131,9 +131,9 @@ elite, not trained again), then fills the rest with children:
 Mean ± standard deviation over 5 seeds; 70.0 % is the lowest final score of the 10 searches, a level every search
 reaches. Guessing among the 5 classes would give 20 %.
 
-![Best validation accuracy found so far, against the number of networks trained](images/hyperparameter_convergence.png)
+![Best validation accuracy found so far, against the number of networks trained](images/hyperparameter_search/hyperparameter_convergence.png)
 
-![Best validation accuracy and test accuracy of each search](images/hyperparameter_final_results.png)
+![Best validation accuracy and test accuracy of each search](images/hyperparameter_search/hyperparameter_final_results.png)
 
 The genetic algorithm climbs faster and ends higher **on the validation boards it selects on**, but its best
 configurations do **worse on the test boards** (67.9 % against 69.3 %). Selection keeps whatever scored best on the
@@ -150,14 +150,14 @@ validation loss, logs in commit `ac8678d`) found the same: equal validation qual
 | tanh + cross-entropy | 246 | **77 %** | 4 % | **69.2 %** | 71.5 % |
 | tanh + MSE | 104 | 32 % | 14 % | 67.0 % | 70.0 % |
 
-![Validation accuracy of every configuration tried, grouped by hidden activation and loss](images/hyperparameter_pairs.png)
+![Validation accuracy of every configuration tried, grouped by hidden activation and loss](images/hyperparameter_search/hyperparameter_pairs.png)
 
 - **The loss matters, the activation barely.** With MSE, 4 to 6 times as many configurations fail and only half as
   many are good. Both methods noticed: they spent 72 % of their 790 networks on cross-entropy.
 - **ReLU and tanh tie.** ReLU has the best configurations (73.1 %, top-10 mean 72.4 % against 71.2 %), tanh is more
   forgiving (77 % of its configurations are good against 61 %).
 
-![Learning rate against validation accuracy for every configuration tried](images/hyperparameter_learning_rates.png)
+![Learning rate against validation accuracy for every configuration tried](images/hyperparameter_search/hyperparameter_learning_rates.png)
 
 Learning rates below 1e-3 fail in 6 epochs (too slow to learn anything), and the good configurations sit between
 about 0.005 and 0.3. The genetic algorithm concentrates there quickly; the swarm keeps exploring more widely.
@@ -166,7 +166,7 @@ about 0.005 and 0.3. The genetic algorithm concentrates there quickly; the swarm
 
 The best configuration of each pair, retrained for 30 epochs and measured after every epoch:
 
-![Validation accuracy and validation cross-entropy per epoch of the best configuration of each pair](images/learning_curves.png)
+![Validation accuracy and validation cross-entropy per epoch of the best configuration of each pair](images/hyperparameter_search/learning_curves.png)
 
 | Hidden activation + loss | Found by | Best epoch | Validation accuracy | Test accuracy | Test macro-F1 |
 |---|---|---|---|---|---|
@@ -184,7 +184,7 @@ The best configuration of each pair, retrained for 30 epochs and measured after 
 - On the test set, the four best configurations are within 3 points of each other: with 750 test boards, one board
   is 0.13 point and the noise is about ±1.7 point, so none is significantly better.
 
-![Per-class F1 on the test set of the best configuration of each pair](images/learning_curves_classes.png)
+![Per-class F1 on the test set of the best configuration of each pair](images/hyperparameter_search/learning_curves_classes.png)
 
 Every pair finds the **checkmates** easiest (F1 69–80 %) and **Check White** hardest (57–63 %). A check depends on
 a line of attack across the board, which a dense layer only sees through many separate square inputs; checkmate
@@ -234,7 +234,7 @@ scale and with regularisation it is no longer the best: see [refined_search.md](
 ```bash
 python -m dataset.generate lichess_db_standard_rated_2013-01.pgn --out data --per-class 1500
 scripts/run_hyperparameter_benchmark.sh data docs/benchmarks/hyperparameter_search 6 5 30
-python -m scripts.plot_hyperparameter_search docs/benchmarks/hyperparameter_search docs/images
+python -m scripts.plot_hyperparameter_search docs/benchmarks/hyperparameter_search docs/images/hyperparameter_search
 ```
 
 The first command builds the dataset; the second encodes it, builds the benchmark (`make -C my_torch benchmark`),

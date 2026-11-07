@@ -263,7 +263,7 @@ def curves_table(results):
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     results = Path(argv[0] if argv else "docs/benchmarks/hyperparameter_search")
-    images = Path(argv[1] if len(argv) > 1 else "docs/images")
+    images = Path(argv[1] if len(argv) > 1 else "docs/images/hyperparameter_search")
     images.mkdir(parents=True, exist_ok=True)
     style()
     runs = {method: runs_of(results, method) for method in METHODS}

@@ -179,7 +179,7 @@ The library keeps only the three activations that serve this problem: **ReLU** a
 (no non-linearity, so no use between layers) and *sigmoid* (one yes/no probability, the wrong output for 5 exclusive
 classes, and a weaker hidden activation than tanh) were removed, and a dense layer now always names its activation.
 
-![Activation functions and their derivatives](images/activations.png)
+![Activation functions and their derivatives](images/my_torch/activations.png)
 
 *The figure was drawn before linear and sigmoid were removed; only ReLU, tanh and softmax remain.*
 
@@ -212,7 +212,7 @@ J = \mathrm{diag}(p) - p\,p^\top
 ($`\delta_{ij} = 1`$ when $`i = j`$, else $`0`$.) The diagonal $`p_i(1 - p_i)`$ is positive: raising your own score
 raises your probability. The rest, $`-p_i p_j`$, is negative.
 
-![Softmax outputs and Jacobian entries](images/softmax.png)
+![Softmax outputs and Jacobian entries](images/my_torch/softmax.png)
 
 **Backward pass without building $`J`$.** Backpropagation needs $`J^\top g`$, where $`g = \partial L / \partial p`$.
 Expanding the product gives a formula that never builds the $`C \times C`$ matrices:
@@ -253,7 +253,7 @@ L = \frac{1}{B\,C} \sum_{b,c} \left(P_{bc} - Y_{bc}\right)^2
 \frac{\partial L}{\partial P_{bc}} = \frac{2}{B\,C}\left(P_{bc} - Y_{bc}\right)
 ```
 
-![Loss functions and their gradients](images/losses.png)
+![Loss functions and their gradients](images/my_torch/losses.png)
 
 The cross-entropy gradient is very steep near $`p = 0`$: a confident mistake gets a strong correction. The
 squared-error gradient is a straight line: it corrects in proportion to the error.
@@ -368,7 +368,7 @@ v \leftarrow \mu\, v - \eta\, \nabla_\theta L
 With a constant gradient the step tends to $`\eta / (1 - \mu)`$: **10 times** the SGD step for $`\mu = 0.9`$, so
 momentum usually wants a smaller $`\eta`$. With $`\mu = 0`$ it is exactly SGD.
 
-![SGD and momentum on a narrow valley](images/momentum.png)
+![SGD and momentum on a narrow valley](images/my_torch/momentum.png)
 
 On a narrow valley, SGD with a large step bounces from side to side across it; momentum's velocity averages
 those opposite pushes and moves along the valley.
@@ -385,7 +385,7 @@ ones later, so they settle instead of jittering around the minimum. Starting fro
 | `ExponentialDecay(γ)` | $`\eta_0\, \gamma^{t}`$ | $`0 < \gamma \le 1`$ |
 | `StepDecay(γ, k)` | $`\eta_0\, \gamma^{\lfloor t / k \rfloor}`$ | $`0 < \gamma \le 1`$, $`k \ge 1`$ |
 
-![Learning-rate schedules](images/schedules.png)
+![Learning-rate schedules](images/my_torch/schedules.png)
 
 ```python
 optimizer = Momentum(learning_rate=0.01, momentum=0.9, schedule=StepDecay(0.5, every=8))
@@ -425,7 +425,7 @@ between is mini-batch. Shuffling every epoch keeps the batches from always group
 XOR cannot be separated by a single straight line, so learning it needs the hidden layer, the derivatives,
 backpropagation and the optimizer all working together.
 
-![XOR training loss](images/xor.png)
+![XOR training loss](images/my_torch/xor.png)
 
 | Input | Expected | Network output $`P(1)`$ after 500 epochs |
 |---|---|---|

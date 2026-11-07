@@ -72,7 +72,7 @@ would give, on a smaller training set.
 Validation accuracy on the 20,000 validation boards, each network trained on 40,000 boards for at most 20 epochs
 (lower than the full-scale figures of §6, which train on 160,000 boards: what counts here is the ranking).
 
-![Best validation accuracy found so far by each search](images/refined_convergence.png)
+![Best validation accuracy found so far by each search](images/refined_search/refined_convergence.png)
 
 All three searches beat the current default by 2.5 to 3 points, and they agree on what matters:
 
@@ -85,7 +85,7 @@ All three searches beat the current default by 2.5 to 3 points, and they agree o
   range, with a stronger L2, and is best by almost a point. A wide network held back by dropout and L2 is the same
   idea as `regularized_network.conf` (128 + 64, dropout 0.2, L2 1e-4).
 
-![Validation accuracy against the dropout rate and the L2 weight decay](images/refined_regularisation.png)
+![Validation accuracy against the dropout rate and the L2 weight decay](images/refined_search/refined_regularisation.png)
 
 ## 6. Full-scale check
 
