@@ -18,6 +18,7 @@
 #include <memory>
 #include <mutex>
 #include <numeric>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -71,9 +72,12 @@ LoggedScore::LoggedScore(const my_torch::FitScore &score, const my_torch::Search
 :
     _score(&score), _path(path), _lock(std::make_shared<std::mutex>())
 {
-    std::ofstream file(path, std::ios::trunc);
+    std::set<std::string> names;
     for (const my_torch::Dimension &dimension : space.dimensions)
-        file << dimension.name << ",";
+        names.insert(dimension.name);
+    std::ofstream file(path, std::ios::trunc);
+    for (const std::string &name : names)
+        file << name << ",";
     file << "score,seconds\n";
 }
 
