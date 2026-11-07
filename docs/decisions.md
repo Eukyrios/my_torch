@@ -109,11 +109,11 @@ The users are the autograder, the jury, and us while training.
 
 | Choice | Value | Justification |
 |---|---|---|
-| Hidden layers | 2 × 47 ReLU | retained by the particle swarm among 1 to 3 layers of 16 to 256 neurons ([hyperparameter_search.md](hyperparameter_search.md)) |
+| Hidden layers | 128 ReLU, 64 tanh, dropout 0.2 after each | best at full scale ([refined_search.md](refined_search.md)); the first particle swarm retained 2 × 47 ReLU at a small scale, without dropout or L2 ([hyperparameter_search.md](hyperparameter_search.md)) |
 | Output | 5 softmax | one probability per label; trained with cross-entropy, the loss matching softmax |
 | Initialization | He for ReLU, Xavier for softmax | keeps the variance of the activations stable through the layers (`docs/my_torch.md`) |
-| Optimizer | Momentum, learning rate 0.018, momentum 0.53, × 0.86 per epoch, batches of 9 | retained by the swarm; the decay takes big steps first and finer ones near the end |
-| Overfitting | 10 % validation, patience 5, best weights kept | the training loss keeps falling while the validation loss turns back up: training stops there |
+| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs, batches of 32 | the pushed network's settings; blank networks get the swarm's 0.018 / 0.53 / × 0.86 per epoch / batches of 9 |
+| Overfitting | 10 % validation, patience 8, best weights kept, dropout 0.2, L2 1e-4 | the training loss keeps falling while the validation loss turns back up: training stops there; dropout and L2 are worth 2 to 3 points in the refined search |
 
 **The network we push.** Both configurations of `configs/` were trained on the 160,000 boards of `data/train.txt`
 and compared on `data/validation.txt`, which neither trained on; `data/test.txt` was used once, at the end.
