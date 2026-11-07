@@ -1,0 +1,16 @@
+accuracy: 82.7% (16535/20000 boards)
+
+confusion matrix (rows: expected, columns: predicted)
+expected \ predicted  Nothing  Check White  Check Black  Checkmate White  Checkmate Black
+Nothing                  3071          460          378               38               53
+Check White               129         3275            0              596                0
+Check Black               169            0         3176                0              655
+Checkmate White             8          570            0             3422                0
+Checkmate Black             4            0          405                0             3591
+
+label            precision  recall  boards
+Nothing              90.8%   76.8%    4000
+Check White          76.1%   81.9%    4000
+Check Black          80.2%   79.4%    4000
+Checkmate White      84.4%   85.5%    4000
+Checkmate Black      83.5%   89.8%    4000
