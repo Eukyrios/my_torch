@@ -1,0 +1,7 @@
+network,config,seed,epochs_run,epochs_kept,best_validation_loss,seconds,validation_accuracy,test_accuracy
+basic_network_1,basic_network,0,15,10,0.4297,260,82.2,82.6
+basic_network_2,basic_network,1,16,11,0.4368,276,82.2,82.5
+basic_network_3,basic_network,2,14,9,0.4325,244,82.5,82.7
+regularized_network_1,regularized_network,100,19,11,0.4008,728,83.4,83.9
+regularized_network_2,regularized_network,101,20,12,0.3968,763,83.9,84.1
+regularized_network_3,regularized_network,102,19,11,0.3979,732,83.5,83.9
