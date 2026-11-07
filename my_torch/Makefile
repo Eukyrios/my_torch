@@ -42,6 +42,7 @@ SRC	=	src/math/matrix.cpp	\
 		src/training/hyperparameters/algorithms/particle_swarm/particle_swarm.cpp	\
 		src/training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.cpp	\
 		src/training/hyperparameters/validation_loss/validation_loss.cpp	\
+		src/training/hyperparameters/fit_score/fit_score.cpp	\
 		src/training/hyperparameters/search_log/search_log.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
@@ -71,6 +72,7 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/training/hyperparameters/test_particle_swarm.cpp	\
 		tests/training/hyperparameters/test_genetic_algorithm.cpp	\
 		tests/training/hyperparameters/test_validation_loss.cpp	\
+		tests/training/hyperparameters/test_fit_score.cpp	\
 		tests/training/hyperparameters/test_search_log.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
