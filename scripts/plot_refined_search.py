@@ -69,7 +69,7 @@ def plot_convergence(runs, path):
     for index, run in enumerate(runs):
         color = SEED_COLORS[index % len(SEED_COLORS)]
         axes.plot(range(1, len(run["curve"]) + 1), run["curve"], color=color, linewidth=2, label=f"search {run['seed']}")
-        axes.annotate(f"search {run['seed']}: {run['curve'][-1]:.2f} %", (len(run["curve"]), run["curve"][-1]), xytext=(8, -12 + 12 * index), textcoords="offset points", va="center", color=TEXT_SECONDARY)
+        axes.annotate(f"search {run['seed']}: {run['curve'][-1]:.2f} %", (len(run["curve"]), run["curve"][-1]), xytext=(8, -12 + 12 * index), textcoords="offset points", va="center", color=color)
     start = accuracy_of(runs[0]["rows"][0]["score"])
     axes.axhline(start, color=MUTED, linewidth=1.5, linestyle="--")
     axes.annotate(f"current default (2 × 47): {start:.2f} %", (1, start), xytext=(4, -12), textcoords="offset points", color=MUTED)
