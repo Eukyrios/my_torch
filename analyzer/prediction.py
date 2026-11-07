@@ -1,21 +1,22 @@
 # Turns the network outputs into game states. The network gives one score per label, as one
 # row of numbers for one board or a list of rows for several, and the highest score is the
-# prediction. A label is a state, "Checkmate", "Check" or "Nothing", followed for checks and
-# checkmates by the colour giving it, "White" or "Black": the full output is the label
-# itself, the state alone drops the colour. Plain Python: the analyzer has no dependency.
+# prediction. A label is a state, "Checkmate", "Check", "Nothing" or "Stalemate" (only known by
+# the bonus network), followed for checks and checkmates by the colour giving it, "White" or
+# "Black": the full output is the label itself, the state alone drops the colour. Plain Python:
+# the analyzer has no dependency.
 
 # same order as the dataset files (dataset.labels), which the network learns from
 LABELS = ("Nothing", "Check White", "Check Black", "Checkmate White", "Checkmate Black")
-STATES = ("Checkmate", "Check", "Nothing")
+STATES = ("Checkmate", "Check", "Nothing", "Stalemate")
 COLOURS = ("White", "Black")
-NO_COLOUR_STATE = "Nothing"
+NO_COLOUR_STATES = ("Nothing", "Stalemate")
 
 
 def is_label(label: str) -> bool:
     words = label.split(" ")
     if words[0] not in STATES or len(words) > 2:
         return False
-    return len(words) == 1 or (words[0] != NO_COLOUR_STATE and words[1] in COLOURS)
+    return len(words) == 1 or (words[0] not in NO_COLOUR_STATES and words[1] in COLOURS)
 
 
 def check_label(label: str) -> None:

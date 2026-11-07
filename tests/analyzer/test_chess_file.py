@@ -22,7 +22,8 @@ def test_an_empty_file_has_no_board(write_boards):
     [
         ("8/8/8/8/8/8/8/k1K5 w", "line 2: expected at least 6 fields"),
         ("8/8/8/8/8/8/8/k1K4 w - - 0 1", "line 2: "),
-        (f"{WHITE_TO_MOVE} Stalemate", "line 2: unknown label 'Stalemate'"),
+        (f"{WHITE_TO_MOVE} Draw", "line 2: unknown label 'Draw'"),
+        (f"{WHITE_TO_MOVE} Stalemate White", "line 2: unknown label 'Stalemate White'"),
         (f"{WHITE_TO_MOVE} Check Green", "line 2: unknown label 'Check Green'"),
     ],
 )
