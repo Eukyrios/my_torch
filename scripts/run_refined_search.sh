@@ -1,7 +1,8 @@
 #!/bin/bash
 # The refined search: SEEDS particle swarm searches in parallel over ReLU + cross-entropy networks trained like
 # --train (early stopping up to MAX_EPOCHS), on TRAIN_BOARDS boards of DATA_DIR/train.txt, starting from the best
-# configurations of the first benchmark in FIRST_DIR; logs and the best .conf of each search go to OUT_DIR.
+# configurations of the first benchmark in FIRST_DIR, the cores shared between the searches; logs (and
+# _progress.csv, filled as it goes) and the best .conf of each search go to OUT_DIR.
 # Usage: scripts/run_refined_search.sh [DATA_DIR] [OUT_DIR] [TRAIN_BOARDS] [MAX_EPOCHS] [SEEDS] [FIRST_DIR]
 
 set -euo pipefail
@@ -12,6 +13,7 @@ TRAIN_BOARDS=${3:-40000}
 MAX_EPOCHS=${4:-20}
 SEEDS=${5:-3}
 FIRST_DIR=${6:-docs/benchmarks/hyperparameter_search}
+THREADS=$(( $(nproc) / SEEDS > 0 ? $(nproc) / SEEDS : 1 ))
 
 python3 -m scripts.encode_dataset "$DATA_DIR"
 make -C my_torch benchmark
@@ -19,7 +21,7 @@ mkdir -p "$OUT_DIR"
 rm -f "$OUT_DIR"/refined_seed*
 
 for seed in $(seq 0 $((SEEDS - 1))); do
-    my_torch/refined_benchmark "$seed" "$DATA_DIR/encoded" "$FIRST_DIR" "$OUT_DIR" "$TRAIN_BOARDS" "$MAX_EPOCHS" > "$OUT_DIR/refined_seed${seed}_summary.csv" &
+    my_torch/refined_benchmark "$seed" "$DATA_DIR/encoded" "$FIRST_DIR" "$OUT_DIR" "$TRAIN_BOARDS" "$MAX_EPOCHS" "$THREADS" > "$OUT_DIR/refined_seed${seed}_summary.csv" &
 done
 wait
 
