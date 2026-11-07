@@ -166,3 +166,47 @@ Test(particle_swarm, rejects_a_starting_position_of_the_wrong_size)
 
     cr_assert_throw(my_torch::ParticleSwarm(PLANE, settings(2, 0)).minimize(sphere, rng, {{0.5}}), std::invalid_argument);
 }
+
+static double fails_on_the_right(const my_torch::Hyperparameters &values)
+{
+    if (values.at("x") > 0.0)
+        throw std::runtime_error("training failed");
+    return -values.at("x");
+}
+
+static my_torch::SwarmSettings parallel_settings(std::size_t particles, std::size_t iterations, std::size_t threads)
+{
+    my_torch::SwarmSettings chosen = settings(particles, iterations);
+    chosen.threads = threads;
+    return chosen;
+}
+
+Test(particle_swarm, in_parallel_finds_the_minimum_and_evaluates_as_many_configurations)
+{
+    std::mt19937 rng(0);
+    my_torch::SearchResult result = my_torch::ParticleSwarm(PLANE, parallel_settings(15, 40, 4)).minimize(sphere, rng);
+
+    cr_assert_eq(result.evaluations.size(), 15u * 41u);
+    cr_assert_float_eq(result.best.at("x"), 1.5, 0.05);
+    cr_assert_float_eq(result.best.at("y"), -2.0, 0.05);
+}
+
+Test(particle_swarm, in_parallel_gives_the_same_result_every_time_and_records_in_particle_order)
+{
+    std::mt19937 first(5);
+    std::mt19937 second(5);
+    my_torch::ParticleSwarm swarm(PLANE, parallel_settings(6, 8, 3));
+    my_torch::SearchResult one = swarm.minimize(sphere, first);
+    my_torch::SearchResult two = swarm.minimize(sphere, second);
+
+    cr_assert(one.best_per_iteration == two.best_per_iteration);
+    for (std::size_t index = 0; index < 6; index++)
+        cr_assert_eq(one.evaluations[index].candidate, index);
+}
+
+Test(particle_swarm, in_parallel_passes_on_a_failed_training)
+{
+    std::mt19937 rng(1);
+
+    cr_assert_throw(my_torch::ParticleSwarm(PLANE, parallel_settings(8, 2, 4)).minimize(fails_on_the_right, rng), std::runtime_error);
+}

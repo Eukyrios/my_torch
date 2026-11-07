@@ -3,10 +3,13 @@
 ** my_torch
 ** File description:
 ** Each step, v = inertia * v + cognitive * r1 * (own best - x) + social * r2 * (swarm best - x),
-** capped to max_velocity, then x += v inside [0, 1]; a NaN or infinite score counts as the worst
+** capped to max_velocity, then x += v inside [0, 1]; a NaN or infinite score counts as the worst; in
+** parallel, scores are recorded in particle order so a run gives the same result every time
 */
 
 #include <algorithm>
+#include <exception>
+#include <thread>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -53,11 +56,9 @@ static std::vector<double> random_velocity(std::size_t size, double max_velocity
     return velocity;
 }
 
-static void evaluate(Swarm &swarm, std::size_t index, std::size_t iteration, const SearchSpace &space, const Objective &objective, SearchResult &result)
+static void record(Swarm &swarm, std::size_t index, std::size_t iteration, const Hyperparameters &hyperparameters, double score, SearchResult &result)
 {
     Particle &particle = swarm.particles[index];
-    Hyperparameters hyperparameters = space.decode(particle.position);
-    double score = usable_score(objective(hyperparameters));
     result.evaluations.push_back({iteration, index, hyperparameters, score});
     if (particle.best_position.empty() || score < particle.best_score) {
         particle.best_position = particle.position;
@@ -67,6 +68,47 @@ static void evaluate(Swarm &swarm, std::size_t index, std::size_t iteration, con
         swarm.best_position = particle.position;
         swarm.best_score = score;
     }
+}
+
+static void evaluate(Swarm &swarm, std::size_t index, std::size_t iteration, const SearchSpace &space, const Objective &objective, SearchResult &result)
+{
+    Hyperparameters hyperparameters = space.decode(swarm.particles[index].position);
+    record(swarm, index, iteration, hyperparameters, usable_score(objective(hyperparameters)), result);
+}
+
+static void score_into(const Objective *objective, const Hyperparameters *hyperparameters, double *score, std::exception_ptr *error)
+{
+    try {
+        *score = usable_score((*objective)(*hyperparameters));
+    } catch (...) {
+        *error = std::current_exception();
+    }
+}
+
+static void score_in_parallel(const Objective &objective, const std::vector<Hyperparameters> &values, std::vector<double> &scores, std::size_t threads)
+{
+    std::vector<std::exception_ptr> errors(values.size());
+    for (std::size_t start = 0; start < values.size(); start += threads) {
+        std::vector<std::thread> workers;
+        for (std::size_t index = start; index < std::min(values.size(), start + threads); index++)
+            workers.emplace_back(score_into, &objective, &values[index], &scores[index], &errors[index]);
+        for (std::thread &worker : workers)
+            worker.join();
+    }
+    for (const std::exception_ptr &error : errors)
+        if (error)
+            std::rethrow_exception(error);
+}
+
+static void evaluate_all(Swarm &swarm, std::size_t iteration, const SearchSpace &space, const Objective &objective, std::size_t threads, SearchResult &result)
+{
+    std::vector<Hyperparameters> values;
+    for (const Particle &particle : swarm.particles)
+        values.push_back(space.decode(particle.position));
+    std::vector<double> scores(values.size());
+    score_in_parallel(objective, values, scores, threads);
+    for (std::size_t index = 0; index < values.size(); index++)
+        record(swarm, index, iteration, values[index], scores[index], result);
 }
 
 static void move(Particle &particle, const std::vector<double> &swarm_best, const SwarmSettings &settings, std::mt19937 &rng)
@@ -106,19 +148,26 @@ SearchResult ParticleSwarm::minimize(const Objective &objective, std::mt19937 &r
 {
     SearchResult result;
     Swarm swarm;
+    bool parallel = settings.threads > 1;
     for (std::size_t index = 0; index < settings.particles; index++) {
         std::vector<double> position = space.random_position(rng);
         if (index < starts.size())
             position = start_position(starts[index], space.size());
         swarm.particles.push_back({position, random_velocity(space.size(), settings.max_velocity, rng), {}, 0.0});
-        evaluate(swarm, index, 0, space, objective, result);
+        if (!parallel)
+            evaluate(swarm, index, 0, space, objective, result);
     }
+    if (parallel)
+        evaluate_all(swarm, 0, space, objective, settings.threads, result);
     result.best_per_iteration.push_back(swarm.best_score);
     for (std::size_t iteration = 1; iteration <= settings.iterations; iteration++) {
         for (std::size_t index = 0; index < settings.particles; index++) {
             move(swarm.particles[index], swarm.best_position, settings, rng);
-            evaluate(swarm, index, iteration, space, objective, result);
+            if (!parallel)
+                evaluate(swarm, index, iteration, space, objective, result);
         }
+        if (parallel)
+            evaluate_all(swarm, iteration, space, objective, settings.threads, result);
         result.best_per_iteration.push_back(swarm.best_score);
     }
     result.best = space.decode(swarm.best_position);

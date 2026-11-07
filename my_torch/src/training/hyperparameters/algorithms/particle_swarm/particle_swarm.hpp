@@ -4,7 +4,7 @@
 ** File description:
 ** Particle swarm optimization: each particle is a configuration that moves through the search
 ** space, pulled towards its own best position and the swarm's; the first particles can start from
-** known good positions; minimize returns every evaluation
+** known good positions; with threads > 1 each iteration moves every particle, then trains them in parallel
 */
 
 #pragma once
@@ -24,6 +24,7 @@ struct SwarmSettings {
     double cognitive = 1.5;
     double social = 1.5;
     double max_velocity = 0.2;
+    std::size_t threads = 1;
 };
 
 class ParticleSwarm {
