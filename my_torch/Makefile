@@ -80,6 +80,7 @@ OBJ	=	$(SRC:.cpp=.o)
 NAME	=	libmytorch.a
 UNIT	=	unit_tests
 BENCHMARK	=	hyperparameter_benchmark
+REFINED	=	refined_benchmark
 ENGINE	=	my_torch_engine
 GENERATOR	=	my_torch_generator
 
@@ -92,7 +93,7 @@ clean:
 	$(RM) $(OBJ) $(shell find . -name '*.gcno' -o -name '*.gcda')
 
 fclean:	clean
-	$(RM) $(NAME) $(UNIT) $(BENCHMARK) $(ENGINE) $(GENERATOR)
+	$(RM) $(NAME) $(UNIT) $(BENCHMARK) $(REFINED) $(ENGINE) $(GENERATOR)
 
 re:	fclean all
 
@@ -105,7 +106,10 @@ tests_run:	$(UNIT)
 $(BENCHMARK):	$(SRC) benchmarks/hyperparameter_search.cpp
 	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
 
-benchmark:	$(BENCHMARK)
+$(REFINED):	$(SRC) benchmarks/refined_search.cpp
+	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
+
+benchmark:	$(BENCHMARK) $(REFINED)
 
 # run by the Python analyzer; optimised, as it trains the networks
 $(ENGINE):	$(SRC) engine/main.cpp
