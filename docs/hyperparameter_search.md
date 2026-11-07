@@ -46,9 +46,8 @@ This is the engine's default training (`my_torch/src/engine/engine.cpp`) and
 | `activation` | ReLU or tanh | choice | the activation of every hidden layer |
 | `loss` | cross-entropy or MSE | choice | what training minimises |
 
-The library keeps exactly the activations and losses that make sense for this problem: **ReLU** and **tanh** as
+The library has exactly the activations and losses that make sense for this problem: **ReLU** and **tanh** as
 hidden-layer candidates, **softmax** for the output, and the two losses **cross-entropy** and **mean squared error**.
-Linear (no non-linearity) and sigmoid (one yes/no probability) were removed.
 
 Both methods work in the unit cube $`[0, 1]^8`$, one coordinate per hyperparameter, and `SearchSpace::decode` maps a
 point to values: $`low + u\,(high - low)`$ on a linear scale, the same between $`\log(low)`$ and $`\log(high)`$ on a log

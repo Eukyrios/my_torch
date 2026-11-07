@@ -63,7 +63,7 @@ language and was not independent of the analyzer.
 | Cost | — | 29 Oct to 2 Nov for one of us to port and retest the whole module, while the other built the dataset, the analyzer and the save format |
 
 The port was done test by test: every Python test was rewritten with Criterion before the Python module was
-removed, and the gradient check (numerical vs analytical gradients) and the XOR training test were kept. The C++
+removed, and the gradient check (numerical vs analytical gradients) was kept. The C++
 suite now has over 300 tests and the Python one over 200, both run by the CI on every push.
 
 **Separate engine instead of bindings.** Sending boards as text costs little: a board is about 33 numbers (the
