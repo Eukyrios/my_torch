@@ -2,7 +2,8 @@
 ** EPITECH PROJECT, 2026
 ** my_torch
 ** File description:
-** Refined search: a particle swarm over ReLU + cross-entropy networks trained like --train, its ranges taken
+** Refined search: a particle swarm over ReLU + cross-entropy networks trained like --train (particles in
+** parallel, each result appended to _progress.csv as it comes), its ranges taken
 ** from the best configurations of the first benchmark (and the current default), which it starts from,
 ** plus dropout and L2
 */
@@ -14,6 +15,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <mutex>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
@@ -27,12 +30,24 @@
 
 static const int EXIT_ERROR = 84;
 
-static const char *USAGE = "USAGE\n    ./refined_benchmark SEED ENCODED_DIR FIRST_RESULTS_DIR OUT_DIR TRAIN_BOARDS MAX_EPOCHS\n";
+static const char *USAGE = "USAGE\n    ./refined_benchmark SEED ENCODED_DIR FIRST_RESULTS_DIR OUT_DIR TRAIN_BOARDS MAX_EPOCHS [THREADS]\n";
 
 static const double TOP_SHARE = 0.25;
 static const std::size_t PARTICLES = 8;
 static const std::size_t ITERATIONS = 7;
 static const std::size_t FULL_SCALE_EPOCHS = 50;
+
+class LoggedScore {
+public:
+    LoggedScore(const my_torch::FitScore &score, const my_torch::SearchSpace &space, const std::string &path);
+
+    double operator()(const my_torch::Hyperparameters &values) const;
+
+private:
+    const my_torch::FitScore *_score;
+    std::string _path;
+    std::shared_ptr<std::mutex> _lock;
+};
 
 struct Earlier {
     my_torch::Hyperparameters hyperparameters;
@@ -50,6 +65,29 @@ static const std::vector<my_torch::Dimension> &first_dimensions()
         {"decay", 0.8, 1.0, false, false},
     };
     return dimensions;
+}
+
+LoggedScore::LoggedScore(const my_torch::FitScore &score, const my_torch::SearchSpace &space, const std::string &path)
+:
+    _score(&score), _path(path), _lock(std::make_shared<std::mutex>())
+{
+    std::ofstream file(path, std::ios::trunc);
+    for (const my_torch::Dimension &dimension : space.dimensions)
+        file << dimension.name << ",";
+    file << "score,seconds\n";
+}
+
+double LoggedScore::operator()(const my_torch::Hyperparameters &values) const
+{
+    auto start = std::chrono::steady_clock::now();
+    double score = (*_score)(values);
+    double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    std::lock_guard<std::mutex> guard(*_lock);
+    std::ofstream file(_path, std::ios::app);
+    for (const auto &[name, value] : values)
+        file << value << ",";
+    file << score << "," << seconds << "\n";
+    return score;
 }
 
 static my_torch::Boards read_boards(const std::string &path)
@@ -199,7 +237,7 @@ static std::string hyperparameters_text(const my_torch::Hyperparameters &values)
 
 static int run(const std::vector<std::string> &arguments)
 {
-    if (arguments.size() != 6)
+    if (arguments.size() != 6 && arguments.size() != 7)
         throw std::invalid_argument(USAGE);
     unsigned int seed = static_cast<unsigned int>(std::stoul(arguments[0]));
     my_torch::Boards train = sample(read_boards(arguments[1] + "/train.txt"), std::stoul(arguments[4]));
@@ -210,11 +248,13 @@ static int run(const std::vector<std::string> &arguments)
     my_torch::SwarmSettings settings;
     settings.particles = PARTICLES;
     settings.iterations = ITERATIONS;
+    settings.threads = arguments.size() == 7 ? std::stoul(arguments[6]) : 1;
+    std::string prefix = arguments[3] + "/refined_seed" + arguments[0];
+    LoggedScore logged(score, space, prefix + "_progress.csv");
     std::mt19937 rng(seed);
     auto start = std::chrono::steady_clock::now();
-    my_torch::SearchResult result = my_torch::ParticleSwarm(space, settings).minimize(score, rng, starts(space, best));
+    my_torch::SearchResult result = my_torch::ParticleSwarm(space, settings).minimize(logged, rng, starts(space, best));
     double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-    std::string prefix = arguments[3] + "/refined_seed" + arguments[0];
     my_torch::write_search_logs(result, prefix + "_evaluations.csv", prefix + "_convergence.csv");
     write_space(prefix + "_space.csv", space);
     write_config(prefix + "_best.conf", score, result.best, seed);
