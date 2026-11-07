@@ -103,3 +103,29 @@ Test(search_space, a_choice_needs_at_least_two_options)
 {
     cr_assert_throw(my_torch::SearchSpace({my_torch::categorical("loss", {"only"})}), std::invalid_argument);
 }
+
+Test(search_space, encode_is_the_inverse_of_decode)
+{
+    my_torch::SearchSpace mixed({
+        {"learning_rate", 1e-4, 1.0, true, false},
+        {"momentum", 0.0, 0.9, false, false},
+        {"batch_size", 8, 256, true, true},
+        my_torch::categorical("loss", {"a", "b", "c"}),
+    });
+    my_torch::Hyperparameters values = {{"learning_rate", 0.018}, {"momentum", 0.53}, {"batch_size", 9}, {"loss", 2}};
+    my_torch::Hyperparameters decoded = mixed.decode(mixed.encode(values));
+
+    cr_assert_float_eq(decoded.at("learning_rate"), 0.018, 1e-12);
+    cr_assert_float_eq(decoded.at("momentum"), 0.53, 1e-12);
+    cr_assert_float_eq(decoded.at("batch_size"), 9.0, 1e-12);
+    cr_assert_float_eq(decoded.at("loss"), 2.0, 1e-12);
+}
+
+Test(search_space, encode_keeps_values_within_the_cube_and_needs_every_name)
+{
+    std::vector<double> position = space().encode({{"learning_rate", 10.0}, {"momentum", -1.0}, {"batch_size", 64}});
+
+    cr_assert_float_eq(position[0], 1.0, 1e-12);
+    cr_assert_float_eq(position[1], 0.0, 1e-12);
+    cr_assert_throw(space().encode({{"learning_rate", 0.1}}), std::invalid_argument);
+}

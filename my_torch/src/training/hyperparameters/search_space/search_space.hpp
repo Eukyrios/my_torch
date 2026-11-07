@@ -36,6 +36,7 @@ public:
     std::size_t size() const;
     std::vector<double> random_position(std::mt19937 &rng) const;
     Hyperparameters decode(const std::vector<double> &position) const;
+    std::vector<double> encode(const Hyperparameters &values) const;
 
     std::vector<Dimension> dimensions;
 };

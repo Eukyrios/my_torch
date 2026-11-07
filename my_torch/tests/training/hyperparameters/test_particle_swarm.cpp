@@ -147,3 +147,22 @@ Test(particle_swarm, rejects_invalid_settings)
     cr_assert_throw(my_torch::ParticleSwarm(PLANE, negative), std::invalid_argument);
     cr_assert_throw(my_torch::ParticleSwarm(PLANE, frozen), std::invalid_argument);
 }
+
+Test(particle_swarm, the_first_particles_start_from_the_given_positions)
+{
+    std::mt19937 rng(9);
+    std::vector<std::vector<double>> starts = {PLANE.encode({{"x", 1.5}, {"y", -2.0}}), {0.0, 1.0}};
+    my_torch::SearchResult result = my_torch::ParticleSwarm(PLANE, settings(4, 0)).minimize(sphere, rng, starts);
+
+    cr_assert_float_eq(result.evaluations[0].hyperparameters.at("x"), 1.5, 1e-12);
+    cr_assert_float_eq(result.evaluations[0].hyperparameters.at("y"), -2.0, 1e-12);
+    cr_assert_float_eq(result.evaluations[1].hyperparameters.at("y"), 5.0, 1e-12);
+    cr_assert_float_eq(result.best_score, 0.0, 1e-12);
+}
+
+Test(particle_swarm, rejects_a_starting_position_of_the_wrong_size)
+{
+    std::mt19937 rng(9);
+
+    cr_assert_throw(my_torch::ParticleSwarm(PLANE, settings(2, 0)).minimize(sphere, rng, {{0.5}}), std::invalid_argument);
+}

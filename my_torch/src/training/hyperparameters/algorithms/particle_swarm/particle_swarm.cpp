@@ -85,6 +85,16 @@ static void move(Particle &particle, const std::vector<double> &swarm_best, cons
     }
 }
 
+static std::vector<double> start_position(const std::vector<double> &start, std::size_t size)
+{
+    if (start.size() != size)
+        throw std::invalid_argument("a starting position needs one coordinate per hyperparameter (" + std::to_string(size) + "), got " + std::to_string(start.size()));
+    std::vector<double> position;
+    for (double coordinate : start)
+        position.push_back(std::clamp(coordinate, 0.0, 1.0));
+    return position;
+}
+
 ParticleSwarm::ParticleSwarm(const SearchSpace &space, const SwarmSettings &settings)
 :
     space(space), settings(settings)
@@ -92,12 +102,15 @@ ParticleSwarm::ParticleSwarm(const SearchSpace &space, const SwarmSettings &sett
     check_settings(settings);
 }
 
-SearchResult ParticleSwarm::minimize(const Objective &objective, std::mt19937 &rng) const
+SearchResult ParticleSwarm::minimize(const Objective &objective, std::mt19937 &rng, const std::vector<std::vector<double>> &starts) const
 {
     SearchResult result;
     Swarm swarm;
     for (std::size_t index = 0; index < settings.particles; index++) {
-        swarm.particles.push_back({space.random_position(rng), random_velocity(space.size(), settings.max_velocity, rng), {}, 0.0});
+        std::vector<double> position = space.random_position(rng);
+        if (index < starts.size())
+            position = start_position(starts[index], space.size());
+        swarm.particles.push_back({position, random_velocity(space.size(), settings.max_velocity, rng), {}, 0.0});
         evaluate(swarm, index, 0, space, objective, result);
     }
     result.best_per_iteration.push_back(swarm.best_score);
