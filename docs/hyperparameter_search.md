@@ -11,15 +11,16 @@ This page gives its results, its plots and the choices they led to.
 5. [Benchmark setup](#5-benchmark-setup)
 6. [Results](#6-results)
 7. [Why we chose what we chose](#7-why-we-chose-what-we-chose)
-8. [Limits](#8-limits)
-9. [Reproducing it](#9-reproducing-it)
+8. [From the search to the network we push](#8-from-the-search-to-the-network-we-push)
+9. [Limits](#9-limits)
+10. [Reproducing it](#10-reproducing-it)
 
 ## 1. The chosen configuration
 
-> **Superseded for the network we push.** This search ran at a small scale and could not try dropout or L2. At full
-> scale, `regularized_network.conf` beats the 2 × 47 below, and the [refined search](refined_search.md) shows why:
-> regularisation is worth 2 to 3 points. The method, the loss and the activation chosen here still stand; 2 × 47
-> remains the default training of a network saved without one.
+> **The network we push is not this one.** The search identified what matters (method, loss, activation, depth,
+> learning rate); on top of it we added early stopping, dropout and L2, which a small-scale search cannot judge, and
+> that network wins at full scale: see [§8](#8-from-the-search-to-the-network-we-push). 2 × 47 remains the default
+> training of a network saved without one.
 
 | Choice | Value | Why, in one line (details in [§7](#7-why-we-chose-what-we-chose)) |
 |---|---|---|
@@ -215,10 +216,39 @@ exactly what softmax does (and what cross-entropy expects).
 
 **2 × 47 kept as the default.** The search keeps landing on 1 or 2 hidden layers of 50 to 250 neurons with learning
 rates of 0.02 to 0.08, the region of the current default, and no new configuration is significantly better on the
-test set. Keeping it means nothing changes for the analyzer, the engine or networks already trained. (At full
-scale and with regularisation it is no longer the best: see [refined_search.md](refined_search.md).)
+test set. Keeping it means nothing changes for the analyzer, the engine or networks already trained.
 
-## 8. Limits
+## 8. From the search to the network we push
+
+The search identified the parameters that matter: **cross-entropy** (by far the largest effect), **ReLU** hidden
+layers (tanh is as good), **2 hidden layers**, and a learning rate in the 0.005 to 0.3 band with Momentum. What it
+cannot judge is what only pays off over a full training on many boards: after 6 epochs on 6,000 boards, a network
+has not yet had time to overfit, so regularisation has nothing to fix.
+
+On top of what the search found, `configs/regularized_network.conf` adds the three guards against overfitting:
+
+| Guard | Setting | What it does |
+|---|---|---|
+| **Early stopping** | 10 % of the boards kept aside, patience 8, best weights kept | stops once the validation loss no longer improves and keeps the best epoch |
+| **Dropout** | 0.2 after each hidden layer | switches off 20 % of the neurons at random at every step, so the network cannot memorise boards through a few of them |
+| **L2 (weight decay)** | 1e-4 | pulls every weight towards 0, so the network cannot fit the noise of the training boards with large weights |
+
+With these guards the network can afford to be wider (128 then 64 neurons) without overfitting, and it trains with
+Momentum 0.9, a learning rate of 0.01 halved every 10 epochs, and batches of 32.
+
+Both configurations were then trained with `./my_torch_analyzer --train` on all 160,000 boards, 3 seeds each, and
+judged on 20,000 validation boards neither trained on; the 20,000 test boards were only used to report
+([`benchmarks/final_network/`](benchmarks/final_network/)):
+
+| Config | Epochs (kept / run) | Validation accuracy | Test accuracy | Minutes per training |
+|---|---|---|---|---|
+| `basic_network.conf` (2 × 47, early stopping only) | 9 to 11 / 14 to 16 | 82.2 to 82.5 % | 82.5 to 82.7 % | 4 to 4.5 |
+| `regularized_network.conf` (128 + 64, early stopping, dropout, L2) | 11 to 12 / 19 to 20 | **83.4 to 83.9 %** | **83.9 to 84.1 %** | 12 to 13 |
+
+The regularized network wins on every seed, by about 1.4 points on the test boards, and is
+`my_torch_network_full.nn`. Its second hidden layer uses tanh rather than ReLU; the search found the two equivalent.
+
+## 9. Limits
 
 - **Small scale:** 6 epochs per evaluation and 7,500 boards keep one search around half an hour. The final network
   trains longer, with early stopping, on more boards.
@@ -228,7 +258,7 @@ scale and with regularisation it is no longer the best: see [refined_search.md](
 - **One run of 30 epochs per learning curve:** the curves show trends (plateau, rising validation loss), not exact
   epoch numbers.
 
-## 9. Reproducing it
+## 10. Reproducing it
 
 ```bash
 python -m dataset.generate lichess_db_standard_rated_2013-01.pgn --out data --per-class 1500

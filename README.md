@@ -14,21 +14,21 @@ The plan (board, team split, roadmap and daily schedule) is in [`docs/project.md
 The maths behind the module is in [`docs/my_torch.md`](docs/my_torch.md).
 The hyperparameter search (particle swarm vs genetic algorithm, activations and losses included), its benchmark,
 learning curves and the choices it led to are in [`docs/hyperparameter_search.md`](docs/hyperparameter_search.md).
-The second, refined search (particle swarm with dropout and L2, trained like `--train` on more boards) and the
-full-scale check that picks the network we push are in [`docs/refined_search.md`](docs/refined_search.md).
+How the network we push builds on it (early stopping, dropout and L2 on top, checked at full scale) is in
+[its §8](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push).
 
 ### Design choices
 
 | Choice | What we use | Why |
 |---|---|---|
 | Input | 769 numbers: one per piece type and square (12 × 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
-| Architecture | 769 → **128 ReLU → 64 tanh** → 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 × 47 the first search retained; both searches land on 2 hidden layers ([full-scale check](docs/refined_search.md#6-full-scale-check)) |
+| Architecture | 769 → **128 ReLU → 64 tanh** → 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 × 47 the first search retained; the search lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
 | Hidden activation | **ReLU** (tanh on the second layer of the pushed network) | tied with tanh on accuracy, best top configurations, cheapest to compute ([results](docs/hyperparameter_search.md#activations-and-losses)) |
 | Output activation | **softmax** | one probability per class over 5 exclusive classes |
 | Loss | **cross-entropy** | MSE fails 4 to 6 times as often in the search; with softmax its gradient is simply `p - y` |
 | Initialization | He before ReLU, Xavier before softmax | keeps the signal's variance steady through the layers ([maths](docs/my_torch.md#9-weight-initialization)) |
 | Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the first search's (0.018, 0.53, × 0.86 per epoch, batches of 9) |
-| Overfitting | validation split, **early stopping** keeping the best weights, **dropout 0.2** and **L2 1e-4** | without dropout, no network of the refined search goes above 76 % where the best reach 78.8 % ([refined search](docs/refined_search.md#5-results-of-the-search)); without early stopping the validation loss rises after 6 to 11 epochs ([curves](docs/hyperparameter_search.md#learning-curves)) |
+| Overfitting | validation split, **early stopping** keeping the best weights, **dropout 0.2** and **L2 1e-4** | they let a wider network learn more without overfitting: 84.0 % on the test boards against 82.6 % ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)); without early stopping the validation loss rises after 6 to 11 epochs ([curves](docs/hyperparameter_search.md#learning-curves)) |
 
 ## Development
 
@@ -190,8 +190,7 @@ The files are written in the current folder and named after the config. Every co
 written, and any problem is printed on stderr with exit **84**. A config is JSON, read like the header of a `.nn`
 file without its weights ([`configs/basic_network.conf`](configs/basic_network.conf) is the configuration the
 first hyperparameter search retained, [`configs/regularized_network.conf`](configs/regularized_network.conf), the
-network we push, adds width, dropout and L2, and [`configs/refined/`](configs/refined/) holds the best configuration
-of each refined search):
+network we push, adds width, dropout and L2):
 
 ```json
 {
