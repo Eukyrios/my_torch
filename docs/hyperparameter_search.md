@@ -16,6 +16,11 @@ This page gives its results, its plots and the choices they led to.
 
 ## 1. The chosen configuration
 
+> **Superseded for the network we push.** This search ran at a small scale and could not try dropout or L2. At full
+> scale, `regularized_network.conf` beats the 2 × 47 below, and the [refined search](refined_search.md) shows why:
+> regularisation is worth 2 to 3 points. The method, the loss and the activation chosen here still stand; 2 × 47
+> remains the default training of a network saved without one.
+
 | Choice | Value | Why, in one line (details in [§7](#7-why-we-chose-what-we-chose)) |
 |---|---|---|
 | Search method | **particle swarm** | its best configurations generalise better to boards the search never saw |
@@ -211,7 +216,8 @@ exactly what softmax does (and what cross-entropy expects).
 
 **2 × 47 kept as the default.** The search keeps landing on 1 or 2 hidden layers of 50 to 250 neurons with learning
 rates of 0.02 to 0.08, the region of the current default, and no new configuration is significantly better on the
-test set. Keeping it means nothing changes for the analyzer, the engine or networks already trained.
+test set. Keeping it means nothing changes for the analyzer, the engine or networks already trained. (At full
+scale and with regularisation it is no longer the best: see [refined_search.md](refined_search.md).)
 
 ## 8. Limits
 
