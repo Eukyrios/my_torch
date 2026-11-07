@@ -22,12 +22,12 @@ How the network we push builds on it (early stopping, dropout and L2 on top, che
 | Choice | What we use | Why |
 |---|---|---|
 | Input | 769 numbers: one per piece type and square (12 × 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
-| Architecture | 769 → **128 ReLU → 64 tanh** → 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 × 47 the first search retained; the search lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
+| Architecture | 769 → **128 ReLU → 64 tanh** → 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 × 47 the search retained, which also lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
 | Hidden activation | **ReLU** (tanh on the second layer of the pushed network) | tied with tanh on accuracy, best top configurations, cheapest to compute ([results](docs/hyperparameter_search.md#activations-and-losses)) |
 | Output activation | **softmax** | one probability per class over 5 exclusive classes |
 | Loss | **cross-entropy** | MSE fails 4 to 6 times as often in the search; with softmax its gradient is simply `p - y` |
 | Initialization | He before ReLU, Xavier before softmax | keeps the signal's variance steady through the layers ([maths](docs/my_torch.md#9-weight-initialization)) |
-| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the first search's (0.018, 0.53, × 0.86 per epoch, batches of 9) |
+| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the search's (0.018, 0.53, × 0.86 per epoch, batches of 9) |
 | Overfitting | validation split, **early stopping** keeping the best weights, **dropout 0.2** and **L2 1e-4** | they let a wider network learn more without overfitting: 84.0 % on the test boards against 82.6 % ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)); without early stopping the validation loss rises after 6 to 11 epochs ([curves](docs/hyperparameter_search.md#learning-curves)) |
 
 ## Development
@@ -189,7 +189,7 @@ known. Any problem raises one error type (`NetworkFileError`); the analyzer prin
 The files are written in the current folder and named after the config. Every config is checked before any file is
 written, and any problem is printed on stderr with exit **84**. A config is JSON, read like the header of a `.nn`
 file without its weights ([`configs/basic_network.conf`](configs/basic_network.conf) is the configuration the
-first hyperparameter search retained, [`configs/regularized_network.conf`](configs/regularized_network.conf), the
+hyperparameter search retained, [`configs/regularized_network.conf`](configs/regularized_network.conf), the
 network we push, adds width, dropout and L2):
 
 ```json
@@ -247,7 +247,7 @@ inputs that are 1. It hands them to `my_torch/my_torch_engine` (C++, built by `m
 ```
 
 Every training setting lives in the `.nn` file, so `--train` needs no option and a second `--train` carries on where
-the first stopped. A network saved without a training starts from the configuration the first hyperparameter
+the first stopped. A network saved without a training starts from the configuration the hyperparameter
 search retained: Momentum, learning rate 0.018, momentum 0.53, decay 0.86 per epoch, batches of 9, cross-entropy.
 
 ### Fighting overfitting
