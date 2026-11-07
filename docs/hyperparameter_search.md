@@ -11,10 +11,16 @@ This page gives its results, its plots and the choices they led to.
 5. [Benchmark setup](#5-benchmark-setup)
 6. [Results](#6-results)
 7. [Why we chose what we chose](#7-why-we-chose-what-we-chose)
-8. [Limits](#8-limits)
-9. [Reproducing it](#9-reproducing-it)
+8. [From the search to the network we push](#8-from-the-search-to-the-network-we-push)
+9. [Limits](#9-limits)
+10. [Reproducing it](#10-reproducing-it)
 
 ## 1. The chosen configuration
+
+> **The network we push is not this one.** The search identified what matters (method, loss, activation, depth,
+> learning rate); on top of it we added early stopping, dropout and L2, which a small-scale search cannot judge, and
+> that network wins at full scale: see [§8](#8-from-the-search-to-the-network-we-push). 2 × 47 remains the default
+> training of a network saved without one.
 
 | Choice | Value | Why, in one line (details in [§7](#7-why-we-chose-what-we-chose)) |
 |---|---|---|
@@ -41,9 +47,8 @@ This is the engine's default training (`my_torch/src/engine/engine.cpp`) and
 | `activation` | ReLU or tanh | choice | the activation of every hidden layer |
 | `loss` | cross-entropy or MSE | choice | what training minimises |
 
-The library keeps exactly the activations and losses that make sense for this problem: **ReLU** and **tanh** as
+The library has exactly the activations and losses that make sense for this problem: **ReLU** and **tanh** as
 hidden-layer candidates, **softmax** for the output, and the two losses **cross-entropy** and **mean squared error**.
-Linear (no non-linearity) and sigmoid (one yes/no probability) were removed.
 
 Both methods work in the unit cube $`[0, 1]^8`$, one coordinate per hyperparameter, and `SearchSpace::decode` maps a
 point to values: $`low + u\,(high - low)`$ on a linear scale, the same between $`\log(low)`$ and $`\log(high)`$ on a log
@@ -126,9 +131,9 @@ elite, not trained again), then fills the rest with children:
 Mean ± standard deviation over 5 seeds; 70.0 % is the lowest final score of the 10 searches, a level every search
 reaches. Guessing among the 5 classes would give 20 %.
 
-![Best validation accuracy found so far, against the number of networks trained](images/hyperparameter_convergence.png)
+![Best validation accuracy found so far, against the number of networks trained](images/hyperparameter_search/hyperparameter_convergence.png)
 
-![Best validation accuracy and test accuracy of each search](images/hyperparameter_final_results.png)
+![Best validation accuracy and test accuracy of each search](images/hyperparameter_search/hyperparameter_final_results.png)
 
 The genetic algorithm climbs faster and ends higher **on the validation boards it selects on**, but its best
 configurations do **worse on the test boards** (67.9 % against 69.3 %). Selection keeps whatever scored best on the
@@ -145,14 +150,14 @@ validation loss, logs in commit `ac8678d`) found the same: equal validation qual
 | tanh + cross-entropy | 246 | **77 %** | 4 % | **69.2 %** | 71.5 % |
 | tanh + MSE | 104 | 32 % | 14 % | 67.0 % | 70.0 % |
 
-![Validation accuracy of every configuration tried, grouped by hidden activation and loss](images/hyperparameter_pairs.png)
+![Validation accuracy of every configuration tried, grouped by hidden activation and loss](images/hyperparameter_search/hyperparameter_pairs.png)
 
 - **The loss matters, the activation barely.** With MSE, 4 to 6 times as many configurations fail and only half as
   many are good. Both methods noticed: they spent 72 % of their 790 networks on cross-entropy.
 - **ReLU and tanh tie.** ReLU has the best configurations (73.1 %, top-10 mean 72.4 % against 71.2 %), tanh is more
   forgiving (77 % of its configurations are good against 61 %).
 
-![Learning rate against validation accuracy for every configuration tried](images/hyperparameter_learning_rates.png)
+![Learning rate against validation accuracy for every configuration tried](images/hyperparameter_search/hyperparameter_learning_rates.png)
 
 Learning rates below 1e-3 fail in 6 epochs (too slow to learn anything), and the good configurations sit between
 about 0.005 and 0.3. The genetic algorithm concentrates there quickly; the swarm keeps exploring more widely.
@@ -161,7 +166,7 @@ about 0.005 and 0.3. The genetic algorithm concentrates there quickly; the swarm
 
 The best configuration of each pair, retrained for 30 epochs and measured after every epoch:
 
-![Validation accuracy and validation cross-entropy per epoch of the best configuration of each pair](images/learning_curves.png)
+![Validation accuracy and validation cross-entropy per epoch of the best configuration of each pair](images/hyperparameter_search/learning_curves.png)
 
 | Hidden activation + loss | Found by | Best epoch | Validation accuracy | Test accuracy | Test macro-F1 |
 |---|---|---|---|---|---|
@@ -179,7 +184,7 @@ The best configuration of each pair, retrained for 30 epochs and measured after 
 - On the test set, the four best configurations are within 3 points of each other: with 750 test boards, one board
   is 0.13 point and the noise is about ±1.7 point, so none is significantly better.
 
-![Per-class F1 on the test set of the best configuration of each pair](images/learning_curves_classes.png)
+![Per-class F1 on the test set of the best configuration of each pair](images/hyperparameter_search/learning_curves_classes.png)
 
 Every pair finds the **checkmates** easiest (F1 69–80 %) and **Check White** hardest (57–63 %). A check depends on
 a line of attack across the board, which a dense layer only sees through many separate square inputs; checkmate
@@ -213,7 +218,37 @@ exactly what softmax does (and what cross-entropy expects).
 rates of 0.02 to 0.08, the region of the current default, and no new configuration is significantly better on the
 test set. Keeping it means nothing changes for the analyzer, the engine or networks already trained.
 
-## 8. Limits
+## 8. From the search to the network we push
+
+The search identified the parameters that matter: **cross-entropy** (by far the largest effect), **ReLU** hidden
+layers (tanh is as good), **2 hidden layers**, and a learning rate in the 0.005 to 0.3 band with Momentum. What it
+cannot judge is what only pays off over a full training on many boards: after 6 epochs on 6,000 boards, a network
+has not yet had time to overfit, so regularisation has nothing to fix.
+
+On top of what the search found, `configs/regularized_network.conf` adds the three guards against overfitting:
+
+| Guard | Setting | What it does |
+|---|---|---|
+| **Early stopping** | 10 % of the boards kept aside, patience 8, best weights kept | stops once the validation loss no longer improves and keeps the best epoch |
+| **Dropout** | 0.2 after each hidden layer | switches off 20 % of the neurons at random at every step, so the network cannot memorise boards through a few of them |
+| **L2 (weight decay)** | 1e-4 | pulls every weight towards 0, so the network cannot fit the noise of the training boards with large weights |
+
+With these guards the network can afford to be wider (128 then 64 neurons) without overfitting, and it trains with
+Momentum 0.9, a learning rate of 0.01 halved every 10 epochs, and batches of 32.
+
+Both configurations were then trained with `./my_torch_analyzer --train` on all 160,000 boards, 3 seeds each, and
+judged on 20,000 validation boards neither trained on; the 20,000 test boards were only used to report
+([`benchmarks/final_network/`](benchmarks/final_network/)):
+
+| Config | Epochs (kept / run) | Validation accuracy | Test accuracy | Minutes per training |
+|---|---|---|---|---|
+| `basic_network.conf` (2 × 47, early stopping only) | 9 to 11 / 14 to 16 | 82.2 to 82.5 % | 82.5 to 82.7 % | 4 to 4.5 |
+| `regularized_network.conf` (128 + 64, early stopping, dropout, L2) | 11 to 12 / 19 to 20 | **83.4 to 83.9 %** | **83.9 to 84.1 %** | 12 to 13 |
+
+The regularized network wins on every seed, by about 1.4 points on the test boards, and is
+`my_torch_network_full.nn`. Its second hidden layer uses tanh rather than ReLU; the search found the two equivalent.
+
+## 9. Limits
 
 - **Small scale:** 6 epochs per evaluation and 7,500 boards keep one search around half an hour. The final network
   trains longer, with early stopping, on more boards.
@@ -223,12 +258,12 @@ test set. Keeping it means nothing changes for the analyzer, the engine or netwo
 - **One run of 30 epochs per learning curve:** the curves show trends (plateau, rising validation loss), not exact
   epoch numbers.
 
-## 9. Reproducing it
+## 10. Reproducing it
 
 ```bash
 python -m dataset.generate lichess_db_standard_rated_2013-01.pgn --out data --per-class 1500
 scripts/run_hyperparameter_benchmark.sh data docs/benchmarks/hyperparameter_search 6 5 30
-python -m scripts.plot_hyperparameter_search docs/benchmarks/hyperparameter_search docs/images
+python -m scripts.plot_hyperparameter_search docs/benchmarks/hyperparameter_search docs/images/hyperparameter_search
 ```
 
 The first command builds the dataset; the second encodes it, builds the benchmark (`make -C my_torch benchmark`),

@@ -1,0 +1,24 @@
+training on 160000 boards, 16000 kept aside for validation, at most 80 epochs
+epoch 1: loss 0.7269, validation loss 0.5863 (best)
+epoch 2: loss 0.5858, validation loss 0.5385 (best)
+epoch 3: loss 0.5274, validation loss 0.5024 (best)
+epoch 4: loss 0.4958, validation loss 0.4812 (best)
+epoch 5: loss 0.4666, validation loss 0.4710 (best)
+epoch 6: loss 0.4437, validation loss 0.4481 (best)
+epoch 7: loss 0.4266, validation loss 0.4617
+epoch 8: loss 0.4106, validation loss 0.4251 (best)
+epoch 9: loss 0.3983, validation loss 0.4325
+epoch 10: loss 0.3862, validation loss 0.4266
+epoch 11: loss 0.3380, validation loss 0.4008 (best)
+epoch 12: loss 0.3238, validation loss 0.4059
+epoch 13: loss 0.3156, validation loss 0.4073
+epoch 14: loss 0.3111, validation loss 0.4033
+epoch 15: loss 0.3070, validation loss 0.4154
+epoch 16: loss 0.3027, validation loss 0.4150
+epoch 17: loss 0.2974, validation loss 0.4059
+epoch 18: loss 0.2936, validation loss 0.4014
+epoch 19: loss 0.2911, validation loss 0.4021
+stopped early: no better validation loss for 8 epochs
+kept the weights after epoch 11 of 19: validation loss 1.6379 -> 0.4008
+saved to /home/wabi-lat/Delivery/semester5/CNA/My_torch/my_torch/data/final_network/regularized_network_1_trained.nn
+seconds 728

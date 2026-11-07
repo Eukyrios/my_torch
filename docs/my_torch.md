@@ -1,9 +1,7 @@
 # my_torch: how the network works
 
 The maths behind `my_torch`, written from scratch in C++ with its own `Matrix` class: the equations each class implements, the
-shape of every matrix, the derivatives used to learn, and what training gives on XOR.
-The figures and the XOR results were produced by the first, Python version of the module, which implemented the same
-equations; the C++ library replaced it and is checked by the same tests.
+shape of every matrix and the derivatives used to learn.
 
 1. [Notation and shapes](#1-notation-and-shapes)
 2. [Architecture](#2-architecture)
@@ -17,8 +15,7 @@ equations; the C++ library replaced it and is checked by the same tests.
 10. [Optimizers](#10-optimizers)
 11. [Learning-rate schedules](#11-learning-rate-schedules)
 12. [Training loop](#12-training-loop)
-13. [Results](#13-results)
-14. [Code map](#14-code-map)
+13. [Code map](#13-code-map)
 
 ## 1. Notation and shapes
 
@@ -174,22 +171,18 @@ moves when $`z`$ moves.
 | `Tanh` | $`\tanh(z)`$ | $`1 - \tanh^2(z)`$ | $`(-1, 1)`$ | hidden layers, centred on 0 |
 | `Softmax` | $`p_i = \dfrac{e^{z_i}}{\sum_j e^{z_j}}`$ | a matrix per sample, see [§5](#5-softmax) | $`(0, 1)`$, sums to 1 | the output layer, one class among $`C`$ |
 
-The library keeps only the three activations that serve this problem: **ReLU** and **tanh** for the hidden layers
-(the hyperparameter search compares them) and **softmax** for the output, which picks one class among 5. *Linear*
-(no non-linearity, so no use between layers) and *sigmoid* (one yes/no probability, the wrong output for 5 exclusive
-classes, and a weaker hidden activation than tanh) were removed, and a dense layer now always names its activation.
+The library has the three activations that serve this problem: **ReLU** and **tanh** for the hidden layers
+(the hyperparameter search compares them) and **softmax** for the output, which picks one class among 5. A dense
+layer always names its activation.
 
-![Activation functions and their derivatives](images/activations.png)
-
-*The figure was drawn before linear and sigmoid were removed; only ReLU, tanh and softmax remain.*
+![Activation functions and their derivatives](images/my_torch/activations.png)
 
 What the slopes show:
 
 - **ReLU** passes the gradient through unchanged where $`z > 0`$ and blocks it where $`z \le 0`$. It never
   shrinks, which is why it trains deep networks well. At exactly $`z = 0`$ the code uses $`f'(0) = 0`$.
-- **Tanh** has a slope of at most $`1`$, close to $`0`$ for large $`|z|`$ (sigmoid, removed, was worse: at most
-  $`0.25`$). Through many layers these small slopes multiply and the gradient fades: the *vanishing gradient*
-  problem.
+- **Tanh** has a slope of at most $`1`$, close to $`0`$ for large $`|z|`$. Through many layers these small slopes
+  multiply and the gradient fades: the *vanishing gradient* problem.
 
 ## 5. Softmax
 
@@ -212,7 +205,7 @@ J = \mathrm{diag}(p) - p\,p^\top
 ($`\delta_{ij} = 1`$ when $`i = j`$, else $`0`$.) The diagonal $`p_i(1 - p_i)`$ is positive: raising your own score
 raises your probability. The rest, $`-p_i p_j`$, is negative.
 
-![Softmax outputs and Jacobian entries](images/softmax.png)
+![Softmax outputs and Jacobian entries](images/my_torch/softmax.png)
 
 **Backward pass without building $`J`$.** Backpropagation needs $`J^\top g`$, where $`g = \partial L / \partial p`$.
 Expanding the product gives a formula that never builds the $`C \times C`$ matrices:
@@ -253,7 +246,7 @@ L = \frac{1}{B\,C} \sum_{b,c} \left(P_{bc} - Y_{bc}\right)^2
 \frac{\partial L}{\partial P_{bc}} = \frac{2}{B\,C}\left(P_{bc} - Y_{bc}\right)
 ```
 
-![Loss functions and their gradients](images/losses.png)
+![Loss functions and their gradients](images/my_torch/losses.png)
 
 The cross-entropy gradient is very steep near $`p = 0`$: a confident mistake gets a strong correction. The
 squared-error gradient is a straight line: it corrects in proportion to the error.
@@ -368,7 +361,7 @@ v \leftarrow \mu\, v - \eta\, \nabla_\theta L
 With a constant gradient the step tends to $`\eta / (1 - \mu)`$: **10 times** the SGD step for $`\mu = 0.9`$, so
 momentum usually wants a smaller $`\eta`$. With $`\mu = 0`$ it is exactly SGD.
 
-![SGD and momentum on a narrow valley](images/momentum.png)
+![SGD and momentum on a narrow valley](images/my_torch/momentum.png)
 
 On a narrow valley, SGD with a large step bounces from side to side across it; momentum's velocity averages
 those opposite pushes and moves along the valley.
@@ -385,7 +378,7 @@ ones later, so they settle instead of jittering around the minimum. Starting fro
 | `ExponentialDecay(γ)` | $`\eta_0\, \gamma^{t}`$ | $`0 < \gamma \le 1`$ |
 | `StepDecay(γ, k)` | $`\eta_0\, \gamma^{\lfloor t / k \rfloor}`$ | $`0 < \gamma \le 1`$, $`k \ge 1`$ |
 
-![Learning-rate schedules](images/schedules.png)
+![Learning-rate schedules](images/my_torch/schedules.png)
 
 ```python
 optimizer = Momentum(learning_rate=0.01, momentum=0.9, schedule=StepDecay(0.5, every=8))
@@ -418,25 +411,7 @@ The loss of an epoch is the mean over every sample, each batch weighted by its s
 `batch_size = 1` is plain stochastic gradient descent, `batch_size = N` is full-batch gradient descent, anything
 between is mini-batch. Shuffling every epoch keeps the batches from always grouping the same samples.
 
-## 13. Results
-
-### XOR
-
-XOR cannot be separated by a single straight line, so learning it needs the hidden layer, the derivatives,
-backpropagation and the optimizer all working together.
-
-![XOR training loss](images/xor.png)
-
-| Input | Expected | Network output $`P(1)`$ after 500 epochs |
-|---|---|---|
-| (0, 0) | 0 | 0.003 |
-| (0, 1) | 1 | 0.995 |
-| (1, 0) | 1 | 0.995 |
-| (1, 1) | 0 | 0.007 |
-
-It is learned from 5 different random starts (`my_torch/tests/model/network/test_xor.cpp`).
-
-## 14. Code map
+## 13. Code map
 
 | Concept | Equation | Code |
 |---|---|---|

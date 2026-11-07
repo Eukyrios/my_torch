@@ -101,7 +101,7 @@ tests_run:	$(UNIT)
 	./$(UNIT)
 
 $(BENCHMARK):	$(SRC) benchmarks/hyperparameter_search.cpp
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
+	$(CXX) $(CXXFLAGS) -O3 -march=native -o $@ $^
 
 benchmark:	$(BENCHMARK)
 
