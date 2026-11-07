@@ -7,6 +7,7 @@
 
 CXX	=	g++
 CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote src
+BENCH_FLAGS	=	-O3 -march=native
 
 SRC	=	src/math/matrix.cpp	\
 		src/model/neuron/neuron.cpp	\
@@ -104,10 +105,10 @@ tests_run:	$(UNIT)
 	./$(UNIT)
 
 $(BENCHMARK):	$(SRC) benchmarks/hyperparameter_search.cpp
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
+	$(CXX) $(CXXFLAGS) $(BENCH_FLAGS) -o $@ $^
 
 $(REFINED):	$(SRC) benchmarks/refined_search.cpp
-	$(CXX) $(CXXFLAGS) -O2 -o $@ $^
+	$(CXX) $(CXXFLAGS) $(BENCH_FLAGS) -o $@ $^
 
 benchmark:	$(BENCHMARK) $(REFINED)
 
