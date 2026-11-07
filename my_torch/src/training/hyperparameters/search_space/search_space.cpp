@@ -63,16 +63,6 @@ static double decode_coordinate(const Dimension &dimension, double coordinate)
     return std::clamp(value, dimension.low, dimension.high);
 }
 
-static double encode_value(const Dimension &dimension, double value)
-{
-    if (!dimension.choices.empty())
-        return (std::clamp(value, 0.0, dimension.high) + 0.5) / dimension.choices.size();
-    double clamped = std::clamp(value, dimension.low, dimension.high);
-    if (dimension.log_scale)
-        return (std::log(clamped) - std::log(dimension.low)) / (std::log(dimension.high) - std::log(dimension.low));
-    return (clamped - dimension.low) / (dimension.high - dimension.low);
-}
-
 Dimension categorical(const std::string &name, const std::vector<std::string> &choices)
 {
     return Dimension{name, 0.0, choices.empty() ? 1.0 : static_cast<double>(choices.size() - 1), false, true, choices};
@@ -106,18 +96,6 @@ Hyperparameters SearchSpace::decode(const std::vector<double> &position) const
     for (std::size_t i = 0; i < dimensions.size(); i++)
         values[dimensions[i].name] = decode_coordinate(dimensions[i], position[i]);
     return values;
-}
-
-std::vector<double> SearchSpace::encode(const Hyperparameters &values) const
-{
-    std::vector<double> position;
-    for (const Dimension &dimension : dimensions) {
-        auto found = values.find(dimension.name);
-        if (found == values.end())
-            throw std::invalid_argument("cannot encode a configuration without '" + dimension.name + "'");
-        position.push_back(encode_value(dimension, found->second));
-    }
-    return position;
 }
 
 }

@@ -1,4 +1,0 @@
-method,seed,train_boards,evaluations,best_validation_error,first_start_validation_error,seconds,hyperparameters
-refined,0,40000,64,0.221000,0.249700,2360.0,batch_size=13 decay=0.893137 dropout=0.324621 hidden_layers=2 hidden_size=55 learning_rate=0.0552196 momentum=0.367917 weight_decay=0.000450975
-refined,1,40000,64,0.221200,0.246450,2082.7,batch_size=21 decay=0.833944 dropout=0.211836 hidden_layers=2 hidden_size=54 learning_rate=0.0770025 momentum=0.437585 weight_decay=0.000170481
-refined,2,40000,64,0.212400,0.243600,6988.3,batch_size=15 decay=0.899245 dropout=0.213827 hidden_layers=2 hidden_size=256 learning_rate=0.0135239 momentum=0.706804 weight_decay=0.00198821

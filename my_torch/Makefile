@@ -7,7 +7,6 @@
 
 CXX	=	g++
 CXXFLAGS	=	-std=c++20 -Wall -Wextra -Werror -iquote src
-BENCH_FLAGS	=	-O3 -march=native
 
 SRC	=	src/math/matrix.cpp	\
 		src/model/neuron/neuron.cpp	\
@@ -43,7 +42,6 @@ SRC	=	src/math/matrix.cpp	\
 		src/training/hyperparameters/algorithms/particle_swarm/particle_swarm.cpp	\
 		src/training/hyperparameters/algorithms/genetic_algorithm/genetic_algorithm.cpp	\
 		src/training/hyperparameters/validation_loss/validation_loss.cpp	\
-		src/training/hyperparameters/fit_score/fit_score.cpp	\
 		src/training/hyperparameters/search_log/search_log.cpp
 
 TESTS	=	tests/math/test_matrix.cpp	\
@@ -73,7 +71,6 @@ TESTS	=	tests/math/test_matrix.cpp	\
 		tests/training/hyperparameters/test_particle_swarm.cpp	\
 		tests/training/hyperparameters/test_genetic_algorithm.cpp	\
 		tests/training/hyperparameters/test_validation_loss.cpp	\
-		tests/training/hyperparameters/test_fit_score.cpp	\
 		tests/training/hyperparameters/test_search_log.cpp
 
 OBJ	=	$(SRC:.cpp=.o)
@@ -81,7 +78,6 @@ OBJ	=	$(SRC:.cpp=.o)
 NAME	=	libmytorch.a
 UNIT	=	unit_tests
 BENCHMARK	=	hyperparameter_benchmark
-REFINED	=	refined_benchmark
 ENGINE	=	my_torch_engine
 GENERATOR	=	my_torch_generator
 
@@ -94,7 +90,7 @@ clean:
 	$(RM) $(OBJ) $(shell find . -name '*.gcno' -o -name '*.gcda')
 
 fclean:	clean
-	$(RM) $(NAME) $(UNIT) $(BENCHMARK) $(REFINED) $(ENGINE) $(GENERATOR)
+	$(RM) $(NAME) $(UNIT) $(BENCHMARK) $(ENGINE) $(GENERATOR)
 
 re:	fclean all
 
@@ -105,12 +101,9 @@ tests_run:	$(UNIT)
 	./$(UNIT)
 
 $(BENCHMARK):	$(SRC) benchmarks/hyperparameter_search.cpp
-	$(CXX) $(CXXFLAGS) $(BENCH_FLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -O3 -march=native -o $@ $^
 
-$(REFINED):	$(SRC) benchmarks/refined_search.cpp
-	$(CXX) $(CXXFLAGS) $(BENCH_FLAGS) -o $@ $^
-
-benchmark:	$(BENCHMARK) $(REFINED)
+benchmark:	$(BENCHMARK)
 
 # run by the Python analyzer; optimised, as it trains the networks
 $(ENGINE):	$(SRC) engine/main.cpp

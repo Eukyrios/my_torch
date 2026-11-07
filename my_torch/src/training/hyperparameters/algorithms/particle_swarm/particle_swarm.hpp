@@ -3,8 +3,7 @@
 ** my_torch
 ** File description:
 ** Particle swarm optimization: each particle is a configuration that moves through the search
-** space, pulled towards its own best position and the swarm's; the first particles can start from
-** known good positions; with threads > 1 each iteration moves every particle, then trains them in parallel
+** space, pulled towards its own best position and the swarm's; minimize returns every evaluation
 */
 
 #pragma once
@@ -24,14 +23,13 @@ struct SwarmSettings {
     double cognitive = 1.5;
     double social = 1.5;
     double max_velocity = 0.2;
-    std::size_t threads = 1;
 };
 
 class ParticleSwarm {
 public:
     explicit ParticleSwarm(const SearchSpace &space, const SwarmSettings &settings = SwarmSettings());
 
-    SearchResult minimize(const Objective &objective, std::mt19937 &rng, const std::vector<std::vector<double>> &starts = {}) const;
+    SearchResult minimize(const Objective &objective, std::mt19937 &rng) const;
 
     SearchSpace space;
     SwarmSettings settings;
