@@ -266,13 +266,38 @@ turns back up after epoch 9: training stops at epoch 14 and keeps the weights of
 ### Building a dataset
 
 ```bash
-python -m dataset.generate lichess_db_standard_rated_2013-01.pgn --out data --per-class 20000
+python -m dataset.generate lichess_db_standard_rated_2016-12.pgn --out data --per-class 40000 --seed 42
 ```
 
 Reads games from a [Lichess database](https://database.lichess.org/) PGN and writes `data/train.txt`,
 `data/validation.txt` and `data/test.txt` (80/10/10 by default), balanced over the 5 classes, one `FEN label` per line.
 Positions from the same game never end up in two splits. Datasets aren't pushed (`data/` and `datasets/` are
-ignored by git) but are kept for the defense.
+ignored by git) but are kept for the defense. With the command above: 160,000 / 20,000 / 20,000 boards, 4,000 per
+class in validation and test.
+
+### Reproducing `my_torch_network_full.nn`
+
+The pushed network is `configs/regularized_network.conf` generated with seed 100 and trained once with `--train` on
+the dataset above. One command does it all, [`scripts/train_final_network.sh`](scripts/train_final_network.sh):
+
+```bash
+scripts/train_final_network.sh data my_torch_network_full.nn
+```
+
+It runs these steps:
+
+```bash
+make
+./my_torch_generator configs/regularized_network.conf 1          # regularized_network_1.nn, seed 100
+./my_torch_analyzer --train --save my_torch_network_full.nn regularized_network_1.nn data/train.txt
+./my_torch_analyzer --predict my_torch_network_full.nn data/test.txt > /dev/null   # accuracy report on stderr
+```
+
+The training takes 8 to 12 minutes (19 epochs, early stopping keeps epoch 11) and gives 83.9 % on the test boards.
+Training is deterministic: retrained from scratch, it gives a `.nn` file identical to the pushed one, bit for bit. Why
+this config and not another is in
+[`docs/benchmarks/final_network/`](docs/benchmarks/final_network/), which `scripts/compare_final_networks.sh`
+reproduces in full (both configs, 3 seeds each).
 
 ### Workflow
 
