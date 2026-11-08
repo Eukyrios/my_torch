@@ -33,8 +33,7 @@ shown during the defense. The PGN dump itself is never committed (`.gitignore`),
 
 **Subject rules.** No library handling neural networks: the network, its training, its optimizers and its file
 format are written from scratch in C++20 with the standard library only. numpy was used by the first, Python version
-of the module; it left the project with the C++ rewrite (the *Bibliothèques* section of the README still lists it
-and should be updated).
+of the module; it left the project with the C++ rewrite.
 
 ## 2. Major decisions
 
