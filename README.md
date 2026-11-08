@@ -1,12 +1,12 @@
 # my_torch
 
-A neural network library written from scratch (no PyTorch, TensorFlow, …) and `my_torch_analyzer`, a program that reads a chessboard in FEN notation and predicts its state: **Nothing**, **Check White**, **Check Black**, **Checkmate White** or **Checkmate Black**.
+A neural network library written from scratch (no PyTorch, TensorFlow, ...) and `my_torch_analyzer`, a program that reads a chessboard in FEN notation and predicts its state: **Nothing**, **Check White**, **Check Black**, **Checkmate White** or **Checkmate Black**.
 
 ```
 ./my_torch_analyzer [--predict | --train [--save SAVEFILE]] LOADFILE CHESSFILE
 ```
 
-> 📅 **Deadline: Sunday 8 November 2026** (moved forward from 17 November).
+> **Deadline: Sunday 8 November 2026** (moved forward from 17 November).
 
 ## Project
 
@@ -15,19 +15,19 @@ The maths behind the module is in [`docs/my_torch.md`](docs/my_torch.md).
 The hyperparameter search (particle swarm vs genetic algorithm, activations and losses included), its benchmark,
 learning curves and the choices it led to are in [`docs/hyperparameter_search.md`](docs/hyperparameter_search.md).
 How the network we push builds on it (early stopping, dropout and L2 on top, checked at full scale) is in
-[its §8](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push).
+[its section 8](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push).
 
 ### Design choices
 
 | Choice | What we use | Why |
 |---|---|---|
-| Input | 769 numbers: one per piece type and square (12 × 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
-| Architecture | 769 → **128 ReLU → 64 tanh** → 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 × 47 the search retained, which also lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
+| Input | 769 numbers: one per piece type and square (12 x 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
+| Architecture | 769 -> **128 ReLU -> 64 tanh** -> 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 x 47 the search retained, which also lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
 | Hidden activation | **ReLU** (tanh on the second layer of the pushed network) | tied with tanh on accuracy, best top configurations, cheapest to compute ([results](docs/hyperparameter_search.md#activations-and-losses)) |
 | Output activation | **softmax** | one probability per class over 5 exclusive classes |
 | Loss | **cross-entropy** | MSE fails 4 to 6 times as often in the search; with softmax its gradient is simply `p - y` |
 | Initialization | He before ReLU, Xavier before softmax | keeps the signal's variance steady through the layers ([maths](docs/my_torch.md#9-weight-initialization)) |
-| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the search's (0.018, 0.53, × 0.86 per epoch, batches of 9) |
+| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the search's (0.018, 0.53, x 0.86 per epoch, batches of 9) |
 | Overfitting | validation split, **early stopping** keeping the best weights, **dropout 0.2** and **L2 1e-4** | they let a wider network learn more without overfitting: 84.0 % on the test boards against 82.6 % ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)); without early stopping the validation loss rises after 6 to 11 epochs ([curves](docs/hyperparameter_search.md#learning-curves)) |
 
 ## Development
@@ -124,12 +124,12 @@ plots and checks):
 
 ```
 my_torch_network_basic.nn
-├── header.json            what the network is, how it was trained, where training stopped
-├── layer_0_weights.npy    float64 (n_inputs, n_outputs)
-├── layer_0_biases.npy     float64 (n_outputs,)
-├── layer_1_weights.npy    ... one pair per dense layer, in order
-├── optimizer_0.npy        optimizer memory, one array per parameter in the same order
-└── ...                    (only for optimizers that have some, e.g. Momentum's velocities)
+|-- header.json            what the network is, how it was trained, where training stopped
+|-- layer_0_weights.npy    float64 (n_inputs, n_outputs)
+|-- layer_0_biases.npy     float64 (n_outputs,)
+|-- layer_1_weights.npy    ... one pair per dense layer, in order
+|-- optimizer_0.npy        optimizer memory, one array per parameter in the same order
+`-- ...                    (only for optimizers that have some, e.g. Momentum's velocities)
 ```
 
 - **Arrays** are `.npy` files: exact float64 values, nothing lost between save and load.
@@ -217,7 +217,7 @@ network we push, adds width, dropout and L2):
 | `inputs` | number of inputs of the first layer (769 for a chessboard) |
 | `seed` | network *i* of the file draws its weights from seed `seed + i - 1` (0 by default): each network starts differently, and all can be regenerated |
 | `layers` | in order; `dense` with `outputs`, `activation` (`relu`, `tanh` or `softmax`, required) and `initialization`, or `dropout` with `rate` |
-| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh and softmax), `lecun` (√(1 / inputs), for tanh) or `auto` (default: He before ReLU, Xavier otherwise) |
+| `initialization` | `he` (sqrt(2 / inputs), for ReLU), `xavier` (sqrt(2 / (inputs + outputs)), for tanh and softmax), `lecun` (sqrt(1 / inputs), for tanh) or `auto` (default: He before ReLU, Xavier otherwise) |
 | `training` | any of the `training` settings of a `.nn` file; each one left out keeps the engine's default, and a missing `schedule` means a constant rate |
 | `metadata` | optional; the generator adds `seed` and `config` |
 
@@ -237,12 +237,12 @@ inputs that are 1. It hands them to `my_torch/my_torch_engine` (C++, built by `m
 
 ```
 ./my_torch_analyzer --predict LOADFILE CHESSFILE
-    analyzer ── "769 5" + one line of input indices per board ──▶ my_torch_engine predict LOADFILE
-    analyzer ◀── one line of 5 outputs per board ─────────────── (a chunk of 1024 boards at a time)
+    analyzer -- "769 5" + one line of input indices per board -> my_torch_engine predict LOADFILE
+    analyzer <- one line of 5 outputs per board --------------- (a chunk of 1024 boards at a time)
     stdout: one label per board, in order; stderr: accuracy report when expected outputs are given
 
 ./my_torch_analyzer --train [--save SAVEFILE] LOADFILE CHESSFILE
-    analyzer ── "769 5" + class and input indices per board ──▶ my_torch_engine train LOADFILE SAVEFILE
+    analyzer -- "769 5" + class and input indices per board -> my_torch_engine train LOADFILE SAVEFILE
     stdout: one line per epoch; the network is saved with its whole training
 ```
 
@@ -302,11 +302,11 @@ reproduces in full (both configs, 3 seeds each).
 ### Workflow
 
 ```
-feature branch  ──  PR  →  main  ──  CI  →  Epitech repo
+feature branch  --  PR  ->  main  --  CI  ->  Epitech repo
 ```
 
 1. One branch per issue, PR into `main` with `Closes #<issue>` so merging closes it.
-2. CI must be green (build, tests, coverage ≥ 85%) before merging.
+2. CI must be green (build, tests, coverage >= 85%) before merging.
 
 ### CI and mirroring
 
@@ -346,7 +346,7 @@ Les positions du dataset proviennent de la **base de données ouverte de Lichess
 ([database.lichess.org](https://database.lichess.org/)) :
 
 - **Fichier utilisé :** `lichess_db_standard_rated_2016-12.pgn`, soit les parties
-  « standard » classées de décembre 2016 (9 433 412 parties).
+  "standard" classées de décembre 2016 (9 433 412 parties).
 - **Licence :** les exports de la base Lichess sont publiés sous licence
   [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/) :
   ils peuvent être téléchargés, modifiés et redistribués sans autorisation, y compris pour la recherche.

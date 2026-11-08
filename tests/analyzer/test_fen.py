@@ -95,7 +95,7 @@ INVALID_FENS = {
     "ep rank wrong for black": "8/8/8/8/8/8/8/k1K5 b - d6 0 1",
     "negative halfmove": "8/8/8/8/8/8/8/k1K5 w - - -1 1",
     "non numeric halfmove": "8/8/8/8/8/8/8/k1K5 w - - x 1",
-    "unicode digit halfmove": "8/8/8/8/8/8/8/k1K5 w - - ² 1",
+    "unicode digit halfmove": "8/8/8/8/8/8/8/k1K5 w - - \u00b2 1",
     "zero fullmove": "8/8/8/8/8/8/8/k1K5 w - - 0 0",
 }
 

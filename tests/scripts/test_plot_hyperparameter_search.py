@@ -52,6 +52,6 @@ def test_main_draws_every_figure_and_prints_the_tables(tmp_path, capsys):
         "hyperparameter_pairs.png", "learning_curves.png", "learning_curves_classes.png",
     ]
     tables = capsys.readouterr().out
-    assert "| Particle swarm | 65.0 ± 7.1 % | 67.0 ± 1.4 % |" in tables
+    assert "| Particle swarm | 65.0 +/- 7.1 % | 67.0 +/- 1.4 % |" in tables
     assert "| ReLU + cross-entropy | 3 |" in tables
     assert "| tanh + MSE | ga_seed0 | 2 | 60.0 % | 61.0 % | 60.0 % |" in tables

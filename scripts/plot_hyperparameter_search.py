@@ -209,7 +209,7 @@ def plot_classes(results, curves, path):
 def mean_and_spread(values, digits):
     if len(values) < 2:
         return f"{values[0]:.{digits}f}"
-    return f"{statistics.mean(values):.{digits}f} ± {statistics.stdev(values):.{digits}f}"
+    return f"{statistics.mean(values):.{digits}f} +/- {statistics.stdev(values):.{digits}f}"
 
 
 def evaluations_to_reach(curve, target):

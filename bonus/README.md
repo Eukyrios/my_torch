@@ -21,7 +21,7 @@ Stalemate
 
 | File | What it is |
 |---|---|
-| `my_torch_network_stalemate.nn` | the trained network: 769 → 47 ReLU → 47 ReLU → 6 softmax |
+| `my_torch_network_stalemate.nn` | the trained network: 769 -> 47 ReLU -> 47 ReLU -> 6 softmax |
 | `stalemate_network.conf` | its configuration for `my_torch_generator`; its metadata gives the 6 labels to the analyzer |
 | `stalemate_dataset.py` | builds the 6-class dataset |
 | `Makefile` | `make dataset` rebuilds the dataset, `make` trains the network, `make evaluate` prints its report |
@@ -54,7 +54,7 @@ The other classes are those of `data/` (about 32,000 each in train). Everything 
 ## Results
 
 Trained with `./my_torch_analyzer --train`: early stopping kept the weights of epoch 12 of 17 (validation loss
-1.813 → 0.464). On the 25,956 test boards:
+1.813 -> 0.464). On the 25,956 test boards:
 
 | Label | Precision | Recall |
 |---|---|---|

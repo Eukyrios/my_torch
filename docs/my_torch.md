@@ -43,17 +43,17 @@ $`W`$, $`\nabla_b L`$ is $`(n_{out})`$ like $`b`$. That rule is enough to check 
 
 ## 2. Architecture
 
-The chess network turns a board into 769 numbers (12 piece types × 64 squares, plus whose turn it is) and gives
+The chess network turns a board into 769 numbers (12 piece types x 64 squares, plus whose turn it is) and gives
 one probability per class:
 
 ```mermaid
 flowchart LR
     FEN["FEN text"] -->|encode_fen| X["X<br/>(B, 769)"]
-    X --> L1["DenseLayer 769 → 47<br/>ReLU"]
-    L1 -->|"(B, 47)"| L2["DenseLayer 47 → 47<br/>ReLU"]
-    L2 -->|"(B, 47)"| L3["DenseLayer 47 → 5<br/>Softmax"]
+    X --> L1["DenseLayer 769 -> 47<br/>ReLU"]
+    L1 -->|"(B, 47)"| L2["DenseLayer 47 -> 47<br/>ReLU"]
+    L2 -->|"(B, 47)"| L3["DenseLayer 47 -> 5<br/>Softmax"]
     L3 --> P["P<br/>(B, 5)"]
-    P --> C["Nothing · Check White · Check Black<br/>Checkmate White · Checkmate Black"]
+    P --> C["Nothing, Check White, Check Black<br/>Checkmate White, Checkmate Black"]
 ```
 
 The sizes (2 hidden layers of 47 ReLU neurons) and the training settings come from the hyperparameter search, which
@@ -169,7 +169,7 @@ moves when $`z`$ moves.
 |---|---|---|---|---|
 | `ReLU` | $`\max(0, z)`$ | $`1`$ if $`z > 0`$, else $`0`$ | $`[0, +\infty)`$ | hidden layers |
 | `Tanh` | $`\tanh(z)`$ | $`1 - \tanh^2(z)`$ | $`(-1, 1)`$ | hidden layers, centred on 0 |
-| `Softmax` | $`p_i = \dfrac{e^{z_i}}{\sum_j e^{z_j}}`$ | a matrix per sample, see [§5](#5-softmax) | $`(0, 1)`$, sums to 1 | the output layer, one class among $`C`$ |
+| `Softmax` | $`p_i = \dfrac{e^{z_i}}{\sum_j e^{z_j}}`$ | a matrix per sample, see [section 5](#5-softmax) | $`(0, 1)`$, sums to 1 | the output layer, one class among $`C`$ |
 
 The library has the three activations that serve this problem: **ReLU** and **tanh** for the hidden layers
 (the hyperparameter search compares them) and **softmax** for the output, which picks one class among 5. A dense
@@ -274,17 +274,17 @@ backwards, each layer turning "how the loss changes with my outputs" into "how i
 
 ```mermaid
 flowchart RL
-    Loss["Loss<br/>∂L/∂P"] -->|"G (B, 5)"| B3["Layer 3 backward<br/>stores ∇W₃, ∇b₃"]
-    B3 -->|"G (B, 64)"| B2["Layer 2 backward<br/>stores ∇W₂, ∇b₂"]
-    B2 -->|"G (B, 256)"| B1["Layer 1 backward<br/>stores ∇W₁, ∇b₁"]
-    B1 -->|"G (B, 769)"| In["∂L/∂X<br/>(unused)"]
+    Loss["Loss<br/>dL/dP"] -->|"G (B, 5)"| B3["Layer 3 backward<br/>stores dW3, db3"]
+    B3 -->|"G (B, 64)"| B2["Layer 2 backward<br/>stores dW2, db2"]
+    B2 -->|"G (B, 256)"| B1["Layer 1 backward<br/>stores dW1, db1"]
+    B1 -->|"G (B, 769)"| In["dL/dX<br/>(unused)"]
 ```
 
 **One dense layer**, receiving $`G_A = \partial L / \partial A`$ of shape $`(B, n_{out})`$:
 
 | Step | Equation | Shape |
 |---|---|---|
-| 1. Back through the activation | $`G_Z = G_A \odot f'(Z)`$ (softmax: [§5](#5-softmax)) | $`(B, n_{out})`$ |
+| 1. Back through the activation | $`G_Z = G_A \odot f'(Z)`$ (softmax: [section 5](#5-softmax)) | $`(B, n_{out})`$ |
 | 2. Weight gradient | $`\nabla_W L = X^\top G_Z`$ | $`(n_{in}, B)(B, n_{out}) = (n_{in}, n_{out})`$ |
 | 3. Bias gradient | $`\nabla_b L = \sum_{b=1}^{B} G_Z[b, :]`$ | $`(n_{out})`$ |
 | 4. Gradient for the previous layer | $`G_X = G_Z\, W^\top`$ | $`(B, n_{out})(n_{out}, n_{in}) = (B, n_{in})`$ |
@@ -333,9 +333,9 @@ nor shrink from layer to layer:
 ReLU zeroes about half its inputs, so He doubles the variance to compensate. Biases start at $`0`$.
 
 ```cpp
-DenseLayer::create(769, 47, std::make_unique<ReLU>(), rng);       // He: σ = √(2/769) ≈ 0.051
-DenseLayer::create(47, 47, std::make_unique<ReLU>(), rng);        // He: σ = √(2/47) ≈ 0.206
-DenseLayer::create(47, 5, std::make_unique<Softmax>(), rng);      // Xavier: σ = √(2/52) ≈ 0.196
+DenseLayer::create(769, 47, std::make_unique<ReLU>(), rng);       // He: sigma = sqrt(2/769) ~ 0.051
+DenseLayer::create(47, 47, std::make_unique<ReLU>(), rng);        // He: sigma = sqrt(2/47) ~ 0.206
+DenseLayer::create(47, 5, std::make_unique<Softmax>(), rng);      // Xavier: sigma = sqrt(2/52) ~ 0.196
 ```
 
 ## 10. Optimizers
@@ -375,8 +375,8 @@ ones later, so they settle instead of jittering around the minimum. Starting fro
 |---|---|---|
 | `Constant()` | $`\eta_0`$ | |
 | `TimeDecay(d)` | $`\dfrac{\eta_0}{1 + d\,t}`$ | $`d \ge 0`$ |
-| `ExponentialDecay(γ)` | $`\eta_0\, \gamma^{t}`$ | $`0 < \gamma \le 1`$ |
-| `StepDecay(γ, k)` | $`\eta_0\, \gamma^{\lfloor t / k \rfloor}`$ | $`0 < \gamma \le 1`$, $`k \ge 1`$ |
+| `ExponentialDecay(gamma)` | $`\eta_0\, \gamma^{t}`$ | $`0 < \gamma \le 1`$ |
+| `StepDecay(gamma, k)` | $`\eta_0\, \gamma^{\lfloor t / k \rfloor}`$ | $`0 < \gamma \le 1`$, $`k \ge 1`$ |
 
 ![Learning-rate schedules](images/my_torch/schedules.png)
 
@@ -415,15 +415,15 @@ between is mini-batch. Shuffling every epoch keeps the batches from always group
 
 | Concept | Equation | Code |
 |---|---|---|
-| Dense layer forward | $`Z = XW + b,\ A = f(Z)`$ | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::forward` |
-| Network forward | $`A^{(l)} = f^{(l)}(A^{(l-1)}W^{(l)} + b^{(l)})`$ | `my_torch/src/model/network/` · `Network::forward` |
-| Activations, derivatives | §4 table | `my_torch/src/model/activations/` · `forward`, `derivative`, `backward` |
-| Softmax backward | $`p \odot (g - \sum g_k p_k)`$ | `my_torch/src/model/activations/activations/softmax/` · `Softmax::backward` |
-| Losses and gradients | §6 | `my_torch/src/training/losses/` · `CrossEntropy`, `MeanSquaredError` |
-| Layer backward | $`X^\top G_Z,\ \sum G_Z,\ G_Z W^\top`$ | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::backward` |
-| Network backward | layers in reverse | `my_torch/src/model/network/` · `Network::backward` |
-| Initialization | He, Xavier | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::create` |
-| SGD, momentum | §10 | `my_torch/src/training/optimizers/` · `SGD`, `Momentum` |
-| Schedules | §11 table | `my_torch/src/training/schedules/` |
-| Training loop | §12 | `my_torch/src/model/network/` · `Network::train` |
+| Dense layer forward | $`Z = XW + b,\ A = f(Z)`$ | `my_torch/src/model/layers/layers/dense_layer/` - `DenseLayer::forward` |
+| Network forward | $`A^{(l)} = f^{(l)}(A^{(l-1)}W^{(l)} + b^{(l)})`$ | `my_torch/src/model/network/` - `Network::forward` |
+| Activations, derivatives | section 4 table | `my_torch/src/model/activations/` - `forward`, `derivative`, `backward` |
+| Softmax backward | $`p \odot (g - \sum g_k p_k)`$ | `my_torch/src/model/activations/activations/softmax/` - `Softmax::backward` |
+| Losses and gradients | section 6 | `my_torch/src/training/losses/` - `CrossEntropy`, `MeanSquaredError` |
+| Layer backward | $`X^\top G_Z,\ \sum G_Z,\ G_Z W^\top`$ | `my_torch/src/model/layers/layers/dense_layer/` - `DenseLayer::backward` |
+| Network backward | layers in reverse | `my_torch/src/model/network/` - `Network::backward` |
+| Initialization | He, Xavier | `my_torch/src/model/layers/layers/dense_layer/` - `DenseLayer::create` |
+| SGD, momentum | section 10 | `my_torch/src/training/optimizers/` - `SGD`, `Momentum` |
+| Schedules | section 11 table | `my_torch/src/training/schedules/` |
+| Training loop | section 12 | `my_torch/src/model/network/` - `Network::train` |
 | Gradient check | central difference | `my_torch/tests/model/network/test_gradient_check.cpp` |
