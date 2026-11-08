@@ -2,8 +2,6 @@
 # expected output ("Checkmate Black"), empty lines skipped. Every FEN and label is checked, and an
 # error names the line it comes from.
 
-from dataclasses import dataclass
-
 from analyzer.fen import Position, parse_fen, split_fen_line
 from analyzer.prediction import check_label
 
@@ -12,11 +10,17 @@ class ChessFileError(ValueError):
     pass
 
 
-@dataclass(frozen=True)
 class Board:
-    position: Position
-    expected: str | None
-    line: int
+    def __init__(self, position: Position, expected: str | None, line: int):
+        self.position = position
+        self.expected = expected
+        self.line = line
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, Board) and (self.position, self.expected, self.line) == (other.position, other.expected, other.line)
+
+    def __repr__(self) -> str:
+        return f"Board({self.position!r}, {self.expected!r}, {self.line!r})"
 
 
 def read_board(text: str, line: int) -> Board:

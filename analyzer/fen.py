@@ -9,7 +9,6 @@ file a. So a8 = 0, h8 = 7, a1 = 56, h1 = 63.
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass
 
 PIECES = "PNBRQKpnbrqk"
 EMPTY = "."
@@ -21,16 +20,28 @@ class FenError(ValueError):
     """Raised when a string is not a valid FEN."""
 
 
-@dataclass(frozen=True)
 class Position:
     """A chess position. `board` has 64 entries, EMPTY ('.') for empty squares."""
 
-    board: tuple[str, ...]
-    white_to_move: bool
-    castling: str = "-"
-    en_passant: int | None = None
-    halfmove: int = 0
-    fullmove: int = 1
+    def __init__(self, board: tuple[str, ...], white_to_move: bool, castling: str = "-", en_passant: int | None = None, halfmove: int = 0, fullmove: int = 1):
+        self.board = board
+        self.white_to_move = white_to_move
+        self.castling = castling
+        self.en_passant = en_passant
+        self.halfmove = halfmove
+        self.fullmove = fullmove
+
+    def fields(self) -> tuple:
+        return (self.board, self.white_to_move, self.castling, self.en_passant, self.halfmove, self.fullmove)
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, Position) and self.fields() == other.fields()
+
+    def __hash__(self) -> int:
+        return hash(self.fields())
+
+    def __repr__(self) -> str:
+        return f"Position{self.fields()!r}"
 
 
 def square_index(name: str) -> int:
