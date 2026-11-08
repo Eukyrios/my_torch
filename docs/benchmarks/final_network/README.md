@@ -10,7 +10,10 @@ Every file of this folder comes from one command:
 
 ```bash
 scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/final_network
+python3 -m scripts.plot_final_network docs/benchmarks/final_network docs/images/final_network
 ```
+
+The second command draws the two figures below from `summary.csv` and the training logs.
 
 | File | What it is |
 |---|---|
@@ -55,6 +58,10 @@ scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/fina
 | basic | 82.3 ± 0.2 % | 82.6 ± 0.1 % | 0.433 | 4.3 min |
 | regularized | **83.6 ± 0.3 %** | **84.0 ± 0.1 %** | **0.398** | 12.4 min |
 
+![Training and validation loss per epoch of the 6 networks](../../images/final_network/final_network_curves.png)
+
+![Validation and test accuracy of each seed](../../images/final_network/final_network_accuracy.png)
+
 ## What it shows
 
 - **The regularized network is better, and not by luck.** Its worst seed (83.4 %) beats the best basic seed
@@ -65,6 +72,10 @@ scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/fina
   boards per split and 160,000 to train on, it shows. The extra width (128 and 64 neurons) only pays off with enough
   data, and dropout and L2 keep it from overfitting: it trains 19 or 20 epochs before early stopping, against 14 to
   16 for basic.
+- **The curves show where the gap comes from.** Basic's validation loss stops falling around epoch 6 and hovers
+  near 0.43 while its training loss keeps going down: from there it only learns its training boards. The
+  regularized network's training loss stays higher (dropout makes training harder on purpose), and when its
+  learning rate is halved at epoch 11, both losses drop at once and the validation loss reaches 0.40.
 - **It costs training time, not prediction time.** 12.4 min against 4.3 min to train, 1.7 MB against 0.6 MB on disk;
   20,000 boards are still predicted in about a second.
 - **Training is reproducible.** Seeds 0 and 100 had already been trained the day before: the new runs gave the same

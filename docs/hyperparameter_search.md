@@ -245,6 +245,10 @@ judged on 20,000 validation boards neither trained on; the 20,000 test boards we
 | `basic_network.conf` (2 × 47, early stopping only) | 9 to 11 / 14 to 16 | 82.2 to 82.5 % | 82.5 to 82.7 % | 4 to 4.5 |
 | `regularized_network.conf` (128 + 64, early stopping, dropout, L2) | 11 to 12 / 19 to 20 | **83.4 to 83.9 %** | **83.9 to 84.1 %** | 12 to 13 |
 
+![Training and validation loss per epoch of the 6 networks](images/final_network/final_network_curves.png)
+
+![Validation and test accuracy of each seed](images/final_network/final_network_accuracy.png)
+
 The regularized network wins on every seed, by about 1.4 points on the test boards, and is
 `my_torch_network_full.nn`. Its second hidden layer uses tanh rather than ReLU; the search found the two equivalent.
 
