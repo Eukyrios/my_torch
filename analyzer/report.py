@@ -3,8 +3,6 @@
 # predicted label) and the precision and recall of every label. It goes to stderr, as stdout
 # only carries the predictions, one per board, which is what the autograder reads.
 
-from dataclasses import dataclass
-
 from analyzer.prediction import LABELS, check_label, state_of
 
 
@@ -22,22 +20,19 @@ def ratio(part: int, whole: int) -> float | None:
     return part / whole if whole else None
 
 
-@dataclass(frozen=True)
 class Report:
-    labels: tuple[str, ...]
-    confusion: tuple[tuple[int, ...], ...]  # confusion[expected][predicted]
+    def __init__(self, labels: tuple[str, ...], confusion: tuple[tuple[int, ...], ...]):
+        self.labels = labels
+        self.confusion = confusion  # confusion[expected][predicted]
 
-    @property
     def total(self) -> int:
         return sum(map(sum, self.confusion))
 
-    @property
     def correct(self) -> int:
         return sum(self.confusion[index][index] for index in range(len(self.labels)))
 
-    @property
     def accuracy(self) -> float | None:
-        return ratio(self.correct, self.total)
+        return ratio(self.correct(), self.total())
 
     def expected_count(self, index: int) -> int:
         return sum(self.confusion[index])
@@ -87,7 +82,7 @@ def format_report(report: Report) -> str:
         [label, percent(report.precision(index)), percent(report.recall(index)), str(report.expected_count(index))]
         for index, label in enumerate(labels)
     ]
-    lines = [f"accuracy: {percent(report.accuracy)} ({report.correct}/{report.total} boards)", ""]
+    lines = [f"accuracy: {percent(report.accuracy())} ({report.correct()}/{report.total()} boards)", ""]
     lines.append("confusion matrix (rows: expected, columns: predicted)")
     lines += format_table(["expected \\ predicted"] + labels, confusion)
     lines.append("")

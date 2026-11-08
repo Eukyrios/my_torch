@@ -23,8 +23,8 @@ def test_counts_every_expected_and_predicted_pair():
 
 def test_accuracy_is_the_share_of_boards_predicted_right():
     report = build_report(EXPECTED, PREDICTED)
-    assert (report.correct, report.total) == (3, 6)
-    assert report.accuracy == 0.5
+    assert (report.correct(), report.total()) == (3, 6)
+    assert report.accuracy() == 0.5
 
 
 def test_precision_and_recall_of_each_label():
@@ -41,13 +41,13 @@ def test_a_label_never_predicted_or_never_expected_has_no_score():
     assert report.precision(LABELS.index("Check Black")) is None
     assert report.precision(LABELS.index("Checkmate Black")) is None
     assert report.recall(LABELS.index("Checkmate Black")) == 0.0
-    assert build_report([], []).accuracy is None
+    assert build_report([], []).accuracy() is None
 
 
 def test_a_network_without_colours_is_judged_on_the_state():
     report = build_report(["Check White", "Checkmate Black", "Nothing"], ["Check", "Check", "Nothing"], BASIC)
     assert report.confusion == ((1, 0, 0), (0, 1, 0), (0, 1, 0))
-    assert report.accuracy == pytest.approx(2 / 3)
+    assert report.accuracy() == pytest.approx(2 / 3)
 
 
 def test_expected_labels_must_match_the_network():

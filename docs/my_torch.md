@@ -15,7 +15,8 @@ shape of every matrix and the derivatives used to learn.
 10. [Optimizers](#10-optimizers)
 11. [Learning-rate schedules](#11-learning-rate-schedules)
 12. [Training loop](#12-training-loop)
-13. [Code map](#13-code-map)
+13. [Regularisation: dropout, L2, early stopping](#13-regularisation-dropout-l2-early-stopping)
+14. [Code map](#14-code-map)
 
 ## 1. Notation and shapes
 
@@ -43,17 +44,17 @@ $`W`$, $`\nabla_b L`$ is $`(n_{out})`$ like $`b`$. That rule is enough to check 
 
 ## 2. Architecture
 
-The chess network turns a board into 769 numbers (12 piece types × 64 squares, plus whose turn it is) and gives
+The chess network turns a board into 769 numbers (12 piece types x 64 squares, plus whose turn it is) and gives
 one probability per class:
 
 ```mermaid
 flowchart LR
     FEN["FEN text"] -->|encode_fen| X["X<br/>(B, 769)"]
-    X --> L1["DenseLayer 769 → 47<br/>ReLU"]
-    L1 -->|"(B, 47)"| L2["DenseLayer 47 → 47<br/>ReLU"]
-    L2 -->|"(B, 47)"| L3["DenseLayer 47 → 5<br/>Softmax"]
+    X --> L1["DenseLayer 769 -> 47<br/>ReLU"]
+    L1 -->|"(B, 47)"| L2["DenseLayer 47 -> 47<br/>ReLU"]
+    L2 -->|"(B, 47)"| L3["DenseLayer 47 -> 5<br/>Softmax"]
     L3 --> P["P<br/>(B, 5)"]
-    P --> C["Nothing · Check White · Check Black<br/>Checkmate White · Checkmate Black"]
+    P --> C["Nothing, Check White, Check Black<br/>Checkmate White, Checkmate Black"]
 ```
 
 The sizes (2 hidden layers of 47 ReLU neurons) and the training settings come from the hyperparameter search, which
@@ -70,7 +71,13 @@ classDiagram
         parameters
         forward(inputs)
         backward(gradient)
-        train(inputs, labels, loss, optimizer, epochs, batch_size)
+        train(inputs, labels, loss, optimizer, epochs, batch_size, rng)
+    }
+    class Training {
+        loss, optimizer, batch_size, rng
+        validation_split, patience, max_epochs
+        run(network, inputs, labels, epochs)
+        fit(network, inputs, labels)
     }
     class Layer {
         <<abstract>>
@@ -83,7 +90,10 @@ classDiagram
     class DenseLayer {
         weights, biases, activation
         weights_gradient, biases_gradient
-        create(n_inputs, n_outputs, activation)$
+        create(n_inputs, n_outputs, activation, rng, initialization)$
+    }
+    class Dropout {
+        rate, mask
     }
     class Activation {
         <<abstract>>
@@ -100,7 +110,7 @@ classDiagram
     }
     class Optimizer {
         <<abstract>>
-        learning_rate, schedule
+        learning_rate, schedule, weight_decay
         start_epoch(epoch)
         step(parameters)
         update(value, gradient)*
@@ -109,8 +119,12 @@ classDiagram
         <<abstract>>
         rate(initial_rate, epoch)*
     }
+    Training --> Network
+    Training --> Loss
+    Training --> Optimizer
     Network o-- Layer
     Layer <|-- DenseLayer
+    Layer <|-- Dropout
     DenseLayer --> Activation
     Activation <|-- ReLU
     Activation <|-- Tanh
@@ -169,7 +183,7 @@ moves when $`z`$ moves.
 |---|---|---|---|---|
 | `ReLU` | $`\max(0, z)`$ | $`1`$ if $`z > 0`$, else $`0`$ | $`[0, +\infty)`$ | hidden layers |
 | `Tanh` | $`\tanh(z)`$ | $`1 - \tanh^2(z)`$ | $`(-1, 1)`$ | hidden layers, centred on 0 |
-| `Softmax` | $`p_i = \dfrac{e^{z_i}}{\sum_j e^{z_j}}`$ | a matrix per sample, see [§5](#5-softmax) | $`(0, 1)`$, sums to 1 | the output layer, one class among $`C`$ |
+| `Softmax` | $`p_i = \dfrac{e^{z_i}}{\sum_j e^{z_j}}`$ | a matrix per sample, see [section 5](#5-softmax) | $`(0, 1)`$, sums to 1 | the output layer, one class among $`C`$ |
 
 The library has the three activations that serve this problem: **ReLU** and **tanh** for the hidden layers
 (the hyperparameter search compares them) and **softmax** for the output, which picks one class among 5. A dense
@@ -274,17 +288,17 @@ backwards, each layer turning "how the loss changes with my outputs" into "how i
 
 ```mermaid
 flowchart RL
-    Loss["Loss<br/>∂L/∂P"] -->|"G (B, 5)"| B3["Layer 3 backward<br/>stores ∇W₃, ∇b₃"]
-    B3 -->|"G (B, 64)"| B2["Layer 2 backward<br/>stores ∇W₂, ∇b₂"]
-    B2 -->|"G (B, 256)"| B1["Layer 1 backward<br/>stores ∇W₁, ∇b₁"]
-    B1 -->|"G (B, 769)"| In["∂L/∂X<br/>(unused)"]
+    Loss["Loss<br/>dL/dP"] -->|"G (B, 5)"| B3["Layer 3 backward<br/>stores dW3, db3"]
+    B3 -->|"G (B, 47)"| B2["Layer 2 backward<br/>stores dW2, db2"]
+    B2 -->|"G (B, 47)"| B1["Layer 1 backward<br/>stores dW1, db1"]
+    B1 -->|"G (B, 769)"| In["dL/dX<br/>(unused)"]
 ```
 
 **One dense layer**, receiving $`G_A = \partial L / \partial A`$ of shape $`(B, n_{out})`$:
 
 | Step | Equation | Shape |
 |---|---|---|
-| 1. Back through the activation | $`G_Z = G_A \odot f'(Z)`$ (softmax: [§5](#5-softmax)) | $`(B, n_{out})`$ |
+| 1. Back through the activation | $`G_Z = G_A \odot f'(Z)`$ (softmax: [section 5](#5-softmax)) | $`(B, n_{out})`$ |
 | 2. Weight gradient | $`\nabla_W L = X^\top G_Z`$ | $`(n_{in}, B)(B, n_{out}) = (n_{in}, n_{out})`$ |
 | 3. Bias gradient | $`\nabla_b L = \sum_{b=1}^{B} G_Z[b, :]`$ | $`(n_{out})`$ |
 | 4. Gradient for the previous layer | $`G_X = G_Z\, W^\top`$ | $`(B, n_{out})(n_{out}, n_{in}) = (B, n_{in})`$ |
@@ -293,8 +307,8 @@ Why these products: $`Z_{bj} = \sum_i X_{bi} W_{ij} + b_j`$, so $`\partial Z_{bj
 the batch, that is $`X^\top G_Z`$), $`\partial Z_{bj} / \partial b_j = 1`$ (a sum over the batch), and
 $`\partial Z_{bj} / \partial X_{bi} = W_{ij}`$ (that is $`G_Z W^\top`$). The shapes column checks each one.
 
-`DenseLayer.backward` stores steps 2 and 3 as `weights_gradient` and `biases_gradient` and returns step 4.
-`Network.backward` runs the layers in reverse. `backward` before `forward` is refused, since $`X`$ and $`Z`$
+`DenseLayer::backward` stores steps 2 and 3 as `weights_gradient` and `biases_gradient` and returns step 4.
+`Network::backward` runs the layers in reverse. `backward` before `forward` is refused, since $`X`$ and $`Z`$
 come from the forward pass.
 
 ## 8. Gradient check
@@ -318,7 +332,7 @@ The tests compare, to a relative tolerance of $`10^{-4}`$ or better:
 ## 9. Weight initialization
 
 All-zero weights would give every neuron of a layer the same output and the same gradient: they would stay
-identical forever. `DenseLayer.create` starts from random weights instead, scaled so that the values neither grow
+identical forever. `DenseLayer::create` starts from random weights instead, scaled so that the values neither grow
 nor shrink from layer to layer:
 
 | Activation | Method | Weights drawn from |
@@ -333,9 +347,9 @@ nor shrink from layer to layer:
 ReLU zeroes about half its inputs, so He doubles the variance to compensate. Biases start at $`0`$.
 
 ```cpp
-DenseLayer::create(769, 47, std::make_unique<ReLU>(), rng);       // He: σ = √(2/769) ≈ 0.051
-DenseLayer::create(47, 47, std::make_unique<ReLU>(), rng);        // He: σ = √(2/47) ≈ 0.206
-DenseLayer::create(47, 5, std::make_unique<Softmax>(), rng);      // Xavier: σ = √(2/52) ≈ 0.196
+DenseLayer::create(769, 47, std::make_unique<ReLU>(), rng);       // He: sigma = sqrt(2/769) ~ 0.051
+DenseLayer::create(47, 47, std::make_unique<ReLU>(), rng);        // He: sigma = sqrt(2/47) ~ 0.206
+DenseLayer::create(47, 5, std::make_unique<Softmax>(), rng);      // Xavier: sigma = sqrt(2/52) ~ 0.196
 ```
 
 ## 10. Optimizers
@@ -375,13 +389,13 @@ ones later, so they settle instead of jittering around the minimum. Starting fro
 |---|---|---|
 | `Constant()` | $`\eta_0`$ | |
 | `TimeDecay(d)` | $`\dfrac{\eta_0}{1 + d\,t}`$ | $`d \ge 0`$ |
-| `ExponentialDecay(γ)` | $`\eta_0\, \gamma^{t}`$ | $`0 < \gamma \le 1`$ |
-| `StepDecay(γ, k)` | $`\eta_0\, \gamma^{\lfloor t / k \rfloor}`$ | $`0 < \gamma \le 1`$, $`k \ge 1`$ |
+| `ExponentialDecay(gamma)` | $`\eta_0\, \gamma^{t}`$ | $`0 < \gamma \le 1`$ |
+| `StepDecay(gamma, k)` | $`\eta_0\, \gamma^{\lfloor t / k \rfloor}`$ | $`0 < \gamma \le 1`$, $`k \ge 1`$ |
 
 ![Learning-rate schedules](images/my_torch/schedules.png)
 
-```python
-optimizer = Momentum(learning_rate=0.01, momentum=0.9, schedule=StepDecay(0.5, every=8))
+```cpp
+my_torch::Momentum optimizer(0.01, 0.9, std::make_unique<my_torch::StepDecay>(0.5, 8));   // eta_0 = 0.01, halved every 8 epochs
 ```
 
 Momentum steadies the **direction** of the steps; a schedule shrinks their **size**. They are used together.
@@ -411,19 +425,92 @@ The loss of an epoch is the mean over every sample, each batch weighted by its s
 `batch_size = 1` is plain stochastic gradient descent, `batch_size = N` is full-batch gradient descent, anything
 between is mini-batch. Shuffling every epoch keeps the batches from always grouping the same samples.
 
-## 13. Code map
+## 13. Regularisation: dropout, L2, early stopping
+
+A network with enough weights can **memorise** its training boards, noise included, instead of learning rules that
+hold on new boards: the training loss keeps falling while the loss on boards it never trained on stops falling, then
+rises. That is overfitting. The module has three guards against it; the network we push uses all three.
+
+### Dropout
+
+A `Dropout` layer sits after a hidden layer. While the network trains, it keeps each input with probability
+$`1 - p`$ and zeroes it otherwise, drawing a new mask $`M`$ at every forward pass:
+
+```math
+M_{bj} = \begin{cases} \dfrac{1}{1 - p} & \text{with probability } 1 - p \\[4pt] 0 & \text{with probability } p \end{cases}
+\qquad A_{\text{out}} = A_{\text{in}} \odot M \qquad G_{\text{in}} = G_{\text{out}} \odot M
+```
+
+- **Why it works:** no neuron can count on another one being there, so the network cannot store a board in a few
+  specific neurons; it has to spread what it learns, which generalises better. Each batch trains a slightly
+  different sub-network, and the full network behaves like their average.
+- **Why $`1 / (1 - p)`$:** the kept inputs are scaled up so the expected value of each output does not change,
+  $`\mathbb{E}[A_{\text{in}} M] = A_{\text{in}}`$. So nothing needs rescaling afterwards: outside training (`--predict`,
+  validation) the layer lets its inputs through unchanged.
+- **Backward:** the gradient only flows through the inputs that were kept, multiplied by the same mask.
+- Only `Network::train` switches the layers to training mode; a rate of 0 does nothing.
+
+### L2 regularisation (weight decay)
+
+L2 adds the squared size of the weights to the loss, with a factor $`\lambda`$ (`weight_decay`):
+
+```math
+L' = L + \frac{\lambda}{2} \sum w^2 \qquad \frac{\partial L'}{\partial w} = \frac{\partial L}{\partial w} + \lambda\, w
+```
+
+`Optimizer::step` adds $`\lambda w`$ to the gradient of every weight before the update. With plain SGD the step
+becomes $`w \leftarrow (1 - \eta\lambda)\, w - \eta\, \partial L / \partial w`$: each step first shrinks the weight a
+little, hence the name *weight decay*.
+
+- **Why it works:** fitting the noise of individual boards needs large weights that react sharply to a single input;
+  pulling every weight towards 0 keeps the network's decisions smooth.
+- **Biases are left alone:** a bias shifts a neuron, it does not make it react to its inputs, so shrinking it would
+  only add bias error.
+- $`\lambda = 0`$ (the default) turns it off.
+
+### Early stopping
+
+`Training::fit` does not train for a fixed number of epochs:
+
+1. a share of the boards (`validation_split`, 10 % by default) is set aside and never trained on; they are drawn with
+   a fixed seed, so a resumed training watches the same boards;
+2. after every epoch, the loss on those boards is measured;
+3. when it has not improved for `patience` epochs in a row (5 by default), or after `max_epochs`, training stops;
+4. the weights of the **best** epoch are put back, not those of the last one.
+
+So a training never leaves a network worse on boards it has not seen than it found it, and it stops by itself once
+more epochs only memorise.
+
+### In the network we push
+
+| Guard | `my_torch_network_full.nn` |
+|---|---|
+| Dropout | $`p = 0.2`$ after each of the two hidden layers (128 and 64 neurons) |
+| L2 | $`\lambda = 10^{-4}`$ |
+| Early stopping | 16,000 of the 160,000 boards set aside, patience 8, at most 80 epochs: it stops at epoch 19 and keeps epoch 11 |
+
+![Training and validation loss per epoch of the 6 networks](images/final_network/final_network_curves.png)
+
+Without dropout and L2, the 2 x 47 network's validation loss stops improving around epoch 6 while its training loss
+keeps falling; with them, the wider network keeps improving to a lower validation loss, and wins by 1.4 points on
+the test boards ([`benchmarks/final_network/`](benchmarks/final_network/)).
+
+## 14. Code map
 
 | Concept | Equation | Code |
 |---|---|---|
-| Dense layer forward | $`Z = XW + b,\ A = f(Z)`$ | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::forward` |
-| Network forward | $`A^{(l)} = f^{(l)}(A^{(l-1)}W^{(l)} + b^{(l)})`$ | `my_torch/src/model/network/` · `Network::forward` |
-| Activations, derivatives | §4 table | `my_torch/src/model/activations/` · `forward`, `derivative`, `backward` |
-| Softmax backward | $`p \odot (g - \sum g_k p_k)`$ | `my_torch/src/model/activations/activations/softmax/` · `Softmax::backward` |
-| Losses and gradients | §6 | `my_torch/src/training/losses/` · `CrossEntropy`, `MeanSquaredError` |
-| Layer backward | $`X^\top G_Z,\ \sum G_Z,\ G_Z W^\top`$ | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::backward` |
-| Network backward | layers in reverse | `my_torch/src/model/network/` · `Network::backward` |
-| Initialization | He, Xavier | `my_torch/src/model/layers/layers/dense_layer/` · `DenseLayer::create` |
-| SGD, momentum | §10 | `my_torch/src/training/optimizers/` · `SGD`, `Momentum` |
-| Schedules | §11 table | `my_torch/src/training/schedules/` |
-| Training loop | §12 | `my_torch/src/model/network/` · `Network::train` |
+| Dense layer forward | $`Z = XW + b,\ A = f(Z)`$ | `my_torch/src/model/layers/layers/dense_layer/` - `DenseLayer::forward` |
+| Network forward | $`A^{(l)} = f^{(l)}(A^{(l-1)}W^{(l)} + b^{(l)})`$ | `my_torch/src/model/network/` - `Network::forward` |
+| Activations, derivatives | section 4 table | `my_torch/src/model/activations/` - `forward`, `derivative`, `backward` |
+| Softmax backward | $`p \odot (g - \sum g_k p_k)`$ | `my_torch/src/model/activations/activations/softmax/` - `Softmax::backward` |
+| Losses and gradients | section 6 | `my_torch/src/training/losses/` - `CrossEntropy`, `MeanSquaredError` |
+| Layer backward | $`X^\top G_Z,\ \sum G_Z,\ G_Z W^\top`$ | `my_torch/src/model/layers/layers/dense_layer/` - `DenseLayer::backward` |
+| Network backward | layers in reverse | `my_torch/src/model/network/` - `Network::backward` |
+| Initialization | He, Xavier | `my_torch/src/model/layers/layers/dense_layer/` - `DenseLayer::create` |
+| SGD, momentum | section 10 | `my_torch/src/training/optimizers/` - `SGD`, `Momentum` |
+| Schedules | section 11 table | `my_torch/src/training/schedules/` |
+| Training loop | section 12 | `my_torch/src/model/network/` - `Network::train` |
+| Dropout | section 13 | `my_torch/src/model/layers/layers/dropout/` - `Dropout::forward`, `Dropout::backward` |
+| L2 regularisation | section 13 | `my_torch/src/training/optimizers/` - `Optimizer::step` |
+| Early stopping | section 13 | `my_torch/src/training/` - `Training::fit` |
 | Gradient check | central difference | `my_torch/tests/model/network/test_gradient_check.cpp` |

@@ -3,7 +3,6 @@
 # leave the network to my_torch_engine, the C++ side.
 
 import sys
-from dataclasses import dataclass, field
 
 from analyzer.chess_file import ChessFileError, check_expected_outputs, read_chess_file
 from analyzer.engine import EngineError, network_labels, predict_outputs, train
@@ -37,19 +36,28 @@ class UsageError(Exception):
     pass
 
 
-@dataclass(frozen=True)
 class Arguments:
-    mode: str
-    load_file: str
-    chess_file: str
-    save_file: str | None = None
+    def __init__(self, mode: str, load_file: str, chess_file: str, save_file: str | None = None):
+        self.mode = mode
+        self.load_file = load_file
+        self.chess_file = chess_file
+        self.save_file = save_file
+
+    def fields(self) -> tuple:
+        return (self.mode, self.load_file, self.chess_file, self.save_file)
+
+    def __eq__(self, other) -> bool:
+        return isinstance(other, Arguments) and self.fields() == other.fields()
+
+    def __repr__(self) -> str:
+        return f"Arguments{self.fields()!r}"
 
 
-@dataclass
 class RawArguments:
-    mode: str | None = None
-    save_file: str | None = None
-    files: list[str] = field(default_factory=list)
+    def __init__(self):
+        self.mode: str | None = None
+        self.save_file: str | None = None
+        self.files: list[str] = []
 
 
 def read_mode(raw: RawArguments, flag: str) -> None:

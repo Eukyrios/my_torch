@@ -33,15 +33,14 @@ shown during the defense. The PGN dump itself is never committed (`.gitignore`),
 
 **Subject rules.** No library handling neural networks: the network, its training, its optimizers and its file
 format are written from scratch in C++20 with the standard library only. numpy was used by the first, Python version
-of the module; it left the project with the C++ rewrite (the *Bibliothèques* section of the README still lists it
-and should be updated).
+of the module; it left the project with the C++ rewrite.
 
 ## 2. Major decisions
 
 | Date | Decision | Alternatives considered | Why this one |
 |---|---|---|---|
-| 26 Oct | Encode a board as **769 binary inputs**: 12 pieces × 64 squares, one-hot, plus the side to move | 64 inputs with a value per piece; hand-made features (attacked squares, king safety) | lets the network find check patterns itself; no chess logic hidden in the encoding, which the subject's "machine-learning-based solution" calls for |
-| 26 Oct | **5 output classes with the colour** (`Check White`, …), softmax + cross-entropy | 3 classes then a second network for the colour | matches the "full" output of the subject; a 3-class network still works, the labels come from the file |
+| 26 Oct | Encode a board as **769 binary inputs**: 12 pieces x 64 squares, one-hot, plus the side to move | 64 inputs with a value per piece; hand-made features (attacked squares, king safety) | lets the network find check patterns itself; no chess logic hidden in the encoding, which the subject's "machine-learning-based solution" calls for |
+| 26 Oct | **5 output classes with the colour** (`Check White`, ...), softmax + cross-entropy | 3 classes then a second network for the colour | matches the "full" output of the subject; a 3-class network still works, the labels come from the file |
 | 26 Oct | Split the dataset **by game**, not by position, and **balance** the 5 classes | random split by position | positions of one game are near copies: a random split leaks them into the test set and inflates accuracy |
 | 2 Nov | **Rewrite the module in C++** (PR #42), the alternative we proposed at the mid-defense | keep Python + numpy | see [section 3](#3-impact-of-the-technical-choices) |
 | 2 Nov | Our own **`.nn` format**: uncompressed zip of a JSON header and `.npy` arrays, versioned | plain text weights; a binary dump of the C++ objects | readable header for the defense, exact float64 values, opened by `np.load` for plots, resists corruption (CRC-32) |
@@ -52,7 +51,7 @@ and should be updated).
 
 ## 3. Impact of the technical choices
 
-**Python → C++ rewrite.** The mid-defense pointed out that the neural network module was not in a compiled
+**Python -> C++ rewrite.** The mid-defense pointed out that the neural network module was not in a compiled
 language and was not independent of the analyzer.
 
 | | Python + numpy (until 1 Nov) | C++20 (from 2 Nov) |
@@ -60,7 +59,7 @@ language and was not independent of the analyzer.
 | Runtime dependencies of the delivered program | numpy, to be installed on the dump (not confirmed by the staff) | **none**: `g++` and the standard library |
 | Separation | module and analyzer in the same Python process | module = `libmytorch.a` + `my_torch_engine` + `my_torch_generator`; the analyzer only reads chess files and talks to the engine |
 | Speed | numpy is fast for big matrices, but every mini-batch goes through the Python interpreter | 160,000 boards trained in 4 to 11 min depending on the network, 20,000 boards predicted in 1.2 s, reading the FENs included |
-| Cost | — | 29 Oct to 2 Nov for one of us to port and retest the whole module, while the other built the dataset, the analyzer and the save format |
+| Cost | - | 29 Oct to 2 Nov for one of us to port and retest the whole module, while the other built the dataset, the analyzer and the save format |
 
 The port was done test by test: every Python test was rewritten with Criterion before the Python module was
 removed, and the gradient check (numerical vs analytical gradients) was kept. The C++
@@ -83,7 +82,7 @@ trip is exact to the bit, which the tests check.
 | Removing numpy from the analyzer | **it did break the CI** (PR #43: `ModuleNotFoundError: numpy`) when the branch met the new `main` | caught by the CI before merging; the code was moved to plain Python the same day |
 | Deadline moved from 17 to 8 November | weeks 3 and 4 merged | a complete analyzer and the save format were ready first, so a bad last week still leaves something to grade |
 | `--train` overwrites LOADFILE by default | a crash during the save would destroy the only copy of a trained network | the file is written to `LOADFILE.tmp` then renamed: the old file stays whole until the new one is complete |
-| A damaged or foreign `.nn` file | the autograder loads our file: a silent misread gives wrong predictions | CRC-32 on every part, format and version checked, every shape checked against the header; any problem → message on stderr, exit 84 |
+| A damaged or foreign `.nn` file | the autograder loads our file: a silent misread gives wrong predictions | CRC-32 on every part, format and version checked, every shape checked against the header; any problem -> message on stderr, exit 84 |
 | Data leakage between train and test | an accuracy that looks good and collapses on the autograder's boards | split by game (hash of the game id), test set used once at the end; validation boards drawn with a fixed seed and never trained on |
 | Overfitting | a network that memorises the training boards | validation split, early stopping with the best weights, L2, dropout (see the README) |
 | The compiler of the dump | C++20 features missing | only standard library features supported by GCC 13; the CI builds on Ubuntu with the default `g++` |
@@ -109,10 +108,10 @@ The users are the autograder, the jury, and us while training.
 
 | Choice | Value | Justification |
 |---|---|---|
-| Hidden layers | 128 ReLU, 64 tanh, dropout 0.2 after each | best at full scale ([hyperparameter_search.md §8](hyperparameter_search.md#8-from-the-search-to-the-network-we-push)); the particle swarm retained 2 × 47 ReLU at a small scale, without dropout or L2 ([hyperparameter_search.md](hyperparameter_search.md)) |
+| Hidden layers | 128 ReLU, 64 tanh, dropout 0.2 after each | best at full scale ([hyperparameter_search.md section 8](hyperparameter_search.md#8-from-the-search-to-the-network-we-push)); the particle swarm retained 2 x 47 ReLU at a small scale, without dropout or L2 ([hyperparameter_search.md](hyperparameter_search.md)) |
 | Output | 5 softmax | one probability per label; trained with cross-entropy, the loss matching softmax |
 | Initialization | He for ReLU, Xavier for softmax | keeps the variance of the activations stable through the layers (`docs/my_torch.md`) |
-| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs, batches of 32 | the pushed network's settings; blank networks get the swarm's 0.018 / 0.53 / × 0.86 per epoch / batches of 9 |
+| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs, batches of 32 | the pushed network's settings; blank networks get the swarm's 0.018 / 0.53 / x 0.86 per epoch / batches of 9 |
 | Overfitting | 10 % validation, patience 8, best weights kept, dropout 0.2, L2 1e-4 | the training loss keeps falling while the validation loss turns back up: training stops there; dropout and L2 let the wider network gain 1.4 points at full scale |
 
 **The network we push.** Both configurations of `configs/` were trained on the 160,000 boards of `data/train.txt`
@@ -120,7 +119,7 @@ and compared on `data/validation.txt`, which neither trained on; `data/test.txt`
 
 | Configuration | Layers | Epochs (kept / run) | Validation accuracy | Test accuracy | File |
 |---|---|---|---|---|---|
-| `basic_network.conf` | 2 × 47 ReLU | 10 / 15 | 82.2 % | 82.6 % | 0.6 MB |
+| `basic_network.conf` | 2 x 47 ReLU | 10 / 15 | 82.2 % | 82.6 % | 0.6 MB |
 | `regularized_network.conf` | 128 ReLU, 64 tanh, dropout 0.2, L2 | 11 / 19 | **83.4 %** | **83.9 %** | 1.7 MB |
 
 The regularized one is `my_torch_network_full.nn`: wider, but dropout and L2 keep it from overfitting more than

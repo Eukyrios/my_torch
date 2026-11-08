@@ -26,21 +26,18 @@ def test_every_label_maps_to_its_colour():
     assert set(colours) - {None} == set(COLOURS)
 
 
-@pytest.mark.parametrize("label", ["Nothing", "Check", "Checkmate", "Check White", "Checkmate Black", "Stalemate"])
-def test_valid_labels(label):
-    assert is_label(label)
+def test_valid_labels():
+    for label in ["Nothing", "Check", "Checkmate", "Check White", "Checkmate Black", "Stalemate"]:
+        assert is_label(label)
 
 
-@pytest.mark.parametrize(
-    "label",
-    ["Draw", "Stalemate White", "", "check White", "Check Green", "Nothing White", "Check  White", "Check White Black", "Check White "],
-)
-def test_invalid_labels(label):
-    assert not is_label(label)
-    with pytest.raises(ValueError, match="unknown label"):
-        state_of(label)
-    with pytest.raises(ValueError, match="unknown label"):
-        colour_of(label)
+def test_invalid_labels():
+    for label in ["Draw", "Stalemate White", "", "check White", "Check Green", "Nothing White", "Check  White", "Check White Black", "Check White "]:
+        assert not is_label(label)
+        with pytest.raises(ValueError, match="unknown label"):
+            state_of(label)
+        with pytest.raises(ValueError, match="unknown label"):
+            colour_of(label)
 
 
 def test_the_highest_output_wins():
@@ -91,20 +88,20 @@ def test_no_board_gives_no_state():
     assert prediction_report([]) == ""
 
 
-@pytest.mark.parametrize(
-    "outputs",
-    [
-        [0.5, 0.5],
-        [[0.0] * 3, [0.0] * 3],
-        [[[0.0] * 5] * 2] * 2,
-        [0.5, [0.0] * 5],
-        [[0.0, 0.0, "1", 0.0, 0.0]],
-        [[True, False, False, False, False]],
-    ],
-)
-def test_outputs_must_have_one_score_per_label(outputs):
-    with pytest.raises(ValueError, match="expected 5 scores per board"):
-        predicted_states(outputs)
+OUTPUTS_MUST_HAVE_ONE_SCORE_PER_LABEL_CASES = [
+    [0.5, 0.5],
+    [[0.0] * 3, [0.0] * 3],
+    [[[0.0] * 5] * 2] * 2,
+    [0.5, [0.0] * 5],
+    [[0.0, 0.0, "1", 0.0, 0.0]],
+    [[True, False, False, False, False]],
+]
+
+
+def test_outputs_must_have_one_score_per_label():
+    for outputs in OUTPUTS_MUST_HAVE_ONE_SCORE_PER_LABEL_CASES:
+        with pytest.raises(ValueError, match="expected 5 scores per board"):
+            predicted_states(outputs)
 
 
 def test_stalemate_has_no_colour():

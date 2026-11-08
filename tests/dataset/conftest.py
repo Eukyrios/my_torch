@@ -1,7 +1,6 @@
 import io
 
 import chess.pgn
-import pytest
 
 HEADER = '[Event "test"]\n[Site "https://lichess.org/{site}"]\n[Result "{result}"]\n\n'
 
@@ -19,22 +18,12 @@ def pgn_text(games=GAMES):
     return "\n\n".join(HEADER.format(site=site, result=result) + moves for site, result, moves in games) + "\n"
 
 
-@pytest.fixture
-def pgn_file(tmp_path):
+def write_pgn(tmp_path):
     path = tmp_path / "games.pgn"
     path.write_text(pgn_text())
     return path
 
 
-@pytest.fixture
-def load_game():
-    def load(index):
-        site, result, moves = GAMES[index]
-        return chess.pgn.read_game(io.StringIO(HEADER.format(site=site, result=result) + moves))
-
-    return load
-
-
-@pytest.fixture
-def game_count():
-    return len(GAMES)
+def load_game(index):
+    site, result, moves = GAMES[index]
+    return chess.pgn.read_game(io.StringIO(HEADER.format(site=site, result=result) + moves))

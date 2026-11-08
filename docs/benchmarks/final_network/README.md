@@ -1,7 +1,7 @@
 # Choosing the network we push: basic or regularized, over 3 seeds
 
-The hyperparameter search ([../../hyperparameter_search.md](../../hyperparameter_search.md)) kept the 2 × 47 ReLU
-network (`configs/basic_network.conf`): at its scale (7,500 boards, 750 to test on, about ±1.7 point of noise) no
+The hyperparameter search ([../../hyperparameter_search.md](../../hyperparameter_search.md)) kept the 2 x 47 ReLU
+network (`configs/basic_network.conf`): at its scale (7,500 boards, 750 to test on, about +/-1.7 point of noise) no
 other configuration was significantly better. Before pushing a network, we compared it at full scale with the other
 config of `configs/`, `regularized_network.conf`, written by hand to use dropout and L2. One training per config could
 be a lucky draw, so each one is trained **3 times, with 3 seeds** (starting weights and batch order change).
@@ -10,7 +10,10 @@ Every file of this folder comes from one command:
 
 ```bash
 scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/final_network
+python3 -m scripts.plot_final_network docs/benchmarks/final_network docs/images/final_network
 ```
+
+The second command draws the two figures below from `summary.csv` and the training logs.
 
 | File | What it is |
 |---|---|
@@ -34,7 +37,7 @@ scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/fina
 | | `basic_network.conf` | `regularized_network.conf` |
 |---|---|---|
 | Hidden layers | 47 ReLU, 47 ReLU | 128 ReLU, dropout 0.2, 64 tanh, dropout 0.2 |
-| Optimizer | Momentum 0.53, learning rate 0.018 × 0.86 per epoch | Momentum 0.9, learning rate 0.01 × 0.5 every 10 epochs, L2 1e-4 |
+| Optimizer | Momentum 0.53, learning rate 0.018 x 0.86 per epoch | Momentum 0.9, learning rate 0.01 x 0.5 every 10 epochs, L2 1e-4 |
 | Batch | 9 | 32 |
 | Early stopping | patience 5, at most 50 epochs | patience 8, at most 80 epochs |
 | Chosen by | the particle swarm search | hand, as the regularized variant |
@@ -50,21 +53,29 @@ scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/fina
 | regularized | 101 | 12 / 20 | **0.3968** | 763 s | **83.9 %** | **84.1 %** |
 | regularized | 102 | 11 / 19 | 0.3979 | 732 s | 83.5 % | 83.9 % |
 
-| Config | Validation (mean ± sd) | Test (mean ± sd) | Validation loss | Training time |
+| Config | Validation (mean +/- sd) | Test (mean +/- sd) | Validation loss | Training time |
 |---|---|---|---|---|
-| basic | 82.3 ± 0.2 % | 82.6 ± 0.1 % | 0.433 | 4.3 min |
-| regularized | **83.6 ± 0.3 %** | **84.0 ± 0.1 %** | **0.398** | 12.4 min |
+| basic | 82.3 +/- 0.2 % | 82.6 +/- 0.1 % | 0.433 | 4.3 min |
+| regularized | **83.6 +/- 0.3 %** | **84.0 +/- 0.1 %** | **0.398** | 12.4 min |
+
+![Training and validation loss per epoch of the 6 networks](../../images/final_network/final_network_curves.png)
+
+![Validation and test accuracy of each seed](../../images/final_network/final_network_accuracy.png)
 
 ## What it shows
 
 - **The regularized network is better, and not by luck.** Its worst seed (83.4 %) beats the best basic seed
   (82.5 %) on validation, and the same holds on test (83.9 % against 82.7 %). The gap, 1.3 points on validation and
   1.4 on test, is about 5 times the spread between seeds (0.1 to 0.3 point) and more than twice the noise of 20,000
-  boards (±0.5 point).
-- **The search was right at its scale.** With 750 boards, ±1.7 point of noise hides a 1.3-point gap; with 20,000
+  boards (+/-0.5 point).
+- **The search was right at its scale.** With 750 boards, +/-1.7 point of noise hides a 1.3-point gap; with 20,000
   boards per split and 160,000 to train on, it shows. The extra width (128 and 64 neurons) only pays off with enough
   data, and dropout and L2 keep it from overfitting: it trains 19 or 20 epochs before early stopping, against 14 to
   16 for basic.
+- **The curves show where the gap comes from.** Basic's validation loss stops falling around epoch 6 and hovers
+  near 0.43 while its training loss keeps going down: from there it only learns its training boards. The
+  regularized network's training loss stays higher (dropout makes training harder on purpose), and when its
+  learning rate is halved at epoch 11, both losses drop at once and the validation loss reaches 0.40.
 - **It costs training time, not prediction time.** 12.4 min against 4.3 min to train, 1.7 MB against 0.6 MB on disk;
   20,000 boards are still predicted in about a second.
 - **Training is reproducible.** Seeds 0 and 100 had already been trained the day before: the new runs gave the same
@@ -72,6 +83,6 @@ scripts/compare_final_networks.sh data docs/benchmarks/final_network 3 data/fina
 
 ## Decision
 
-`my_torch_network_full.nn` is a **regularized** network. The search's 2 × 47 stays the default of `my_torch_engine`
+`my_torch_network_full.nn` is a **regularized** network. The search's 2 x 47 stays the default of `my_torch_engine`
 and `configs/basic_network.conf`: small and quick to train, it is the right choice for experiments; the pushed
 network is the one that does best on boards it never saw.

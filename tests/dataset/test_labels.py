@@ -25,10 +25,10 @@ def play(*moves):
     return board
 
 
-@pytest.mark.parametrize("line", SAMPLE_LINES)
-def test_matches_labels_of_the_given_database(line):
-    fen, expected = line.rsplit(" ", 2)[0], " ".join(line.split()[6:])
-    assert label_board(chess.Board(fen)) == expected
+def test_matches_labels_of_the_given_database():
+    for line in SAMPLE_LINES:
+        fen, expected = line.rsplit(" ", 2)[0], " ".join(line.split()[6:])
+        assert label_board(chess.Board(fen)) == expected
 
 
 def test_start_position_is_nothing():

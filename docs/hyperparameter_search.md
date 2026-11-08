@@ -19,17 +19,17 @@ This page gives its results, its plots and the choices they led to.
 
 > **The network we push is not this one.** The search identified what matters (method, loss, activation, depth,
 > learning rate); on top of it we added early stopping, dropout and L2, which a small-scale search cannot judge, and
-> that network wins at full scale: see [§8](#8-from-the-search-to-the-network-we-push). 2 × 47 remains the default
+> that network wins at full scale: see [section 8](#8-from-the-search-to-the-network-we-push). 2 x 47 remains the default
 > training of a network saved without one.
 
-| Choice | Value | Why, in one line (details in [§7](#7-why-we-chose-what-we-chose)) |
+| Choice | Value | Why, in one line (details in [section 7](#7-why-we-chose-what-we-chose)) |
 |---|---|---|
 | Search method | **particle swarm** | its best configurations generalise better to boards the search never saw |
 | Loss | **cross-entropy** | MSE fails 4 to 6 times as often and gives about half as many good networks |
 | Hidden activation | **ReLU** | ties with tanh on accuracy, has the best top configurations and is cheaper |
 | Output activation | **softmax** | turns the scores into one probability per class, the only sensible output for 5 exclusive classes |
-| Network | **769 → 47 ReLU → 47 ReLU → 5 softmax** | the search keeps landing on 1 or 2 hidden layers; none of the new results is significantly better than this one |
-| Training | Momentum, learning rate 0.018, momentum 0.53, batches of 9, learning rate × 0.86 per epoch, **early stopping** | the learning curves peak after 6 to 11 epochs, then the validation loss rises |
+| Network | **769 -> 47 ReLU -> 47 ReLU -> 5 softmax** | the search keeps landing on 1 or 2 hidden layers; none of the new results is significantly better than this one |
+| Training | Momentum, learning rate 0.018, momentum 0.53, batches of 9, learning rate x 0.86 per epoch, **early stopping** | the learning curves peak after 6 to 11 epochs, then the validation loss rises |
 
 This is the engine's default training (`my_torch/src/engine/engine.cpp`) and
 [`configs/basic_network.conf`](../configs/basic_network.conf), the config `my_torch_generator` builds blank networks from.
@@ -58,7 +58,7 @@ Code: `my_torch/src/training/hyperparameters/search_space/`.
 
 ## 3. How a configuration is scored
 
-`ValidationLoss` builds the network a configuration describes (769 inputs, `hidden_layers` × `hidden_size` hidden
+`ValidationLoss` builds the network a configuration describes (769 inputs, `hidden_layers` x `hidden_size` hidden
 neurons with the chosen activation, 5 softmax outputs), trains it for 6 epochs on the training split with Momentum,
 the chosen loss and the exponential decay, then `ValidationError` returns its **validation error**: the share of the
 750 validation boards it gets wrong, boards it never trained on.
@@ -114,7 +114,7 @@ elite, not trained again), then fills the rest with children:
 | Data | 7,500 positions from the Lichess database of January 2013, balanced over the 5 classes: 6,000 train, 750 validation, 750 test (`python -m dataset.generate ... --per-class 1500`) |
 | Inputs | the analyzer's 769-input encoding (`analyzer.encoder.encode_fen`) |
 | Training per evaluation | 6 epochs, scored by validation error |
-| Budget | PSO: 8 particles × 10 positions = **80** networks; GA: 8 individuals + 10 generations × 7 children = **78** networks |
+| Budget | PSO: 8 particles x 10 positions = **80** networks; GA: 8 individuals + 10 generations x 7 children = **78** networks |
 | Repetitions | 5 seeds per method, the 10 searches run in parallel: **790 networks** in all |
 | Learning curves | the best configuration of each activation and loss pair, over all 10 searches, retrained for 30 epochs and measured after every epoch |
 | Final check | test metrics on the **test** split, never used by the search |
@@ -125,10 +125,10 @@ elite, not trained again), then fills the rest with children:
 
 | Method | Best validation accuracy | Test accuracy | Networks trained to reach 70.0 % | Minutes per search |
 |---|---|---|---|---|
-| Particle swarm | 70.9 ± 0.6 % | **69.3 ± 1.4 %** | 28.8 ± 13.5 | 29.3 ± 7.5 |
-| Genetic algorithm | **71.9 ± 1.0 %** | 67.9 ± 1.8 % | **18.2 ± 9.6** | **25.4 ± 8.7** |
+| Particle swarm | 70.9 +/- 0.6 % | **69.3 +/- 1.4 %** | 28.8 +/- 13.5 | 29.3 +/- 7.5 |
+| Genetic algorithm | **71.9 +/- 1.0 %** | 67.9 +/- 1.8 % | **18.2 +/- 9.6** | **25.4 +/- 8.7** |
 
-Mean ± standard deviation over 5 seeds; 70.0 % is the lowest final score of the 10 searches, a level every search
+Mean +/- standard deviation over 5 seeds; 70.0 % is the lowest final score of the 10 searches, a level every search
 reaches. Guessing among the 5 classes would give 20 %.
 
 ![Best validation accuracy found so far, against the number of networks trained](images/hyperparameter_search/hyperparameter_convergence.png)
@@ -143,7 +143,7 @@ validation loss, logs in commit `ac8678d`) found the same: equal validation qual
 
 ### Activations and losses
 
-| Hidden activation + loss | Networks trained | Good (≥ 68 %) | Failed (< 50 %) | Median | Best |
+| Hidden activation + loss | Networks trained | Good (>= 68 %) | Failed (< 50 %) | Median | Best |
 |---|---|---|---|---|---|
 | ReLU + cross-entropy | 321 | 61 % | 4 % | 68.9 % | **73.1 %** |
 | ReLU + MSE | 119 | 28 % | 23 % | 63.9 % | 70.8 % |
@@ -170,23 +170,23 @@ The best configuration of each pair, retrained for 30 epochs and measured after 
 
 | Hidden activation + loss | Found by | Best epoch | Validation accuracy | Test accuracy | Test macro-F1 |
 |---|---|---|---|---|---|
-| ReLU + cross-entropy | GA seed 2 (1 × 134) | 9 | 69.6 % | 69.3 % | 69.2 % |
-| ReLU + MSE | GA seed 1 (2 × 59) | 11 | 69.5 % | 70.8 % | 70.4 % |
-| tanh + cross-entropy | PSO seed 4 (1 × 256) | 6 | 70.8 % | 68.7 % | 68.2 % |
-| tanh + MSE | PSO seed 0 (2 × 68) | 8 | 70.8 % | 67.9 % | 67.9 % |
+| ReLU + cross-entropy | GA seed 2 (1 x 134) | 9 | 69.6 % | 69.3 % | 69.2 % |
+| ReLU + MSE | GA seed 1 (2 x 59) | 11 | 69.5 % | 70.8 % | 70.4 % |
+| tanh + cross-entropy | PSO seed 4 (1 x 256) | 6 | 70.8 % | 68.7 % | 68.2 % |
+| tanh + MSE | PSO seed 0 (2 x 68) | 8 | 70.8 % | 67.9 % | 67.9 % |
 
-- **Accuracy levels off after 6 to 11 epochs** at 69–71 % for every pair: more epochs do not help.
+- **Accuracy levels off after 6 to 11 epochs** at 69-71 % for every pair: more epochs do not help.
 - **The validation cross-entropy turns back up after about epoch 5**, most of all for ReLU + cross-entropy: the
   network grows more confident without getting more boards right. That is overfitting, and it is why training uses
   **early stopping** (stop when the validation loss has not improved for 5 epochs, keep the best weights).
 - The validation loss is measured with cross-entropy for every pair, so the four curves share one scale; MSE-trained
   networks are scored on it too, not on their own training loss.
 - On the test set, the four best configurations are within 3 points of each other: with 750 test boards, one board
-  is 0.13 point and the noise is about ±1.7 point, so none is significantly better.
+  is 0.13 point and the noise is about +/-1.7 point, so none is significantly better.
 
 ![Per-class F1 on the test set of the best configuration of each pair](images/hyperparameter_search/learning_curves_classes.png)
 
-Every pair finds the **checkmates** easiest (F1 69–80 %) and **Check White** hardest (57–63 %). A check depends on
+Every pair finds the **checkmates** easiest (F1 69-80 %) and **Check White** hardest (57-63 %). A check depends on
 a line of attack across the board, which a dense layer only sees through many separate square inputs; checkmate
 positions are also simpler boards, with about 15 pieces left on average against about 26 for "Nothing" (the dataset
 generator's report).
@@ -195,8 +195,8 @@ generator's report).
 
 **Particle swarm.** Final validation quality is close (70.9 against 71.9 %), and the genetic algorithm gets there
 with fewer networks, but its best configurations do 1.4 points worse on unseen boards. In the first version of this
-benchmark both methods tied on test accuracy, and the swarm's results were the steadier ones (test loss ± 0.001
-against ± 0.023). What matters is the network we keep, judged on data the search never touched, so we keep the method whose
+benchmark both methods tied on test accuracy, and the swarm's results were the steadier ones (test loss +/- 0.001
+against +/- 0.023). What matters is the network we keep, judged on data the search never touched, so we keep the method whose
 choices transfer. The swarm also has fewer settings to tune (inertia, two pull weights and a speed cap, against
 population, elites, tournament size, crossover and mutation rates and mutation scale).
 
@@ -214,7 +214,7 @@ stopping keeping the best weights. tanh would be a sound alternative: more forgi
 **Softmax** is not searched: the output must give one probability per class over 5 exclusive classes, which is
 exactly what softmax does (and what cross-entropy expects).
 
-**2 × 47 kept as the default.** The search keeps landing on 1 or 2 hidden layers of 50 to 250 neurons with learning
+**2 x 47 kept as the default.** The search keeps landing on 1 or 2 hidden layers of 50 to 250 neurons with learning
 rates of 0.02 to 0.08, the region of the current default, and no new configuration is significantly better on the
 test set. Keeping it means nothing changes for the analyzer, the engine or networks already trained.
 
@@ -242,8 +242,12 @@ judged on 20,000 validation boards neither trained on; the 20,000 test boards we
 
 | Config | Epochs (kept / run) | Validation accuracy | Test accuracy | Minutes per training |
 |---|---|---|---|---|
-| `basic_network.conf` (2 × 47, early stopping only) | 9 to 11 / 14 to 16 | 82.2 to 82.5 % | 82.5 to 82.7 % | 4 to 4.5 |
+| `basic_network.conf` (2 x 47, early stopping only) | 9 to 11 / 14 to 16 | 82.2 to 82.5 % | 82.5 to 82.7 % | 4 to 4.5 |
 | `regularized_network.conf` (128 + 64, early stopping, dropout, L2) | 11 to 12 / 19 to 20 | **83.4 to 83.9 %** | **83.9 to 84.1 %** | 12 to 13 |
+
+![Training and validation loss per epoch of the 6 networks](images/final_network/final_network_curves.png)
+
+![Validation and test accuracy of each seed](images/final_network/final_network_accuracy.png)
 
 The regularized network wins on every seed, by about 1.4 points on the test boards, and is
 `my_torch_network_full.nn`. Its second hidden layer uses tanh rather than ReLU; the search found the two equivalent.

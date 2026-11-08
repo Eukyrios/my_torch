@@ -1,69 +1,116 @@
 # my_torch
 
-A neural network library written from scratch (no PyTorch, TensorFlow, …) and `my_torch_analyzer`, a program that reads a chessboard in FEN notation and predicts its state: **Nothing**, **Check White**, **Check Black**, **Checkmate White** or **Checkmate Black**.
+A neural network library written from scratch in C++ (no PyTorch, TensorFlow or NumPy), and `my_torch_analyzer`, a
+program that reads chessboards in FEN notation and predicts the state of each one: **Nothing**, **Check White**,
+**Check Black**, **Checkmate White** or **Checkmate Black**.
+
+1. [Quick start](#quick-start)
+2. [Results](#results)
+3. [Documentation](#documentation)
+4. [Design choices](#design-choices)
+5. [Repository layout](#repository-layout)
+6. [The my_torch module](#the-my_torch-module)
+7. [The analyzer](#the-analyzer)
+8. [Data and reproduction](#data-and-reproduction)
+9. [Bonus: stalemate](#bonus-stalemate)
+10. [Development](#development)
+11. [Credits](#credits)
+
+## Quick start
+
+```bash
+make                                                            # builds ./my_torch_analyzer and ./my_torch_generator
+./my_torch_analyzer --help
+./my_torch_analyzer --predict my_torch_network_full.nn chessboards.txt
+```
 
 ```
-./my_torch_analyzer [--predict | --train [--save SAVEFILE]] LOADFILE CHESSFILE
+$> cat chessboards.txt
+rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3
+rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+$> ./my_torch_analyzer --predict my_torch_network_full.nn chessboards.txt
+Checkmate Black
+Nothing
 ```
 
-> 📅 **Deadline: Sunday 8 November 2026** (moved forward from 17 November).
+- **`--predict`** prints one prediction per board, in order, on stdout. When the file also gives the expected output
+  after each FEN (`... w KQkq - 1 3 Checkmate Black`), an accuracy report (accuracy, confusion matrix, precision and
+  recall per class) goes to stderr.
+- **`--train [--save SAVEFILE]`** trains the network on boards that give their expected output, and saves it to
+  SAVEFILE, or back to LOADFILE without `--save`.
+- Any error (bad option, unreadable file, invalid FEN or network) is printed on stderr and exits with **84**.
 
-## Project
+## Results
 
-The plan (board, team split, roadmap and daily schedule) is in [`docs/project.md`](docs/project.md).
-The maths behind the module is in [`docs/my_torch.md`](docs/my_torch.md).
-The hyperparameter search (particle swarm vs genetic algorithm, activations and losses included), its benchmark,
-learning curves and the choices it led to are in [`docs/hyperparameter_search.md`](docs/hyperparameter_search.md).
-How the network we push builds on it (early stopping, dropout and L2 on top, checked at full scale) is in
-[its §8](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push).
+`my_torch_network_full.nn`, trained on 160,000 positions and tested on 20,000 positions it never saw:
 
-### Design choices
+| Accuracy | Nothing | Check White | Check Black | Checkmate White | Checkmate Black |
+|---|---|---|---|---|---|
+| **83.9 %** | 76.8 % | 82.6 % | 82.3 % | 89.3 % | 88.6 % |
+
+(recall per class: the share of each class predicted right). It almost never confuses the colours (1 board in
+20,000); its mistakes are a check taken for a checkmate and back, and a quiet position taken for a check.
+
+![Validation and test accuracy of each seed](docs/images/final_network/final_network_accuracy.png)
+
+It was chosen over the network the hyperparameter search retained (82.6 %) after training both 3 times at full
+scale: [`docs/benchmarks/final_network/`](docs/benchmarks/final_network/).
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [`docs/my_torch.md`](docs/my_torch.md) | the maths of the module: shapes, forward pass, activations, softmax, losses, backpropagation, gradient check, initialization, optimizers, schedules |
+| [`docs/hyperparameter_search.md`](docs/hyperparameter_search.md) | the hyperparameter search (particle swarm vs genetic algorithm, activations and losses), its benchmark, learning curves, and how the network we push builds on it |
+| [`docs/benchmarks/final_network/`](docs/benchmarks/final_network/) | the full-scale comparison that chose `my_torch_network_full.nn`, with its learning curves |
+| [`docs/decisions.md`](docs/decisions.md) | every design decision with its alternatives, risks and impact |
+| [`docs/project.md`](docs/project.md) | the plan: board, team split, roadmap and daily schedule |
+| [`bonus/README.md`](bonus/README.md) | the stalemate bonus |
+
+## Design choices
 
 | Choice | What we use | Why |
 |---|---|---|
-| Input | 769 numbers: one per piece type and square (12 × 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
-| Architecture | 769 → **128 ReLU → 64 tanh** → 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 × 47 the search retained, which also lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
+| Input | 769 numbers: one per piece type and square (12 x 64), plus whose turn it is | every fact about the board and nothing hand-crafted: the network has to learn what a check is |
+| Architecture | 769 -> **128 ReLU -> 64 tanh** -> 5 softmax, dropout 0.2 after each hidden layer ([`regularized_network.conf`](configs/regularized_network.conf)) | best at full scale: 83.9 % on the test boards against 82.6 % for the 2 x 47 the search retained, which also lands on 2 hidden layers ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)) |
 | Hidden activation | **ReLU** (tanh on the second layer of the pushed network) | tied with tanh on accuracy, best top configurations, cheapest to compute ([results](docs/hyperparameter_search.md#activations-and-losses)) |
 | Output activation | **softmax** | one probability per class over 5 exclusive classes |
 | Loss | **cross-entropy** | MSE fails 4 to 6 times as often in the search; with softmax its gradient is simply `p - y` |
 | Initialization | He before ReLU, Xavier before softmax | keeps the signal's variance steady through the layers ([maths](docs/my_torch.md#9-weight-initialization)) |
-| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the search's (0.018, 0.53, × 0.86 per epoch, batches of 9) |
+| Optimizer | Momentum, learning rate 0.01, momentum 0.9, halved every 10 epochs; batches of 32 | the pushed network's settings; a network saved without a training gets the search's (0.018, 0.53, x 0.86 per epoch, batches of 9) |
 | Overfitting | validation split, **early stopping** keeping the best weights, **dropout 0.2** and **L2 1e-4** | they let a wider network learn more without overfitting: 84.0 % on the test boards against 82.6 % ([full-scale check](docs/hyperparameter_search.md#8-from-the-search-to-the-network-we-push)); without early stopping the validation loss rises after 6 to 11 epochs ([curves](docs/hyperparameter_search.md#learning-curves)) |
 
-## Development
-
-The neural network module is a **C++20 library** (`my_torch/`, built with `g++`, tested with
-[Criterion](https://github.com/Snaipe/Criterion)), with its own small matrix library instead of numpy. The analyzer
-and the dataset generator are Python 3.12; `python-chess` is only used to label the training data.
-
-```bash
-sudo apt install libcriterion-dev       # C++ tests
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements-dev.txt
-
-make                    # builds my_torch/libmytorch.a, ./my_torch_analyzer and ./my_torch_generator
-make tests_run          # C++ tests, then Python tests
-make coverage           # Python tests + coverage report in reports/htmlcov
-```
+## Repository layout
 
 ```
 my_torch/               the neural network module, a C++ library (libmytorch.a)
-  src/math/             Matrix: products, transpose, broadcasting, reductions (numpy's role)
-  src/model/            Neuron, activations (ReLU, Softmax, ...), layers (DenseLayer, Dropout), Network
-  src/training/         losses, optimizers (SGD, Momentum), learning-rate schedules, Training (early stopping)
+  src/math/             Matrix: products, transpose, broadcasting, reductions
+  src/model/            Neuron, activations (ReLU, tanh, softmax), layers (DenseLayer, Dropout), Network
+  src/training/         losses, optimizers (SGD, Momentum), learning-rate schedules, Training (early stopping),
+                        hyperparameter search (particle swarm, genetic algorithm)
   src/io/               .nn files (json, npy, zip) and boards encoded as input indices
   src/engine/           my_torch_engine, the program the analyzer runs to predict and train
   src/generator/        my_torch_generator: blank networks from a config file, in code or as .nn files
+  benchmarks/           the hyperparameter benchmark
   tests/                Criterion tests, one folder per source folder
 analyzer/               my_torch_analyzer: CLI, FEN parser, board encoder (769 inputs), chess file, report
 dataset/                builds labelled train/validation/test files from a Lichess PGN
-configs/                example config files for my_torch_generator
+configs/                config files for my_torch_generator (basic and regularized networks)
+scripts/                benchmark runners and the plots of docs/
+docs/                   documentation, benchmark results and figures
+bonus/                  the stalemate network, its dataset and Makefile
+tests/                  Python tests (analyzer, dataset, scripts)
 my_torch_analyzer.py    entry point, copied to ./my_torch_analyzer by make
-tests/                  Python tests (analyzer, dataset)
+my_torch_network_full.nn  the pre-trained network
 ```
 
 Each base class sits at the top of its folder and each subclass in its own subfolder, e.g.
 `src/training/losses/loss.hpp` and `src/training/losses/losses/cross_entropy/cross_entropy.hpp`.
+
+## The my_torch module
+
+The module lets you **create** a network (in code or from a config file), **train** it, and **save and load** it with
+everything needed to resume its training.
 
 ### Using the module
 
@@ -124,12 +171,12 @@ plots and checks):
 
 ```
 my_torch_network_basic.nn
-├── header.json            what the network is, how it was trained, where training stopped
-├── layer_0_weights.npy    float64 (n_inputs, n_outputs)
-├── layer_0_biases.npy     float64 (n_outputs,)
-├── layer_1_weights.npy    ... one pair per dense layer, in order
-├── optimizer_0.npy        optimizer memory, one array per parameter in the same order
-└── ...                    (only for optimizers that have some, e.g. Momentum's velocities)
+|-- header.json            what the network is, how it was trained, where training stopped
+|-- layer_0_weights.npy    float64 (n_inputs, n_outputs)
+|-- layer_0_biases.npy     float64 (n_outputs,)
+|-- layer_1_weights.npy    ... one pair per dense layer, in order
+|-- optimizer_0.npy        optimizer memory, one array per parameter in the same order
+`-- ...                    (only for optimizers that have some, e.g. Momentum's velocities)
 ```
 
 - **Arrays** are `.npy` files: exact float64 values, nothing lost between save and load.
@@ -217,7 +264,7 @@ network we push, adds width, dropout and L2):
 | `inputs` | number of inputs of the first layer (769 for a chessboard) |
 | `seed` | network *i* of the file draws its weights from seed `seed + i - 1` (0 by default): each network starts differently, and all can be regenerated |
 | `layers` | in order; `dense` with `outputs`, `activation` (`relu`, `tanh` or `softmax`, required) and `initialization`, or `dropout` with `rate` |
-| `initialization` | `he` (√(2 / inputs), for ReLU), `xavier` (√(2 / (inputs + outputs)), for tanh and softmax), `lecun` (√(1 / inputs), for tanh) or `auto` (default: He before ReLU, Xavier otherwise) |
+| `initialization` | `he` (sqrt(2 / inputs), for ReLU), `xavier` (sqrt(2 / (inputs + outputs)), for tanh and softmax), `lecun` (sqrt(1 / inputs), for tanh) or `auto` (default: He before ReLU, Xavier otherwise) |
 | `training` | any of the `training` settings of a `.nn` file; each one left out keeps the engine's default, and a missing `schedule` means a constant rate |
 | `metadata` | optional; the generator adds `seed` and `config` |
 
@@ -230,6 +277,8 @@ my_torch::GeneratedNetwork generated = my_torch::generate_network(my_torch::read
 generated.training.fit(generated.network, inputs, labels);         // or save_network(path, generated.network, generated.metadata, &generated.training)
 ```
 
+## The analyzer
+
 ### How the analyzer uses the network
 
 The analyzer (Python) reads the chess file, checks every FEN and label, and turns each board into the indices of its
@@ -237,12 +286,12 @@ inputs that are 1. It hands them to `my_torch/my_torch_engine` (C++, built by `m
 
 ```
 ./my_torch_analyzer --predict LOADFILE CHESSFILE
-    analyzer ── "769 5" + one line of input indices per board ──▶ my_torch_engine predict LOADFILE
-    analyzer ◀── one line of 5 outputs per board ─────────────── (a chunk of 1024 boards at a time)
+    analyzer -- "769 5" + one line of input indices per board -> my_torch_engine predict LOADFILE
+    analyzer <- one line of 5 outputs per board --------------- (a chunk of 1024 boards at a time)
     stdout: one label per board, in order; stderr: accuracy report when expected outputs are given
 
 ./my_torch_analyzer --train [--save SAVEFILE] LOADFILE CHESSFILE
-    analyzer ── "769 5" + class and input indices per board ──▶ my_torch_engine train LOADFILE SAVEFILE
+    analyzer -- "769 5" + class and input indices per board -> my_torch_engine train LOADFILE SAVEFILE
     stdout: one line per epoch; the network is saved with its whole training
 ```
 
@@ -260,28 +309,82 @@ search retained: Momentum, learning rate 0.018, momentum 0.53, decay 0.86 per ep
 | **Dropout**: zeroes inputs at random while training, scales the others by `1 / (1 - rate)` | `Dropout` layer | `{"type": "dropout", "rate": 0.2}` in `layers` |
 
 Because the best weights are kept, a `--train` run never leaves a network worse on its validation boards than it
-found it. On the 8,000 boards of `data/train.txt`, the training loss keeps falling while the validation loss
-turns back up after epoch 9: training stops at epoch 14 and keeps the weights of epoch 9.
+found it. Training `my_torch_network_full.nn` on the 160,000 boards of `data/train.txt`, the validation loss stops
+improving after epoch 11 while the training loss keeps falling: training stops at epoch 19 and keeps the weights of
+epoch 11 ([curves](docs/benchmarks/final_network/)).
+
+## Data and reproduction
 
 ### Building a dataset
 
 ```bash
-python -m dataset.generate lichess_db_standard_rated_2013-01.pgn --out data --per-class 20000
+python -m dataset.generate lichess_db_standard_rated_2016-12.pgn --out data --per-class 40000 --seed 42
 ```
 
 Reads games from a [Lichess database](https://database.lichess.org/) PGN and writes `data/train.txt`,
 `data/validation.txt` and `data/test.txt` (80/10/10 by default), balanced over the 5 classes, one `FEN label` per line.
 Positions from the same game never end up in two splits. Datasets aren't pushed (`data/` and `datasets/` are
-ignored by git) but are kept for the defense.
+ignored by git) but are kept for the defense. With the command above: 160,000 / 20,000 / 20,000 boards, 4,000 per
+class in validation and test.
+
+### Reproducing `my_torch_network_full.nn`
+
+The pushed network is `configs/regularized_network.conf` generated with seed 100 and trained once with `--train` on
+the dataset above. One command does it all, [`scripts/train_final_network.sh`](scripts/train_final_network.sh):
+
+```bash
+scripts/train_final_network.sh data my_torch_network_full.nn
+```
+
+It runs these steps:
+
+```bash
+make
+./my_torch_generator configs/regularized_network.conf 1          # regularized_network_1.nn, seed 100
+./my_torch_analyzer --train --save my_torch_network_full.nn regularized_network_1.nn data/train.txt
+./my_torch_analyzer --predict my_torch_network_full.nn data/test.txt > /dev/null   # accuracy report on stderr
+```
+
+The training takes 8 to 12 minutes (19 epochs, early stopping keeps epoch 11) and gives 83.9 % on the test boards.
+Training is deterministic: retrained from scratch, it gives a `.nn` file identical to the pushed one, bit for bit. Why
+this config and not another is in
+[`docs/benchmarks/final_network/`](docs/benchmarks/final_network/), which `scripts/compare_final_networks.sh`
+reproduces in full (both configs, 3 seeds each).
+
+## Bonus: stalemate
+
+[`bonus/`](bonus/) holds a sixth-class network that also predicts **Stalemate** (side to move not in check and
+without a legal move): 94.0 % of stalemates recognised, with no change to the 5-class network. Details, dataset and
+results in [`bonus/README.md`](bonus/README.md).
+
+```bash
+./my_torch_analyzer --predict bonus/my_torch_network_stalemate.nn CHESSFILE
+```
+
+## Development
+
+The module is **C++20** (`g++`, tests with [Criterion](https://github.com/Snaipe/Criterion)); the analyzer and the
+dataset generator are **Python 3.12**.
+
+```bash
+sudo apt install libcriterion-dev       # C++ tests
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements-dev.txt
+
+make                    # builds my_torch/libmytorch.a, ./my_torch_analyzer and ./my_torch_generator
+make tests_run          # C++ tests, then Python tests
+make coverage           # Python tests + coverage report in reports/htmlcov
+make clean / fclean / re
+```
 
 ### Workflow
 
 ```
-feature branch  ──  PR  →  main  ──  CI  →  Epitech repo
+feature branch  --  PR  ->  main  --  CI  ->  Epitech repo
 ```
 
 1. One branch per issue, PR into `main` with `Closes #<issue>` so merging closes it.
-2. CI must be green (build, tests, coverage ≥ 85%) before merging.
+2. CI must be green (build, tests, coverage >= 85%) before merging.
 
 ### CI and mirroring
 
@@ -313,32 +416,28 @@ To check the key reaches the Epitech repo before pushing:
 GIT_SSH_COMMAND="ssh -i ~/.ssh/ci_deploy -o IdentitiesOnly=yes" \
   git ls-remote git@github.com:EpitechPGE3-2026/G-CNA-501-PAR-5-1-mytorch-20.git
 ```
-## Crédits
 
-### Données d'entraînement
+## Credits
 
-Les positions du dataset proviennent de la **base de données ouverte de Lichess**
-([database.lichess.org](https://database.lichess.org/)) :
+### Training data
 
-- **Fichier utilisé :** `lichess_db_standard_rated_2016-12.pgn`, soit les parties
-  « standard » classées de décembre 2016 (9 433 412 parties).
-- **Licence :** les exports de la base Lichess sont publiés sous licence
-  [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/) :
-  ils peuvent être téléchargés, modifiés et redistribués sans autorisation, y compris pour la recherche.
-- **Ce que nous en avons tiré :** à partir des coups de chaque partie, nous avons
-  reconstitué des positions au format FEN, puis nous les avons étiquetées
-  (`Nothing`, `Check White/Black`, `Checkmate White/Black`) avec la bibliothèque
-  [python-chess](https://github.com/niklasf/python-chess), qui sert uniquement à
-  produire les étiquettes. Le réseau de neurones lui-même est entièrement
-  codé par nous, sans bibliothèque d'apprentissage.
-- **Reproductibilité :** le dataset n'est pas versionné (le fichier source fait environ 8 Go).
-  Il se régénère avec :
-  `python -m dataset.generate dataset/lichess_db_standard_rated_2016-12.pgn --out data --per-class 40000 --seed 42`
-  (160 000 / 20 000 / 20 000 positions)
-  (la graine fixe donne toujours les mêmes fichiers).
+The positions come from the **Lichess open database** ([database.lichess.org](https://database.lichess.org/)):
 
-### Bibliothèques
+- **File used:** `lichess_db_standard_rated_2016-12.pgn`, the rated standard games of December 2016 (9,433,412
+  games).
+- **License:** the Lichess database exports are published under
+  [Creative Commons CC0](https://creativecommons.org/publicdomain/zero/1.0/): they can be downloaded, modified and
+  redistributed without permission, research included.
+- **What we took from it:** we replayed the moves of each game to rebuild positions in FEN, then labelled them
+  (`Nothing`, `Check White/Black`, `Checkmate White/Black`) with [python-chess](https://github.com/niklasf/python-chess),
+  which is only used to produce the labels. The neural network itself is entirely ours, without any learning library.
+- **Reproducibility:** the dataset is not versioned (the source file is about 8 GB); it is rebuilt with the command
+  of [Building a dataset](#building-a-dataset), and the fixed seed always gives the same files.
 
-- [python-chess](https://github.com/niklasf/python-chess) : lecture des parties PGN et étiquetage des positions.
-- [matplotlib](https://matplotlib.org/) : graphiques des benchmarks (`docs/images/`). Le calcul matriciel du réseau
-  et le format `.nn` sont codés en C++ dans `my_torch/`, sans NumPy.
+### Libraries
+
+- [python-chess](https://github.com/niklasf/python-chess): reading PGN games and labelling positions (dataset only).
+- [matplotlib](https://matplotlib.org/): the benchmark figures in `docs/images/`.
+- [Criterion](https://github.com/Snaipe/Criterion) and [pytest](https://pytest.org/): tests.
+
+Matrix maths and the `.nn` format are written in C++ in `my_torch/`, without NumPy.

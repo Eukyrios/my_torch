@@ -5,14 +5,16 @@ import chess
 
 from dataset.games import fen_of, read_games, sample_game
 
+from tests.dataset.conftest import GAMES, load_game, write_pgn
+
 
 def labels_of(samples):
     return Counter(label for label, _ in samples)
 
 
-def test_read_games_skips_games_with_illegal_moves(pgn_file, game_count):
-    sites = [game.headers["Site"] for game in read_games(pgn_file)]
-    assert len(sites) == game_count - 1
+def test_read_games_skips_games_with_illegal_moves(tmp_path):
+    sites = [game.headers["Site"] for game in read_games(write_pgn(tmp_path))]
+    assert len(sites) == len(GAMES) - 1
     assert "https://lichess.org/illegal1" not in sites
 
 
@@ -22,35 +24,35 @@ def test_fen_keeps_the_en_passant_square_like_the_subject():
     assert fen_of(board).endswith(" b KQkq d3 0 1")
 
 
-def test_checkmate_position_is_always_kept(load_game):
+def test_checkmate_position_is_always_kept():
     samples = sample_game(load_game(0), random.Random(0), per_game=10)
     assert labels_of(samples) == {"Nothing": 3, "Checkmate Black": 1}
 
 
-def test_scholars_mate_is_labelled_for_white(load_game):
+def test_scholars_mate_is_labelled_for_white():
     samples = sample_game(load_game(1), random.Random(0), per_game=10)
     assert labels_of(samples)["Checkmate White"] == 1
 
 
-def test_checks_are_capped_per_game(load_game):
+def test_checks_are_capped_per_game():
     assert labels_of(sample_game(load_game(2), random.Random(0), per_game=1))["Check White"] == 1
     assert labels_of(sample_game(load_game(2), random.Random(0), per_game=5))["Check White"] == 2
 
 
-def test_black_checks_are_labelled_for_black(load_game):
+def test_black_checks_are_labelled_for_black():
     samples = sample_game(load_game(3), random.Random(0), per_game=5)
     assert labels_of(samples)["Check Black"] == 2
 
 
-def test_quiet_positions_are_capped_per_game(load_game):
+def test_quiet_positions_are_capped_per_game():
     samples = sample_game(load_game(3), random.Random(0), per_game=1)
     assert labels_of(samples)["Nothing"] <= 1
 
 
-def test_game_without_moves_gives_nothing(load_game):
+def test_game_without_moves_gives_nothing():
     assert sample_game(load_game(4), random.Random(0), per_game=3) == []
 
 
-def test_sampling_is_reproducible(load_game):
+def test_sampling_is_reproducible():
     first = sample_game(load_game(3), random.Random(5), per_game=2)
     assert first == sample_game(load_game(3), random.Random(5), per_game=2)
