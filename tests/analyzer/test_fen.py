@@ -20,9 +20,9 @@ SUBJECT_FENS = [
 ]
 
 
-@pytest.mark.parametrize("fen", SUBJECT_FENS)
-def test_subject_fens_round_trip(fen):
-    assert to_fen(parse_fen(fen)) == fen
+def test_subject_fens_round_trip():
+    for fen in SUBJECT_FENS:
+        assert to_fen(parse_fen(fen)) == fen
 
 
 def test_starting_position_fields():
@@ -54,16 +54,16 @@ def test_square_helpers():
     assert all(square_index(square_name(i)) == i for i in range(64))
 
 
-@pytest.mark.parametrize("name", ["", "e", "e22", "i3", "a0", "a9", "E2"])
-def test_square_index_rejects_garbage(name):
-    with pytest.raises(FenError):
-        square_index(name)
+def test_square_index_rejects_garbage():
+    for name in ["", "e", "e22", "i3", "a0", "a9", "E2"]:
+        with pytest.raises(FenError):
+            square_index(name)
 
 
-@pytest.mark.parametrize("index", [-1, 64])
-def test_square_name_out_of_range(index):
-    with pytest.raises(ValueError):
-        square_name(index)
+def test_square_name_out_of_range():
+    for index in [-1, 64]:
+        with pytest.raises(ValueError):
+            square_name(index)
 
 
 INVALID_FENS = {
@@ -100,10 +100,10 @@ INVALID_FENS = {
 }
 
 
-@pytest.mark.parametrize("fen", INVALID_FENS.values(), ids=INVALID_FENS.keys())
-def test_invalid_fens_are_rejected(fen):
-    with pytest.raises(FenError):
-        parse_fen(fen)
+def test_invalid_fens_are_rejected():
+    for fen in INVALID_FENS.values():
+        with pytest.raises(FenError):
+            parse_fen(fen)
 
 
 def test_non_string_is_rejected():

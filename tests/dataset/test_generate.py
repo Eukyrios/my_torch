@@ -5,6 +5,8 @@ from dataset import generate
 from dataset.generate import Collector, collect, describe, main, write_splits
 from dataset.labels import LABELS
 
+from tests.dataset.conftest import write_pgn
+
 TRAIN_ONLY = (1, 0, 0)
 
 
@@ -36,26 +38,30 @@ def test_collector_stops_at_the_quota():
     assert collector.split_is_full("train") is False
 
 
-def test_collect_fills_every_class(pgn_file):
+def test_collect_fills_every_class(tmp_path):
+    pgn_file = write_pgn(tmp_path)
     collector = collect(pgn_file, per_class=1, ratios=TRAIN_ONLY, per_game=5, seed=1)
     assert collector.is_full()
     assert all(len(collector.lines["train"][label]) == 1 for label in LABELS)
     assert collector.shortfalls() == []
 
 
-def test_collect_reports_missing_positions(pgn_file):
+def test_collect_reports_missing_positions(tmp_path):
+    pgn_file = write_pgn(tmp_path)
     collector = collect(pgn_file, per_class=50, ratios=TRAIN_ONLY, per_game=5, seed=1)
     assert not collector.is_full()
     assert ("train", "Checkmate White", 1, 50) in collector.shortfalls()
 
 
-def test_collect_prints_progress(pgn_file, monkeypatch, capsys):
+def test_collect_prints_progress(tmp_path, monkeypatch, capsys):
+    pgn_file = write_pgn(tmp_path)
     monkeypatch.setattr(generate, "PROGRESS_EVERY", 1)
     collect(pgn_file, per_class=50, ratios=TRAIN_ONLY, per_game=5, seed=1)
     assert "games read" in capsys.readouterr().err
 
 
-def test_write_splits_balances_and_writes_files(pgn_file, tmp_path):
+def test_write_splits_balances_and_writes_files(tmp_path):
+    pgn_file = write_pgn(tmp_path)
     collector = collect(pgn_file, per_class=1, ratios=TRAIN_ONLY, per_game=5, seed=1)
     written = write_splits(collector, tmp_path / "out", seed=1)
     assert len(written["train"]) == 5
@@ -70,7 +76,8 @@ def test_describe_counts_labels_and_pieces():
     assert stats["Check White"] == (0, 0.0)
 
 
-def test_main_writes_valid_labelled_lines(pgn_file, tmp_path, capsys):
+def test_main_writes_valid_labelled_lines(tmp_path, capsys):
+    pgn_file = write_pgn(tmp_path)
     assert run(pgn_file, tmp_path / "data") == 0
     lines = (tmp_path / "data" / "train.txt").read_text().splitlines()
     assert len(lines) == 5
@@ -81,13 +88,15 @@ def test_main_writes_valid_labelled_lines(pgn_file, tmp_path, capsys):
     assert "mean pieces" in capsys.readouterr().out
 
 
-def test_same_seed_gives_identical_files(pgn_file, tmp_path):
+def test_same_seed_gives_identical_files(tmp_path):
+    pgn_file = write_pgn(tmp_path)
     run(pgn_file, tmp_path / "a", "--seed", "9")
     run(pgn_file, tmp_path / "b", "--seed", "9")
     assert (tmp_path / "a" / "train.txt").read_text() == (tmp_path / "b" / "train.txt").read_text()
 
 
-def test_main_warns_when_a_class_is_short(pgn_file, tmp_path, capsys):
+def test_main_warns_when_a_class_is_short(tmp_path, capsys):
+    pgn_file = write_pgn(tmp_path)
     main([str(pgn_file), "--out", str(tmp_path / "d"), "--per-class", "9", "--ratios", "1", "0", "0"])
     assert "warning: train / Checkmate White" in capsys.readouterr().err
 
@@ -97,10 +106,8 @@ def test_missing_file_exits_with_84(tmp_path, capsys):
     assert "dataset:" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize(
-    "bad",
-    [["--per-class", "0"], ["--per-game", "0"], ["--ratios", "0", "0", "0"], ["--ratios", "-1", "1", "1"]],
-)
-def test_bad_options_are_rejected(pgn_file, bad):
-    with pytest.raises(SystemExit):
-        main([str(pgn_file), *bad])
+def test_bad_options_are_rejected(tmp_path):
+    pgn_file = write_pgn(tmp_path)
+    for bad in [["--per-class", "0"], ["--per-game", "0"], ["--ratios", "0", "0", "0"], ["--ratios", "-1", "1", "1"]]:
+        with pytest.raises(SystemExit):
+            main([str(pgn_file), *bad])

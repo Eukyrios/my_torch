@@ -9,7 +9,7 @@ from analyzer.engine import EngineError, boards_text, network_labels, parse_outp
 from analyzer.fen import parse_fen
 from analyzer.prediction import LABELS
 
-from tests.analyzer.conftest import BLACK_TO_MOVE, WHITE_TO_MOVE, write_network
+from tests.analyzer.conftest import BLACK_TO_MOVE, WHITE_TO_MOVE, side_network, write_network
 
 BOARDS = [Board(parse_fen(WHITE_TO_MOVE), None, 1), Board(parse_fen(BLACK_TO_MOVE), "Nothing", 2)]
 
@@ -29,19 +29,21 @@ def test_outputs_are_read_one_line_per_board():
         parse_outputs("USAGE\n")
 
 
-def test_predict_gives_the_outputs_of_the_network(side_network):
-    outputs = predict_outputs(side_network, BOARDS, LABELS)
+def test_predict_gives_the_outputs_of_the_network(tmp_path):
+    network_file = side_network(tmp_path)
+    outputs = predict_outputs(network_file, BOARDS, LABELS)
     assert len(outputs) == 2
     assert max(range(5), key=outputs[0].__getitem__) == LABELS.index("Check White")
     assert max(range(5), key=outputs[1].__getitem__) == LABELS.index("Check Black")
     assert sum(outputs[0]) == pytest.approx(1.0)
 
 
-def test_engine_errors_carry_its_message(tmp_path, side_network):
+def test_engine_errors_carry_its_message(tmp_path):
+    network_file = side_network(tmp_path)
     with pytest.raises(EngineError, match="cannot open the network file"):
         predict_outputs(str(tmp_path / "missing.nn"), BOARDS, LABELS)
     with pytest.raises(EngineError, match="every board needs its class"):
-        engine.run_engine(["train", side_network, side_network], "769 5\n- 1\n0 2\n", capture_output=True)
+        engine.run_engine(["train", network_file, network_file], "769 5\n- 1\n0 2\n", capture_output=True)
 
 
 def test_a_missing_engine_is_reported(monkeypatch, tmp_path):
@@ -50,9 +52,10 @@ def test_a_missing_engine_is_reported(monkeypatch, tmp_path):
         predict_outputs("net.nn", BOARDS, LABELS)
 
 
-def test_train_writes_the_trained_network(tmp_path, side_network):
+def test_train_writes_the_trained_network(tmp_path):
+    network_file = side_network(tmp_path)
     saved = tmp_path / "trained.nn"
-    train(side_network, str(saved), BOARDS * 5, [0, 0] * 5, LABELS)
+    train(network_file, str(saved), BOARDS * 5, [0, 0] * 5, LABELS)
     assert "training" in zipfile.ZipFile(saved).read("header.json").decode()
 
 

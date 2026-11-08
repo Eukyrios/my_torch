@@ -34,8 +34,7 @@ def write_network(path, weights: list[list[float]], biases: list[float], metadat
     return str(path)
 
 
-@pytest.fixture
-def side_network(tmp_path):
+def side_network(tmp_path) -> str:
     """A 769 -> 5 network that answers Check White when white is to move, Check Black otherwise."""
     if not ENGINE.is_file():
         pytest.fail(f"{ENGINE} is missing, build it with make")
@@ -46,10 +45,7 @@ def side_network(tmp_path):
     return write_network(tmp_path / "side.nn", weights, biases)
 
 
-@pytest.fixture
-def write_boards(tmp_path):
-    def write(lines: list[str], name: str = "boards.txt") -> str:
-        path = tmp_path / name
-        path.write_text("\n".join(lines) + "\n")
-        return str(path)
-    return write
+def write_boards(tmp_path, lines: list[str], name: str = "boards.txt") -> str:
+    path = tmp_path / name
+    path.write_text("\n".join(lines) + "\n")
+    return str(path)
