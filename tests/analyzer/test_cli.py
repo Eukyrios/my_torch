@@ -159,3 +159,14 @@ def test_train_refuses_labels_the_network_does_not_predict(side_network, write_b
 def test_train_errors_of_the_engine_exit_84(tmp_path, write_boards, capsys):
     assert main(["--train", str(tmp_path / "missing.nn"), write_boards(training_lines(2))]) == EXIT_ERROR
     assert "cannot open the network file" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("mode", ["--predict", "--train"])
+def test_a_file_that_is_not_a_network_exits_84(write_boards, tmp_path, capfd, mode):
+    network = tmp_path / "corrupt.nn"
+    network.write_bytes(b"not a network")
+    assert main([mode, str(network), write_boards([f"{WHITE_TO_MOVE} Nothing"])]) == EXIT_ERROR
+    out, err = capfd.readouterr()
+    assert out == ""
+    assert "is not a valid my_torch network" in err
+    assert network.read_bytes() == b"not a network"
