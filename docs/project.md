@@ -27,7 +27,7 @@ The work is split into **4 parent issues**, each with sub-issues:
 
 Save and load ([#4](https://github.com/Eukyrios/my_torch/issues/4), [#8](https://github.com/Eukyrios/my_torch/issues/8)) are implemented by @wabilatif from the `.nn` format spec in [#24](https://github.com/Eukyrios/my_torch/issues/24).
 The tracks meet at `--train` ([#14](https://github.com/Eukyrios/my_torch/issues/14)) and `--predict` ([#19](https://github.com/Eukyrios/my_torch/issues/19)), which call the module:
-`Network.load`, `network.train`, `network(boards)` and `network.save`.
+`load_network`, `Training::fit`, `network(boards)` and `save_network`.
 
 ## Roadmap
 
